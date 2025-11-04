@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "iostream": "cpp"
+    },
+    "cmake.sourceDirectory": "/workspaces/ad_data_closed_loop/infra/data_collection/src"
+}
