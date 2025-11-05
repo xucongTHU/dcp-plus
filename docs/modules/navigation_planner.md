@@ -18,7 +18,7 @@ These implementations provide the core functionality for the reinforcement learn
 - Provides positive rewards for visiting sparse areas (+10) and successful triggers (+0.5)
 - Applies penalties for collisions (-1.0) and step costs (-0.01)
 - Includes optional shaped reward based on distance to sparse cells
-2. **Route Optimization** (planner_optRoute.h/cpp):
+2. **Route Optimization** (planner_route_optimize.h/cpp):
 - Implements the optRoute function that adjusts costs based on data density
 - Decreases costs in sparse areas to encourage exploration
 - Increases costs in high-density areas to discourage redundancy
