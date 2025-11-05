@@ -9,7 +9,7 @@
 
 // Include all component headers
 #include "costmap/costmap.h"
-#include "rl/planner_optRoute.h"
+#include "rl/planner_route_optimize.h"
 #include "rl/planner_reward.h"
 #include "sampler/coverage_metric.h"
 #include "sampler/sampling_optimizer.h"

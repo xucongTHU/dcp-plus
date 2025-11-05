@@ -5,8 +5,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "../infra/navigation_planner/nav_planner_node.h"
-#include "../infra/navigation_planner/utils/planner_utils.h"
+#include "/navigation_planner/nav_planner_node.h"
+#include "/navigation_planner/utils/planner_utils.h"
 
 // Forward declarations for data collection components
 struct DataPoint {

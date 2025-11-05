@@ -1,0 +1,17 @@
+{
+  "MODULE_VERSION": "1.20251017-034320-ac81a.ad_shadowmode-thor-dirty",
+  "BUILDTOOLS_TARGET_PLATFORM": "thor",
+  "PROJECT_NAME": "ad_shadowmode",
+  "AD_CROSS_COMPILE": "ON",
+  "BT_CROSS_ROOT": "/usr/local/thor/",
+  "BT_CROSS_TOOLCHAIN": "/usr/local/thor/aarch64--glibc--bleeding-edge-2024.02-1",
+  "BT_SYSROOT": "/",
+  "SENSEAUTO_DEV_INSTALLED_ROOT": "/",
+  "CMAKE_SYSTEM_NAME": "Linux",
+  "CMAKE_SYSTEM_PROCESSOR": "aarch64",
+  "HOST_OS": "Linux",
+  "ARCH_TYPE": "aarch64",
+  "PLATFORM_NAME": "aarch64",
+  "CPACK_GENERATOR": "TGZ",
+  "INSTALL_SOFTLINK_SRC": ""
+}
