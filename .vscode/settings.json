@@ -1,6 +1,17 @@
 {
     "files.associations": {
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "vector": "cpp",
+        "string": "cpp"
     },
-    "cmake.sourceDirectory": "/workspaces/ad_data_closed_loop/infra/data_collection/src"
+    "cmake.sourceDirectory": "/workspaces/ad_data_closed_loop/src",
+    "C_Cpp.errorSquiggles": "Enabled",
+    "C_Cpp.intelliSenseEngine": "Default",
+    "C_Cpp.formatting": "Default",
+    "C_Cpp.autocomplete": "Default",
+    "C_Cpp.debugShortcut": false,
+    "C_Cpp.dimInactiveRegions": true,
+    "C_Cpp.inlayHints.autoDeclarationTypes.enabled": true,
+    "C_Cpp.inlayHints.parameterNames.enabled": "literals",
+    "C_Cpp.inlayHints.referenceOperator.enabled": true
 }
