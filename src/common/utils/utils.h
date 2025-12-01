@@ -48,6 +48,7 @@ std::vector<std::string> GetFilesInTimeRange(const std::string& path, uint64_t s
 // 时间处理
 //=========================================================
 uint64_t GetCurrentTimestampNs();
+uint64_t GetCurrentTimestampUs();
 uint64_t GetCurrentTimestampMs();
 long long getTime();
 std::string get14DigitTimestamp();

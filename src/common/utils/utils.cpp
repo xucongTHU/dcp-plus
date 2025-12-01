@@ -244,6 +244,13 @@ uint64_t GetCurrentTimestampNs()
     return ns.count();
 }
 
+uint64_t GetCurrentTimestampUs()
+{
+    auto now = std::chrono::system_clock::now();
+    auto us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    return us.count();
+}
+
 uint64_t GetCurrentTimestampMs()
 {
     auto now = std::chrono::system_clock::now();
