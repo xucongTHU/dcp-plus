@@ -18,7 +18,8 @@
 #include "recorder/common/diskspace_checker.hpp"
 #include "recorder/common/file_compress.h"
 #include "recorder/common/file_roller.h"
-// #include "trigger/base/TriggerBase.h"
+#include "trigger_engine/strategy_config.h"
+#include "trigger_engine/dcl_trigger.h"
 // #include "cyber_recorder/CyberRecorder.h"
 #include "recorder/rscl_recorder.h"
 // #include "common/time/Timer.h"
@@ -41,28 +42,23 @@ public:
     virtual ~DataStorage() = default;
 
     bool Init(const std::shared_ptr<senseAD::rscl::comm::Node>& node,
-              const strategy::StrategyConfig& strategy_config);
-
-    // bool Init(stoic::cm::NodeHandle& nh,
-    //           const common::AppConfigData::DataStorage& config,
-    //           const strategy::StrategyConfig& strategy_config,
-    //           std::shared_ptr<uploader::DataReporter> data_reporter);
+              const dcl::trigger::StrategyConfig& strategy_config);
 
     bool Start();
     bool Stop();
-    void AddTrigger(const trigger::TriggerContextPtr& trigger);
+    void AddTrigger(const dcl::trigger::TriggerContext& trigger);
     std::shared_ptr<RsclRecorder> GetRsclRecorder() const { return rscl_recorder_; }
 
 private:
-    bool saveTriggerInfoJson(std::string& output_json_filename, const trigger::TriggerContext& current_trigger);
+    bool saveTriggerInfoJson(std::string& output_json_filename, const dcl::trigger::TriggerContext& current_trigger);
     bool compressFiles(const std::vector<std::string>& inputFilePaths, const std::string& outputFilePath);
-    bool handleTrigger(const trigger::TriggerContextPtr& current_trigger);
+    bool handleTrigger(const dcl::trigger::TriggerContext& current_trigger);
     bool checkDiskSpace() const;
 
 private:
     std::shared_ptr<senseAD::rscl::comm::Node> node_{nullptr};
-    strategy::StrategyConfig strategy_config_;
-    std::shared_ptr<strategy::Strategy> strategy_{nullptr};
+    dcl::trigger::StrategyConfig strategy_config_;
+    std::shared_ptr<dcl::trigger::Strategy> strategy_{nullptr};
     std::unique_ptr<FileRoller> fileRoller;
     std::shared_ptr<DiskSpaceChecker> diskSpaceChecker;
     // std::shared_ptr<uploader::DataReporter> data_reporter_;
@@ -81,7 +77,7 @@ private:
 
     std::atomic<CollectionStatus> collectionStatus_{CollectionStatus::None};
     std::atomic<bool> stop_{false};
-    std::queue<trigger::TriggerContextPtr> triggerList_; 
+    std::queue<dcl::trigger::TriggerContext> triggerList_; 
     // trigger::TriggerContext current_trigger_;
     double bag_distance = 0.0;
 

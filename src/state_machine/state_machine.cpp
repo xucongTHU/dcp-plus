@@ -1,8 +1,6 @@
 #include "state_machine.h"
-#include "../data_collection/src/common/logger/Logger.h"
+#include "common/log/Logger.h"
 #include <iostream>
-
-using namespace dcl::logger;
 
 namespace dcl::state_machine {
 StateMachine::StateMachine() 
@@ -11,37 +9,37 @@ StateMachine::StateMachine()
 }
 
 bool StateMachine::initialize() {
-    Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Initializing state machine");
+    AD_INFO(StateMachine, "Initializing state machine");
     
     if (!data_collection_planner_) {
-        Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Data collection planner not set");
+        AD_ERROR(StateMachine, "Data collection planner not set");
         return false;
     }
     
     if (!nav_planner_) {
-        Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Navigation planner not set");
+        AD_ERROR(StateMachine, "Navigation planner not set");
         return false;
     }
     
     if (!data_storage_) {
-        Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Data storage not set");
+        AD_ERROR(StateMachine, "Data storage not set");
         return false;
     }
     
     // 初始化各组件
     if (!data_collection_planner_->initialize()) {
-        Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Failed to initialize data collection planner");
+        AD_ERROR(StateMachine, "Failed to initialize data collection planner");
         transitionToState(SystemState::ERROR, StateEvent::ERROR_OCCURRED);
         return false;
     }
     
     if (!nav_planner_->initialize()) {
-        Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Failed to initialize navigation planner");
+        AD_ERROR(StateMachine, "Failed to initialize navigation planner");
         transitionToState(SystemState::ERROR, StateEvent::ERROR_OCCURRED);
         return false;
     }
     
-    Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "State machine initialized successfully");
+    AD_INFO(StateMachine, "State machine initialized successfully");
     transitionToState(SystemState::IDLE, StateEvent::INIT_COMPLETE);
     return true;
 }
@@ -80,28 +78,26 @@ void StateMachine::handleInitializing(StateEvent event) {
     if (event == StateEvent::INIT_COMPLETE) {
         transitionToState(SystemState::IDLE, event);
     } else {
-        Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-            "Unexpected event in INITIALIZING state");
+        AD_WARN(StateMachine, "Unexpected event in INITIALIZING state");
     }
 }
 
 void StateMachine::handleIdle(StateEvent event) {
     switch (event) {
         case StateEvent::PLAN_REQUEST:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Starting mission planning");
+            AD_INFO(StateMachine, "Starting mission planning");
             transitionToState(SystemState::PLANNING, event);
             break;
         case StateEvent::UPLOAD_REQUEST:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Starting data upload");
+            AD_INFO(StateMachine, "Starting data upload");
             transitionToState(SystemState::UPLOADING, event);
             break;
         case StateEvent::SHUTDOWN_REQUEST:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Shutting down system");
+            AD_INFO(StateMachine, "Shutting down system");
             transitionToState(SystemState::SHUTTING_DOWN, event);
             break;
         default:
-            Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-                "Unexpected event in IDLE state");
+            AD_WARN(StateMachine, "Unexpected event in IDLE state");
             break;
     }
 }
@@ -109,24 +105,23 @@ void StateMachine::handleIdle(StateEvent event) {
 void StateMachine::handlePlanning(StateEvent event) {
     switch (event) {
         case StateEvent::PLAN_COMPLETE:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Mission planning completed");
+            AD_INFO(StateMachine, "Mission planning completed");
             transitionToState(SystemState::NAVIGATING, event);
             break;
         case StateEvent::ERROR_OCCURRED:
-            Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Error occurred during planning");
+            AD_ERROR(StateMachine, "Error occurred during planning");
             transitionToState(SystemState::ERROR, event);
             break;
         default:
-            Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-                "Unexpected event in PLANNING state");
+            AD_WARN(StateMachine, "Unexpected event in PLANNING state");
             break;
     }
 }
 
-void StateMachine::handleNavigating(StateEvent event) {
+void C::handleNavigating(StateEvent event) {
     switch (event) {
         case StateEvent::WAYPOINT_REACHED:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Waypoint reached");
+            AD_INFO(StateMachine, "Waypoint reached");
             // 检查是否需要采集数据
             if (current_waypoint_index_ < current_path_.size()) {
                 const Point& waypoint = current_path_[current_waypoint_index_];
@@ -144,31 +139,29 @@ void StateMachine::handleNavigating(StateEvent event) {
             }
             break;
         case StateEvent::ERROR_OCCURRED:
-            Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Error occurred during navigation");
+            AD_ERROR(StateMachine, "Error occurred during navigation");
             transitionToState(SystemState::ERROR, event);
             break;
         default:
-            Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-                "Unexpected event in NAVIGATING state");
+            AD_WARN(StateMachine, "Unexpected event in NAVIGATING state");
             break;
     }
 }
 
-void StateMachine::handleDataCollection(StateEvent event) {
+void C::handleDataCollection(StateEvent event) {
     switch (event) {
         case StateEvent::DATA_COLLECTED:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Data collection completed");
+            AD_INFO(StateMachine, "Data collection completed");
             // 数据采集完成后继续导航
             current_waypoint_index_++;
             transitionToState(SystemState::NAVIGATING, event);
             break;
         case StateEvent::ERROR_OCCURRED:
-            Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Error occurred during data collection");
+            AD_ERROR(StateMachine, "Error occurred during data collection");
             transitionToState(SystemState::ERROR, event);
             break;
         default:
-            Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-                "Unexpected event in DATA_COLLECTION state");
+            AD_WARN(StateMachine, "Unexpected event in DATA_COLLECTION state");
             break;
     }
 }
@@ -176,16 +169,15 @@ void StateMachine::handleDataCollection(StateEvent event) {
 void StateMachine::handleUploading(StateEvent event) {
     switch (event) {
         case StateEvent::UPLOAD_COMPLETE:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Data upload completed");
+            AD_INFO(StateMachine, "Data upload completed");
             transitionToState(SystemState::IDLE, event);
             break;
         case StateEvent::ERROR_OCCURRED:
-            Logger::instance()->Log(LOG_LEVEL_ERROR, "STATE_MACHINE", "Error occurred during data upload");
+            AD_ERROR(StateMachine, "Error occurred during data upload");
             transitionToState(SystemState::ERROR, event);
             break;
         default:
-            Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-                "Unexpected event in UPLOADING state");
+            AD_WARN(StateMachine, "Unexpected event in UPLOADING state");
             break;
     }
 }
@@ -193,25 +185,23 @@ void StateMachine::handleUploading(StateEvent event) {
 void StateMachine::handleError(StateEvent event) {
     switch (event) {
         case StateEvent::RECOVERY_REQUEST:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Attempting system recovery");
+            AD_INFO(StateMachine, "Attempting system recovery");
             // 尝试恢复到空闲状态
             transitionToState(SystemState::IDLE, event);
             break;
         case StateEvent::SHUTDOWN_REQUEST:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "Shutting down due to error");
+            AD_INFO(StateMachine, "Shutting down due to error");
             transitionToState(SystemState::SHUTTING_DOWN, event);
             break;
         default:
-            Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-                "Unexpected event in ERROR state");
+            AD_WARN(StateMachine, "Unexpected event in ERROR state");
             break;
     }
 }
 
 void StateMachine::handleShuttingDown(StateEvent event) {
     // 关闭状态下不处理任何事件
-    Logger::instance()->Log(LOG_LEVEL_WARN, "STATE_MACHINE", 
-        "Event received during shutdown state, ignoring");
+    AD_WARN(StateMachine, "Event received during shutdown state, ignoring");
 }
 
 void StateMachine::transitionToState(SystemState new_state, StateEvent event) {
@@ -250,7 +240,7 @@ void StateMachine::transitionToState(SystemState new_state, StateEvent event) {
             }
             break;
         case SystemState::SHUTTING_DOWN:
-            Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", "System shutdown complete");
+            AD_INFO(StateMachine, "System shutdown complete");
             break;
         default:
             // 其他状态不需要特殊处理
@@ -300,8 +290,7 @@ void StateMachine::logStateTransition(SystemState from, SystemState to, StateEve
         case StateEvent::SHUTDOWN_REQUEST: event_str = "SHUTDOWN_REQUEST"; break;
     }
     
-    Logger::instance()->Log(LOG_LEVEL_INFO, "STATE_MACHINE", 
-        ("State transition: " + from_str + " -> " + to_str + " (event: " + event_str + ")").c_str());
+    AD_INFO(StateMachine, "State transition: %s -> %s (event: %s)", from_str.c_str(), to_str.c_str(), event_str.c_str()); 
 }
 
 void StateMachine::setDataCollectionPlanner(std::shared_ptr<DataCollectionPlanner> planner) {

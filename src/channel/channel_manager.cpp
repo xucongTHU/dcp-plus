@@ -50,10 +50,10 @@ bool ChannelManager::InitSubscribers() {
             );
 
             if (!subscriber) {
-                LOG_ERROR("Create subscriber failed for topic: %s", topic.c_str());
+                AD_ERROR(ChannelManager, "Create subscriber failed for topic: %s", topic.c_str());
                 return false;
             }
-            LOG_INFO("Init subscriber for topic: %s, node: %p, subscriber: %p", topic.c_str(), node_.get(), subscriber.get());
+            AD_INFO(ChannelManager, "Init subscriber for topic: %s, node: %p, subscriber: %p", topic.c_str(), node_.get(), subscriber.get());
             subscribers_[topic] = subscriber;
         }
     }
@@ -64,12 +64,12 @@ bool ChannelManager::InitSubscribers() {
 bool ChannelManager::InitObservers() {
     if (rscl_recorder_) {
         AddObserver(rscl_recorder_);
-        LOG_INFO("Added RsclRecorder as observer");
+        AD_INFO(ChannelManager, "Added RsclRecorder as observer");
     }
 
     if (data_reporter_) {
         AddObserver(data_reporter_);
-        LOG_INFO("Added DataReporter as observer");
+        AD_INFO(ChannelManager, "Added DataReporter as observer");
     }
 
     
@@ -78,13 +78,13 @@ bool ChannelManager::InitObservers() {
             auto trigger = trigger_factory_->GetTrigger(strategy.trigger.triggerName);
             if (trigger) {
                 AddObserver(trigger);
-                LOG_INFO("Added %s as observer", strategy.trigger.triggerName.c_str());
+                AD_INFO(ChannelManager, "Added %s as observer", strategy.trigger.triggerName.c_str());
             }
 
         }
     }
 
-    LOG_INFO("InitObservers ok");
+    AD_INFO(ChannelManager, "InitObservers ok");
     return true;
 }
 
@@ -98,13 +98,13 @@ void ChannelManager::OnMessageReceived(const std::string& topic, const TRawMessa
     }
     else
     {
-        LOG_ERROR("OnMessageReceived, topic: %s, header parse error", topic.c_str());
+        AD_ERROR(ChannelManager, "OnMessageReceived, topic: %s, header parse error", topic.c_str());
         return;
     }
 
     // in start of replay mode rscl timestamp is zero
     if (message_time == 0) {
-        LOG_ERROR("OnMessageReceived, topic: %s, message_time is zero", topic.c_str());
+        AD_ERROR(ChannelManager, "OnMessageReceived, topic: %s, message_time is zero", topic.c_str());
         return;
     }
 }

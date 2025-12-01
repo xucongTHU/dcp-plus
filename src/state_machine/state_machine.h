@@ -5,7 +5,7 @@
 #include <string>
 #include "../data_collection_planner.h"
 #include "../navigation_planner/nav_planner_node.h"
-#include "../data_collection/src/data_storage/DataStorage.h"
+#include "../recorder/DataStorage.h"
 
 // 系统状态枚举
 enum class SystemState {

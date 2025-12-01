@@ -12,7 +12,6 @@
 namespace dcl {
 namespace uploader {
 
-static const char* LOG_TAG = "DATA_REPORTER";
 static inline const std::string OBU161 = "obu161";
 static inline const std::string OBU14 = "obu14";
 static inline const std::string OBU02 = "obu02";
@@ -272,11 +271,11 @@ void DataReporter::handleConfigMessage(const std::string &msg, const std::string
         std::cout << "rawJson " << rawJson << std::endl;
         // std::string contentStr = rawJson["content"].get<std::string>();
         json paras = rawJson["paras"];
-        LOG_INFO("paras: %s", paras.dump().c_str());
+        AD_INFO(DataReporter, "paras: %s", paras.dump().c_str());
         std::string token = common::readFileToString(std::string(common::getInstallRootPath()) + "/config/token");
         // 生成消息ID（确保content和msgId使用相同的ID
         std::string contentToken = trim(token);
-        LOG_INFO("contentToken: %s", contentToken.c_str());
+        AD_INFO(DataReporter,"contentToken: %s", contentToken.c_str());
         // 创建content JSON
         json content;
         content["msg"] = "";
@@ -290,17 +289,17 @@ void DataReporter::handleConfigMessage(const std::string &msg, const std::string
         // 检查 paras 是否存在且是数组
         if (!rawJson.contains("paras") || !rawJson["paras"].is_array())
         {
-            LOG_ERROR("Error: 'paras' is missing or not an array");
+            AD_ERROR(DataReporter, "Error: 'paras' is missing or not an array");
         }
 
         // 检查 paras 数组是否为空
         if (paras.empty())
         {
-            LOG_ERROR("Error: 'paras' array is empty");
+            AD_ERROR(DataReporter, "Error: 'paras' array is empty");
         }
         // 获取 paras 数组的第一个元素
         json first_para = paras[0];
-        LOG_ERROR("first_para: %s", first_para.dump().c_str());
+        AD_ERROR(DataReporter, "first_para: %s", first_para.dump().c_str());
         if (!(first_para.contains("configId") && first_para.contains("strategyId")))
         {
             std::cerr << "Error: [configId] and [strategyId] not found." << std::endl;
@@ -319,7 +318,7 @@ void DataReporter::handleConfigMessage(const std::string &msg, const std::string
         content["resultContent"] = resultContent.dump(); // 将JSON转为字符串
 
         if (!checkConfigValid(first_para)) {
-            LOG_ERROR("Error: wrong config json format!");
+            AD_ERROR(DataReporter, "Error: wrong config json format!");
             content["status"] = "2";
             content["error"] = "wrong format!";
             return;
@@ -346,14 +345,14 @@ void DataReporter::handleConfigMessage(const std::string &msg, const std::string
 
         std::string payload = response.dump();
 
-        LOG_INFO("response: %s", payload.c_str());
+        AD_INFO(DataReporter, "response: %s", payload.c_str());
 
         mqttWrapper_->Publish(upload_topic, payload);
-        LOG_INFO("配置响应消息发布成功");
+        AD_INFO(DataReporter, "配置响应消息发布成功");
     }
     catch (const mqtt::exception &e)
     {
-        LOG_ERROR("消息发布失败: %s", e.what());
+        AD_ERROR(DataReporter, "消息发布失败: %s", e.what());
         return;
     }
 }
@@ -424,11 +423,11 @@ void DataReporter::publishTaskMessage(const std::string &msgId, const std::strin
     {
         std::string payload = response.dump();
         mqttWrapper_->Publish(upload_topic, payload);
-        LOG_INFO("配置响应消息发布成功");
+        AD_INFO(DataReporter, "配置响应消息发布成功");
     }
     catch (const mqtt::exception &e)
     {
-        LOG_ERROR("消息发布失败: %s", e.what());
+        AD_ERROR(DataReporter, "消息发布失败: %s", e.what());
     }
 }
 
@@ -473,7 +472,7 @@ void DataReporter::handleTaskMessage(const std::string &msg, const std::string &
 void DataReporter::handleTaskAndConfigMessage(const std::string& topic, const std::string& msg){
     auto start_time = std::chrono::steady_clock::now();
     const std::string rawMessage = msg;
-    LOG_INFO("handleTaskAndConfigMessage: %s", rawMessage.c_str());
+    AD_INFO(DataReporter, "handleTaskAndConfigMessage: %s", rawMessage.c_str());
     try
     {
         json rawJson = json::parse(rawMessage);
@@ -548,7 +547,7 @@ void DataReporter::handleTaskAndConfigMessage(const std::string& topic, const st
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start_time);
 
-    LOG_INFO("消息处理耗时: %d ms", duration.count());
+    AD_INFO(DataReporter, "消息处理耗时: %d ms", duration.count());
 }
 
 // void DataReporter::publishSysMessage(const SysInfo &sys_info)
@@ -680,14 +679,14 @@ bool DataReporter::MqttInit() {
             std::bind(&DataReporter::handleTaskAndConfigMessage, this, std::placeholders::_1, std::placeholders::_2));
         auto ret = mqttWrapper_->Connect();
         if (ret != data_proto::MqttWrapper::ErrorCode::SUCCESS) {
-            LOG_ERROR("MqttInit, Connect failed, ret: %d", ret);
+            AD_ERROR(DataReporter, MqttInit, Connect failed, ret: %d", ret);
             return false;
         } 
 
-        LOG_INFO("MqttInit, Connect success");
+        AD_INFO(DataReporter, "MqttInit, Connect success");
 
         // Subscribe to topic
-        LOG_INFO("MqttInit, Subscribing to topic: %s", download_topic.c_str());
+        AD_INFO(DataReporter, "MqttInit, Subscribing to topic: %s", download_topic.c_str());
         mqttWrapper_->Subscribe(download_topic, 1);
 
         // Publish message

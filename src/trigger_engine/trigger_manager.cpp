@@ -28,7 +28,7 @@ void TriggerManager::InitTriggerChecker(std::shared_ptr<RuleTrigger> trigger) {
         return true;
     });
 }
-std::shared_ptr<RuleTrigger> TriggerManager::createTrigger(const strategy::Strategy& strategy) {
+std::shared_ptr<RuleTrigger> TriggerManager::createTrigger(const Strategy& strategy) {
     auto trigger = std::make_shared<RuleTrigger>();
     
     triggers_[strategy.triggerId] = trigger;

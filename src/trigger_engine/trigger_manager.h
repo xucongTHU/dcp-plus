@@ -27,7 +27,7 @@ public:
     void InitTriggerChecker(std::shared_ptr<RuleTrigger> trigger);
     void InitTriggerScehduler(std::shared_ptr<RuleTrigger> trigger);
 
-    std::shared_ptr<RuleTrigger> createTrigger(const strategy::Strategy& strategy);
+    std::shared_ptr<RuleTrigger> createTrigger(const Strategy& strategy);
 
     std::shared_ptr<RuleTrigger> getTrigger(const std::string& trigger_id) const;
 

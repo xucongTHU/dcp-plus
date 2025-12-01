@@ -5,8 +5,6 @@
 namespace dcl {
 namespace uploader {
 
-static const char* LOG_TAG = "DATA_PROTO";
-
 CURLcode CurlWrapper::Init(const std::string& client_cert_path, const std::string& client_key_path, const std::string& ca_cert_path) {
     client_cert_path_ = client_cert_path;//客户端证书路径
     client_key_path_ = client_key_path;//客户端私钥路径
@@ -14,7 +12,7 @@ CURLcode CurlWrapper::Init(const std::string& client_cert_path, const std::strin
     curl_global_init(CURL_GLOBAL_ALL);//cURL全局初始化
     curl_ = curl_easy_init();
     if (curl_ == nullptr) {
-        LOG_ERROR("Failed to initialize Curl.");
+        AD_ERROR(CurlWrapper, "Failed to initialize Curl.");
         return CURLE_FAILED_INIT;
     }
     return CURLE_OK;
@@ -53,7 +51,7 @@ void CurlWrapper::SetupMutualTLS() {
 
 CURLcode CurlWrapper::HttpPost(const std::string& url, const std::string& data, std::string& response, const std::vector<std::string>& heads) {
     if (IsInited() != CURLE_OK) {
-        LOG_ERROR("Curl is not initialized.");
+        AD_ERROR(CurlWrapper, "Curl is not initialized.");
         return CURLE_FAILED_INIT;
     }
 
@@ -81,14 +79,14 @@ CURLcode CurlWrapper::HttpPost(const std::string& url, const std::string& data, 
     curl_slist_free_all(headers);
 
     if (res != CURLE_OK) {
-        LOG_ERROR("Failed to perform HTTP POST request: %s", curl_easy_strerror(res));
+        AD_ERROR(CurlWrapper, "Failed to perform HTTP POST request: %s", curl_easy_strerror(res));
     }
     return res;
 }
 
 CURLcode CurlWrapper::HttpGet(const std::string& url, std::string& response, const std::vector<std::string>& heads) {
     if (IsInited() != CURLE_OK) {
-        LOG_ERROR("Curl is not initialized.");
+        AD_ERROR(CurlWrapper, "Curl is not initialized.");
         return CURLE_FAILED_INIT;
     }
 
@@ -112,14 +110,14 @@ CURLcode CurlWrapper::HttpGet(const std::string& url, std::string& response, con
     curl_slist_free_all(headers);
 
     if (res != CURLE_OK) {
-        LOG_ERROR("Failed to perform HTTP GET request: %s", curl_easy_strerror(res));
+        AD_ERROR(CurlWrapper, "Failed to perform HTTP GET request: %s", curl_easy_strerror(res));
     }
     return res;
 }
 
 CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& data, std::string& response, const std::vector<std::string>& heads) {
     if (IsInited() != CURLE_OK) {
-        LOG_ERROR("Curl is not initialized.");
+        AD_ERROR(CurlWrapper, "Curl is not initialized.");
         return CURLE_FAILED_INIT;
     }
 
@@ -141,7 +139,6 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
     curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data.size());
     // 转换为 string 并输出
     std::string str(data.begin(), data.begin() + 10);
-    std::cout << "update data:" << str << std::endl;
     // curl_easy_setopt(curl_, CURLOPT_READFUNCTION, NULL);  // 无需读取函数
     // curl_easy_setopt(curl_, CURLOPT_READDATA, data.data());      // 指定要发送的数据
     // curl_easy_setopt(curl_, CURLOPT_INFILESIZE_LARGE, (curl_off_t)(data.size()));  // 设置数据大小
@@ -187,14 +184,14 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
     curl_slist_free_all(headers);
 
     if (res != CURLE_OK) {
-        LOG_ERROR("Failed to perform HTTP PUT request: %s", curl_easy_strerror(res));
+        AD_ERROR(CurlWrapper, "Failed to perform HTTP PUT request: %s", curl_easy_strerror(res));
 
         // 打印所有错误代码和消息
         const char *http_err;
         curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_err);
         if (http_err)
         {
-            LOG_ERROR("HTTP status code: %s\n", http_err);
+            AD_ERROR(CurlWrapper, "HTTP status code: %s\n", http_err);
         }
     }
     response = etag;

@@ -12,18 +12,18 @@ void MessageProvider::onMessageReceived(const std::string& topic,
     if(topic == "/canbus/vehicle_report")
     {
         updateVehicleInfo(topic, msg);
-        AD_LDEBUG(MessageProvider::Observe) << "Observed topic: " << topic;
+        AD_INFO(MessageProvider, "Observed topic: %s", topic.c_str());
     } else if (topic == "/decision_planning/planning_state") {
         updatePlanningState(topic, msg);
-        AD_LDEBUG(MessageProvider::Observe) << "Observed topic: " << topic;
+        AD_INFO(MessageProvider, "Observed topic: %s", topic.c_str());
     }
     else if (topic == "/mcu/vehicle_processing") {
         updateAebDecelReq(msg);
-        AD_LDEBUG(MessageProvider::Observe) << "Observed topic: " << topic;
+        AD_INFO(MessageProvider, "Observed topic: %s", topic.c_str());
     }
     else if (topic == "/mcu/state_machine") {
         updateMcuDrvOverride(msg);
-        AD_LDEBUG(MessageProvider::Observe) << "Observed topic: " << topic;
+        AD_INFO(MessageProvider, "Observed topic: %s", topic.c_str());
     }
 }
 
@@ -47,19 +47,19 @@ void MessageProvider::updateVehicleInfo(const std::string& topic,
 void MessageProvider::updateGear(const senseAD::msg::vehicle::VehicleReport::Reader& report)
 {
     gear_.store(report.getGear().getActual());
-    AD_LDEBUG(MessageProvider) << "gear : " << static_cast<int32_t>(gear_.load());
+    AD_INFO(MessageProvider, "gear : %d", static_cast<int32_t>(gear_.load()));
 }
 
 void MessageProvider::updateAutoModeEnable(const senseAD::msg::vehicle::VehicleReport::Reader& report) 
 {
     autoModeEnable_.store(report.getMode().getEnable());
-    AD_LDEBUG(MessageProvider) << "autoModeEnable_ : " << autoModeEnable_.load();
+    AD_INFO(MessageProvider, "autoModeEnable_ : %d", autoModeEnable_.load());
 }
 
 void MessageProvider::updateChassisVehicleMps(const senseAD::msg::vehicle::VehicleReport::Reader& report)
 {
     chassisVehicleMps_.store(report.getChassis().getVehicleMps());
-    AD_LDEBUG(MessageProvider) << "chassisVehicleMps_ : " << chassisVehicleMps_.load();
+    AD_INFO(MessageProvider, "chassisVehicleMps_ : %f", chassisVehicleMps_.load());
 }
 
 void MessageProvider::updatePlanningState(const std::string& topic,
@@ -73,7 +73,7 @@ void MessageProvider::updatePlanningState(const std::string& topic,
 
     // senseAD::rscl::common::dynamicPrintValue(planning_state);
     vehicle_state_.store(planning_state.getVehicleState());
-    AD_LDEBUG(MessageProvider) << "vehicle_state : " << static_cast<int32_t>(vehicle_state_.load());
+    AD_INFO(MessageProvider, "vehicle_state : %d", static_cast<int32_t>(vehicle_state_.load()));
 }
 
 void MessageProvider::updateAebDecelReq(const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg)
@@ -85,7 +85,7 @@ void MessageProvider::updateAebDecelReq(const std::shared_ptr<ReceivedMsg<senseA
     auto vehicleProcessing = reader.getRoot<senseAD::msg::planning::Vehicleprocessing>();
 
     aebDecelReq_.store(vehicleProcessing.getAebDecelReq());
-    AD_LDEBUG(MessageProvider) << "aebDecelReq_ : " << aebDecelReq_.load();
+    AD_INFO(MessageProvider, "aebDecelReq_ : %f", aebDecelReq_.load());
 }
 
 void MessageProvider::updateMcuDrvOverride(const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) {
@@ -96,7 +96,7 @@ void MessageProvider::updateMcuDrvOverride(const std::shared_ptr<ReceivedMsg<sen
     auto mcuStateMachineInfo = reader.getRoot<senseAD::msg::planning::MCUStateMachineInfo>();
 
     mcuDrvOverride_.store(mcuStateMachineInfo.getMcuDrvOverride());
-    AD_LDEBUG(MessageProvider) << "mcuDrvOverride_ : " << static_cast<int32_t>(mcuDrvOverride_.load());
+    AD_INFO(MessageProvider, "mcuDrvOverride_ : %d", static_cast<int32_t>(mcuDrvOverride_.load()));
 }
 
 }

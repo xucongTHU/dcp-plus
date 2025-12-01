@@ -16,7 +16,7 @@
 #include <future>
 #include <unordered_set>
 #include "common/ringBuffer.h"
-// #include "strategy/StrategyConfig.h"
+#include "trigger_engine/strategy_config.h"
 #include "channel/observer.h"
 
 #include "ad_rscl/ad_rscl.h"
@@ -57,7 +57,7 @@ using TRawMessagePtr = std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessa
 
 class RsclRecorder : public Observer {
   public:
-    RsclRecorder(const std::shared_ptr<rscl::Node>& node, const std::shared_ptr<strategy::Strategy>& s);
+    RsclRecorder(const std::shared_ptr<rscl::Node>& node, const std::shared_ptr<dcl::trigger::Strategy>& s);
     ~RsclRecorder() = default;
 
     bool Open(OptMode opt_mode, const std::string& full_path);
@@ -73,7 +73,7 @@ class RsclRecorder : public Observer {
 
   private:
     bool InitRingBuffers();
-    void OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) override;
+    void onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) override;
     bool WriteBuffersToFile(const std::string& outputfilePath);
 
   private: 
@@ -85,8 +85,8 @@ class RsclRecorder : public Observer {
     bool has_data_writen_{false};
     std::string full_path_;
     std::unordered_map<std::string, senseAD::bag::ChannelInfo> channel_infos_;
-    std::shared_ptr<strategy::Strategy> strategy_{nullptr};
-    strategy::CacheMode cache_mode_;
+    std::shared_ptr<dcl::trigger::Strategy> strategy_{nullptr};
+    dcl::trigger::CacheMode cache_mode_;
 
     struct TimestampedData {
         TRawMessagePtr msg;

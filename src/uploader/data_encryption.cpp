@@ -88,12 +88,12 @@ void DataEncryption::LoadFileList() {
     std::lock_guard<std::mutex> lock(mutex_);
     std::string folder_name;
     GetFolderName(folder_name); 
-    LOG_INFO("upload_folder_name_today: %s", folder_name.c_str());
+    AD_INFO(DataEncryption, "upload_folder_name_today: %s", folder_name.c_str());
     for (const auto& [_, upload_dir] : encrypt_paths) {
         std::string upload_dir_today = upload_dir + "/"+ folder_name; 
-        LOG_INFO("upload_dir_today: %s", upload_dir_today.c_str());
+        AD_INFO(DataEncryption, "upload_dir_today: %s", upload_dir_today.c_str());
         if (!common::IsDirExist(upload_dir_today)) {
-            LOG_ERROR("Directory %s does not exist.", upload_dir_today.c_str());   
+            AD_ERROR(DataEncryption, "Directory %s does not exist.", upload_dir_today.c_str());   
             continue;
         }
         for (const auto& entry : fs::directory_iterator(upload_dir_today)) {
@@ -102,11 +102,11 @@ void DataEncryption::LoadFileList() {
             }
         }
     }
-    LOG_INFO("Loaded %d files from encrypt paths.", encrypt_queue_.size());  
+    AD_INFO(DataEncryption, "Loaded %d files from encrypt paths.", encrypt_queue_.size());  
 }
 
 void DataEncryption::Run() {
-    LOG_INFO("Encrypt Run.");  
+    AD_INFO(DataEncryption, "Encrypt Run.");  
     while (!stop_flag_) {
         LoadFileList();
         ProcessQueue();
@@ -122,7 +122,7 @@ void DataEncryption::ProcessQueue() {
         {
             std::lock_guard<std::mutex> lock(mutex_);
             if (encrypt_queue_.empty()) {
-                LOG_INFO("No files in queue.");  
+                AD_INFO(DataEncryption, "No files in queue.");  
                 break;
             }
             current_file = encrypt_queue_.front();
@@ -136,15 +136,15 @@ void DataEncryption::ProcessQueue() {
         std::cout  << "Encrypting file:   " << encrypted_file << std::endl;    
 
         auto success = EncryptFileWithEnvelope(current_file, encrypted_file);     
-        LOG_INFO("success: %d", success);   
+        AD_INFO(DataEncryption, "success: %d", success);   
 
         if (success == 0) {
-            LOG_INFO("Uploaded file: %s", current_file.c_str());   
+            AD_INFO(DataEncryption, "Uploaded file: %s", current_file.c_str());   
             common::DeleteFile(current_file);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         } else {
             std::lock_guard<std::mutex> lock(mutex_);
-            LOG_ERROR("Failed to upload file: %s", current_file.c_str());   
+            AD_ERROR(DataEncryption, "Failed to upload file: %s", current_file.c_str());   
             encrypt_queue_.push(current_file);
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
@@ -152,7 +152,7 @@ void DataEncryption::ProcessQueue() {
 }
 
 bool DataEncryption::Stop() {
-    LOG_INFO("Stop.");  
+    AD_INFO(DataEncryption, "Stop.");  
     stop_flag_ = true;
     cv_.notify_all();
     return true;

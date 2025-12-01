@@ -7,17 +7,22 @@ add_library(ad_3rdparty_mtar SHARED ${CMAKE_SOURCE_DIR}/3rdparty/microtar/microt
 
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/
-        ${CMAKE_CURRENT_SOURCE_DIR}/data_collection
         ${CMAKE_CURRENT_SOURCE_DIR}/navigation_planner
 )
 
-add_subdirectory(data_collection)
+add_subdirectory(channel)
+add_subdirectory(codec)
+add_subdirectory(common)
+add_subdirectory(recorder)
+add_subdirectory(trigger_engine)
+add_subdirectory(uploader)
 add_subdirectory(navigation_planner)
+add_subdirectory(state_machine)
 
 add_executable(ad_dcl 
                ./main.cpp
                ./data_collection_planner.cpp
-               ./state_machine.cpp)
+)
 
 #############
 ##  CPack  ##

@@ -6,8 +6,6 @@
 namespace dcl {
 namespace uploader {
 
-static const char* LOG_TAG = "DATA_UPLOAD";
-
 FileStatusManager::FileStatusManager(const std::string& json_path)
     : main_path_(json_path), backup_path_(json_path + ".bak"), tmp_path_(json_path + ".tmp") {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -23,7 +21,7 @@ bool FileStatusManager::AddFileRecord(const std::string& file_path, const common
 bool FileStatusManager::DeleteFileRecord(const std::string& file_path) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!data_.contains(file_path)) {
-        LOG_INFO("File %s has no record.", file_path.c_str());
+        AD_INFO(FileStatusManager, "File %s has no record.", file_path.c_str());
         return false;
     }
     data_.erase(file_path);
@@ -33,7 +31,7 @@ bool FileStatusManager::DeleteFileRecord(const std::string& file_path) {
 bool FileStatusManager::UpdateFileStartChunk(const std::string& file_path, int start_chunk) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!data_.contains(file_path)) {
-        LOG_INFO("File %s has no record.", file_path.c_str());
+        AD_INFO(FileStatusManager, "File %s has no record.", file_path.c_str());
         return false;
     }
     data_[file_path]["start_chunk"] = start_chunk;
@@ -43,7 +41,7 @@ bool FileStatusManager::UpdateFileStartChunk(const std::string& file_path, int s
 std::optional<common::FileUploadRecord> FileStatusManager::GetFileRecord(const std::string& file_path) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!data_.contains(file_path)) {
-        LOG_INFO("File %s has no record.", file_path.c_str());
+        AD_INFO(FileStatusManager, "File %s has no record.", file_path.c_str());
         return std::nullopt;
     }
     common::FileUploadRecord record;
@@ -57,7 +55,7 @@ std::optional<common::FileUploadRecord> FileStatusManager::GetFileRecord(const s
         }
         // record.upload_url_map = data_[file_path]["upload_url_map"].get<std::map<int, std::string>>();
     } catch (const std::exception& e) {
-        LOG_ERROR("Parse json error: %d", e.what());
+        AD_ERROR(FileStatusManager, "Parse json error: %d", e.what());
         return std::nullopt;
     }
     return std::optional(record);
@@ -69,13 +67,13 @@ bool FileStatusManager::SaveToFile() {
         WriteToFile(tmp_path_, data_);
         if (fs::exists(main_path_)) {
             fs::rename(main_path_, backup_path_);
-            LOG_INFO("Backup successfully.");
+            AD_INFO(FileStatusManager, "Backup successfully.");
         }
         fs::rename(tmp_path_, main_path_);
-        LOG_INFO("Save successfully.");
+        AD_INFO(FileStatusManager, "Save successfully.");
         return true;
     } catch (const fs::filesystem_error& e) {
-        LOG_ERROR("Save to file error: %s", e.what());
+        AD_ERROR(FileStatusManager, "Save to file error: %s", e.what());
         return false;
     }
     return false;
@@ -101,17 +99,17 @@ void FileStatusManager::LoadWithRecovery() {
     try {
         if (fs::exists(main_path_)) {
             data_ = LoadFromFile(main_path_);
-            LOG_INFO("Load from file %s successful", main_path_.c_str());
+            AD_INFO(FileStatusManager, "Load from file %s successful", main_path_.c_str());
             return;
         }
     } catch (const FileStatusException& e) {
         if (TryRecoverFromBackup()) {
-            LOG_INFO("Load from backup file %s successful", backup_path_.c_str());
+            AD_INFO(FileStatusManager, "Load from backup file %s successful", backup_path_.c_str());
             return;
         }
     }
     CreateNewFile();
-    LOG_INFO("Recovery failed, create new file.");
+    AD_INFO(FileStatusManager, "Recovery failed, create new file.");
 }
 
 bool FileStatusManager::TryRecoverFromBackup() {
@@ -119,11 +117,11 @@ bool FileStatusManager::TryRecoverFromBackup() {
         if (fs::exists(backup_path_)) {
             data_ = LoadFromFile(backup_path_);
             SaveToFile();
-            LOG_INFO("Recover from backup file %s successful.", backup_path_.c_str());
+            AD_INFO(FileStatusManager, "Recover from backup file %s successful.", backup_path_.c_str());
             return true;
         }
     } catch (const FileStatusException& e) {
-        LOG_WARN("Load backup file failed: %s", e.what());
+        AD_WARN(FileStatusManager, "Load backup file failed: %s", e.what());
         fs::remove(backup_path_);
     }
     return false;
@@ -134,14 +132,14 @@ json FileStatusManager::LoadFromFile(const std::string& path) {
     try {
         std::ifstream file(path);
         if (!file) {
-            LOG_ERROR("Open file %s failed.", path.c_str());
+            AD_ERROR(FileStatusManager, "Open file %s failed.", path.c_str());
             throw FileStatusException(FileStatusException::ErrorType::CORRUPTED_FILE, path, "Cannot open file");
         }
         std::stringstream buffer;
         buffer << file.rdbuf();
         return json::parse(buffer.str());
     } catch (const json::exception& e) {
-        LOG_ERROR("Parse JSON error: %s", e.what());
+        AD_ERROR(FileStatusManager, "Parse JSON error: %s", e.what());
         throw FileStatusException(FileStatusException::ErrorType::CORRUPTED_FILE, path, "Invalid JSON format: " + std::string(e.what()));
     }
     return json::object();
@@ -151,7 +149,7 @@ void FileStatusManager::CreateNewFile() {
     data_ = json::object();
     SaveToFile();
     if (!fs::exists(main_path_)) {
-        LOG_ERROR("Cannot create new file.");
+        AD_ERROR(FileStatusManager, "Cannot create new file.");
     }
 }
 
@@ -159,14 +157,14 @@ void FileStatusManager::CreateNewFile() {
 void FileStatusManager::WriteToFile(const std::string& path, const json& j) {
     std::ofstream file(path, std::ios::binary);
     if (!file) {
-        LOG_ERROR("Open file %s failed.", path.c_str());
+        AD_ERROR(FileStatusManager, "Open file %s failed.", path.c_str());
         throw FileStatusException(FileStatusException::ErrorType::WRITE_FAILURE, path, "Cannot open file for writing");
     }
     //将对象j转换为格式化的json字符串，缩进4个空格
     file << j.dump(4) << std::endl;
     file.flush();
     if (!file.good()) {
-        LOG_ERROR("Write to file %s failed.", path.c_str());
+        AD_ERROR(FileStatusManager, "Write to file %s failed.", path.c_str());
         throw FileStatusException(FileStatusException::ErrorType::WRITE_FAILURE, path, "Write operation failed");
     }
     file.close();

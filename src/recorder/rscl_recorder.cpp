@@ -13,9 +13,8 @@
 
 namespace dcl {
 namespace recorder {
-// static const char* LOG_TAG = "DataStorage";
 
-RsclRecorder::RsclRecorder(const std::shared_ptr<rscl::Node>& node, const std::shared_ptr<strategy::Strategy>& s)
+RsclRecorder::RsclRecorder(const std::shared_ptr<rscl::Node>& node, const std::shared_ptr<dcl::trigger::Strategy>& s)
     : node_(node), strategy_(s) {
     if (node_) {
         service_discovery_ = node_->GetServiceDiscovery();
@@ -24,19 +23,19 @@ RsclRecorder::RsclRecorder(const std::shared_ptr<rscl::Node>& node, const std::s
 
 bool RsclRecorder::Init() {
     if (!strategy_) {
-        LOG_ERROR("No enabled strategy found");
+        AD_ERROR(RsclRecorder, "No enabled strategy found");
         return false;
     }
     cache_mode_ = strategy_->mode.cacheMode;
-    LOG_INFO("Cache config - Forward duration: %ds, Backward duration: %ds",
+    AD_INFO(RsclRecorder, "Cache config - Forward duration: %ds, Backward duration: %ds",
               cache_mode_.forwardCaptureDurationSec, cache_mode_.backwardCaptureDurationSec);
 
     if (!InitRingBuffers()) {
-        LOG_ERROR("Init buffers failed");
+        AD_ERROR(RsclRecorder, "Init buffers failed");
         return false;
     }
 
-    LOG_INFO("RsclRecorder Init ok");
+    AD_INFO(RsclRecorder, "RsclRecorder Init ok");
     return true;
 }
 
@@ -53,26 +52,26 @@ bool RsclRecorder::InitRingBuffers() {
 
         auto forward_buf = std::make_unique<BufferType>(forward_size);
         if (!forward_buf) {
-            LOG_ERROR("Create forward buffer failed for topic: %s", topic.c_str());
+            AD_ERROR(RsclRecorder, "Create forward buffer failed for topic: %s", topic.c_str());
             return false;
         }
 
         auto backward_buf = std::make_unique<BufferType>(backward_size);
         if (!backward_buf) {
-            LOG_ERROR("Create backward buffer failed for topic: %s", topic.c_str());
+            AD_ERROR(RsclRecorder, "Create backward buffer failed for topic: %s", topic.c_str());
             return false;
         }
 
         forward_ringbuffers_[topic] = std::move(forward_buf);
         backward_ringbuffers_[topic] = std::move(backward_buf);
-        LOG_INFO("Init buffer for topic: %s, forward size: %d, backward size: %d", topic.c_str(), forward_size, backward_size);
+        AD_INFO(RsclRecorder, "Init buffer for topic: %s, forward size: %d, backward size: %d", topic.c_str(), forward_size, backward_size);
     }
     return true;
 }
 
-void RsclRecorder::OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
+void RsclRecorder::onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
     if (!msg) return;
-    uint64_t message_timestamp = common::Timer::now_us();
+    uint64_t message_timestamp = common::GetCurrentTimestampUs();
     // LOG_INFO("Received message on topic: %s, timestamp: %llu", topic.c_str(), message_timestamp);
 
     std::lock_guard<std::mutex> lock(buffer_mutex_);
@@ -95,13 +94,13 @@ void RsclRecorder::OnMessageReceived(const std::string& topic, const TRawMessage
 
 void RsclRecorder::TriggerRecord(uint64_t triggerTimestamp, const std::string& outputfilePath) {
     if (is_triggered_) {
-        LOG_WARN("Already triggered, ignore");
+        AD_WARN(RsclRecorder, "Already triggered, ignore");
         // return;
     }
 
     is_triggered_ = true;
     trigger_timestamp_ = triggerTimestamp;
-    LOG_INFO("Triggered at %llu, backward duration: %ds", trigger_timestamp_, cache_mode_.backwardCaptureDurationSec);
+    AD_INFO(RsclRecorder, "Triggered at %llu, backward duration: %ds", trigger_timestamp_, cache_mode_.backwardCaptureDurationSec);
 
     {
         std::lock_guard<std::mutex> lock(buffer_mutex_);
@@ -122,7 +121,8 @@ void RsclRecorder::TriggerRecord(uint64_t triggerTimestamp, const std::string& o
             triggered_forward_buffers_[topic] = std::move(saved_data);
         }
     }
-
+    
+    // ==ASYNC==
     // future_ = std::async(std::launch::async, [this, outputfilePath]() {
     //     std::this_thread::sleep_for(std::chrono::seconds(cache_mode_.backwardCaptureDurationSec));
     //     {
@@ -149,7 +149,7 @@ bool RsclRecorder::WriteBuffersToFile(const std::string& outputfilePath) {
     uint64_t max_timestamp = 0;
 
     if (!Open(OptMode::OPT_WRITE, outputfilePath)) {
-        LOG_ERROR("Open file failed: %s", outputfilePath.c_str());
+        AD_ERROR(RsclRecorder, "Open file failed: %s", outputfilePath.c_str());
         return false;
     }
 
@@ -163,7 +163,7 @@ bool RsclRecorder::WriteBuffersToFile(const std::string& outputfilePath) {
         auto current_forward_it = forward_ringbuffers_.find(topic);
 
         if (forward_it == triggered_forward_buffers_.end() && backward_it == backward_ringbuffers_.end()) {
-            LOG_WARN("No buffer found for topic: %s", topic.c_str());
+            AD_WARN(RsclRecorder, "No buffer found for topic: %s", topic.c_str());
             continue;
         }
 
@@ -216,15 +216,15 @@ bool RsclRecorder::WriteBuffersToFile(const std::string& outputfilePath) {
             }
         }
 
-        LOG_INFO("Topic %s: wrote %zu forward messages, %zu backward messages",
+        AD_INFO(RsclRecorder, "Topic %s: wrote %zu forward messages, %zu backward messages",
                  topic.c_str(), forward_count, backward_count);
     }
 
     double duration_seconds = (max_timestamp - min_timestamp) / 1e6;
-    LOG_INFO("Total recording duration: %.3f seconds", duration_seconds);
+    AD_INFO(RsclRecorder, "Total recording duration: %.3f seconds", duration_seconds);
 
     Close();
-    LOG_INFO("Wrote all topics to file: %s", outputfilePath.c_str());
+    AD_INFO(RsclRecorder, "Wrote all topics to file: %s", outputfilePath.c_str());
     return true;
 }
 
