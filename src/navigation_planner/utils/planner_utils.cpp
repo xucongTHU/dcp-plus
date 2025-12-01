@@ -23,6 +23,7 @@ void Path::clear() {
     length = 0.0;
 }
 
+namespace dcl::planner {
 // PlannerUtils implementation
 double PlannerUtils::euclideanDistance(const Point& p1, const Point& p2) {
     double dx = p1.x - p2.x;
@@ -291,3 +292,5 @@ std::string LogUtils::formatPoint(const Point& point) {
     ss << std::fixed << std::setprecision(2) << "(" << point.x << ", " << point.y << ")";
     return ss.str();
 }
+
+} // namespace dcl::planner

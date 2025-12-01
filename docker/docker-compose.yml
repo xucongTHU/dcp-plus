@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  ad_data_closed_loop_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ad_data_closed_loop_dev
+    volumes:
+      - .:/workspaces/ad_data_closed_loop
+    working_dir: /workspaces/ad_data_closed_loop
+    stdin_open: true
+    tty: true
+    command: /bin/bash

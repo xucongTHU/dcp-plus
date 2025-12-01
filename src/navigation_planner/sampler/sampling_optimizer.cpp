@@ -4,6 +4,7 @@
 #include <limits>
 #include <algorithm>
 
+namespace dcl::planner {
 SamplingOptimizer::SamplingOptimizer(const SamplingParams& parameters)
     : params(parameters), coverage_metric(parameters.sparse_threshold) {
 }
@@ -110,3 +111,5 @@ void SamplingOptimizer::updateParameters(const SamplingParams& new_params) {
     // Update coverage metric with new sparse threshold
     coverage_metric = CoverageMetric(params.sparse_threshold);
 }
+
+} // namespace dcl::planner

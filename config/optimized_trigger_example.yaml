@@ -1,0 +1,70 @@
+# 优化后的触发器配置示例
+# 展示如何使用基于表达式的通用触发器来替代数百个自定义触发器类
+
+configId: "optimized_trigger_example"
+strategyId: 1002
+
+strategies:
+  # 示例1: 基于速度和跟车距离的紧急制动触发条件
+  - businessType: "ActiveSafetyTrigger"
+    trigger:
+      triggerName: "ExpressionBasedTrigger"
+      triggerId: "emergency_braking_002"
+      priority: 1
+      enabled: true
+      # 表达式: 速度大于60km/h 且 距离前车小于20米 且 不在弯道上
+      triggerCondition: "speed > 60 and distance_to_lead < 20 and not on_curve"
+    mode:
+      triggerMode: 1
+      cacheMode:
+        forwardCaptureDurationSec: 10
+        backwardCaptureDurationSec: 5
+        cooldownDurationSec: 30
+    enableMasking: false
+    dds:
+      channels:
+        - topic: "/vehicle/status"
+          type: "VehicleStatus"
+          originalFrameRate: 100
+          capturedFrameRate: 100
+        - topic: "/perception/objects"
+          type: "PerceptionObjects"
+          originalFrameRate: 20
+          capturedFrameRate: 20
+    cyber:
+      channels: []
+    upload:
+      destination: "cloud"
+      priority: "high"
+
+  # 示例2: 基于多种条件的FCW触发器
+  - businessType: "ActiveSafetyTrigger"
+    trigger:
+      triggerName: "ExpressionBasedTrigger"
+      triggerId: "fcw_active_002"
+      priority: 2
+      enabled: true
+      # 表达式: 系统处于自动驾驶模式 且 存在碰撞风险 且 驾驶员未接管
+      triggerCondition: "is_auto_mode and collision_risk and not driver_override"
+    mode:
+      triggerMode: 1
+      cacheMode:
+        forwardCaptureDurationSec: 5
+        backwardCaptureDurationSec: 3
+        cooldownDurationSec: 20
+    enableMasking: false
+    dds:
+      channels:
+        - topic: "/autopilot/state"
+          type: "AutopilotState"
+          originalFrameRate: 10
+          capturedFrameRate: 10
+        - topic: "/perception/objects"
+          type: "PerceptionObjects"
+          originalFrameRate: 20
+          capturedFrameRate: 20
+    cyber:
+      channels: []
+    upload:
+      destination: "cloud"
+      priority: "high"

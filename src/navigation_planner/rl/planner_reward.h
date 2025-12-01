@@ -14,6 +14,8 @@ struct StateInfo {
                   collision(false), distance_to_sparse(0.0) {}
 };
 
+namespace dcl::planner {
+
 class RewardCalculator {
 public:
     /**
@@ -32,5 +34,7 @@ public:
      */
     static double computeShapedReward(double distance_to_sparse);
 };
+
+} // namespace dcl::planner
 
 #endif // PLANNER_REWARD_H

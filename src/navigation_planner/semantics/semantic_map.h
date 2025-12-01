@@ -32,6 +32,8 @@ struct SemanticObject {
         : type(t), position(p), radius(r), label(l), confidence(conf) {}
 };
 
+namespace dcl::planner {
+
 class SemanticMap {
 private:
     std::vector<SemanticObject> objects;
@@ -88,5 +90,7 @@ public:
     double getResolution() const { return resolution; }
     size_t getObjectCount() const { return objects.size(); }
 };
+
+} // namespace dcl::planner
 
 #endif // SEMANTIC_MAP_H

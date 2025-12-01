@@ -4,6 +4,8 @@
 #include <queue>
 #include <cmath>
 
+
+namespace dcl::planner {
 RoutePlanner::RoutePlanner(double sparse_threshold, 
                           double exploration_bonus,
                           double redundancy_penalty)
@@ -56,3 +58,5 @@ std::vector<Point> RoutePlanner::computeAStarPath(const CostMap& costmap,
               
     return path;
 }
+
+} // namespace dcl::planner

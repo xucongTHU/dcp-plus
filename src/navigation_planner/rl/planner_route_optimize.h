@@ -5,6 +5,8 @@
 #include "../costmap/costmap.h"
 #include <vector>
 
+
+namespace dcl::planner {
 struct MapData {
     CostMap costmap;
     
@@ -68,5 +70,7 @@ public:
     void setExplorationBonus(double bonus) { exploration_bonus = bonus; }
     void setRedundancyPenalty(double penalty) { redundancy_penalty = penalty; }
 };
+
+} // namespace dcl::planner
 
 #endif // PLANNER_OPTROUTE_H

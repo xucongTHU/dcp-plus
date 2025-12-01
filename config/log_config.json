@@ -1,0 +1,69 @@
+{
+  "logs":[
+    {
+      "logType":1,
+      "desc":"syslog",
+      "apps":[
+        {
+          "appId":"syslog",
+          "logRootPath":"/var/log",
+          "baseName":"syslog|kern|dmesg|bootstrap"
+        }
+      ]
+
+    },
+    {
+      "logType":2,
+      "desc":"otherLog",
+      "apps":[
+        {
+          "appId":"dcl",
+          "logRootPath":"/tmp",
+          "baseName":"dcl"
+        },
+        {
+          "appId":"em",
+          "logRootPath":"/tmp",
+          "baseName":"senselotu_em"
+        }
+      ]
+
+    },
+    {
+      "logType":3,
+      "desc":"EDR",
+      "apps":[
+        {
+          "appId":"",
+          "logRootPath":"",
+          "baseName":""
+        }
+      ]
+
+    },
+    {
+      "logType":4,
+      "desc":"DSSAD",
+      "apps":[
+        {
+          "appId":"",
+          "logRootPath":"",
+          "baseName":""
+        }
+      ]
+
+    }
+
+  ],
+  "periodic":{
+    "enable":false,
+    "logTypeList":[1,2,3,4],
+    "period":100
+  },
+  "savePaths":{
+    "sysLogPath":"/opt/data/dcl/log/syslog",
+    "otherLogPath":"/opt/data/dcl/log/otherlog",
+    "edrLogPath":"/opt/data/dcl/log/edrlog",
+    "dssadLogPath":"/opt/data/dcl/log/dssadlog"
+  }
+}

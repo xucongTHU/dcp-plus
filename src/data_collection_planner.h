@@ -5,8 +5,21 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "/navigation_planner/nav_planner_node.h"
-#include "/navigation_planner/utils/planner_utils.h"
+#include "navigation_planner/nav_planner_node.h"
+#include "navigation_planner/utils/planner_utils.h"
+
+// Include data collection components
+#include "trigger_engine/strategy_parser.h"
+#include "trigger_engine/trigger_manager.h"
+#include "recorder/data_storage.h"
+#include "uploader/data_uploader.h"
+
+
+using namespace dcl;
+using namespace dcl::common;
+using namespace dcl::uploader;
+using namespace dcl::recorder;
+using namespace dcl::trigger;
 
 // Forward declarations for data collection components
 struct DataPoint {
@@ -25,15 +38,22 @@ struct MissionArea {
     MissionArea(const Point& c = Point(), double r = 0.0) : center(c), radius(r) {}
 };
 
+namespace dcl {
+
 class DataCollectionPlanner {
 private:
-    std::unique_ptr<NavPlannerNode> nav_planner_;
+    std::unique_ptr<planner::NavPlannerNode> nav_planner_;
+    std::unique_ptr<DataStorage> data_storage_;
+    std::unique_ptr<DataUploader> data_uploader_;
+    std::unique_ptr<TriggerManager> trigger_manager_;
+    std::unique_ptr<StrategyParser> strategy_parser_;
+    
     std::vector<DataPoint> collected_data_;
     MissionArea mission_area_;
     
 public:
     DataCollectionPlanner(const std::string& config_file = 
-                         "/workspaces/ad_data_closed_loop/infra/navigation_planner/config/planner_weights.yaml");
+                         "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
     
     ~DataCollectionPlanner() = default;
     
@@ -55,7 +75,7 @@ public:
     std::vector<Point> planDataCollectionMission();
     
     /**
-     * @brief Execute data collection along a path
+     * @brief Execute data collection along a path using real data collection modules
      * @param path Path to follow for data collection
      */
     void executeDataCollection(const std::vector<Point>& path);
@@ -80,6 +100,11 @@ public:
      * @brief Get collected data
      */
     const std::vector<DataPoint>& getCollectedData() const { return collected_data_; }
+    
+    /**
+     * @brief Upload collected data to cloud
+     */
+    void uploadCollectedData();
 };
 
 // Data collection analyzer for processing collected data
@@ -143,4 +168,6 @@ public:
                                    const std::string& config_path);
 };
 
-#endif // DATA_COLLECTION_PLANNEER_H
+} // namespace dcl
+
+#endif // DATA_COLLECTION_PLANNER_H

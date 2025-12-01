@@ -19,6 +19,8 @@ struct Cell {
         : x(x), y(y), cost(cost), data_density(density) {}
 };
 
+namespace dcl::planner {
+
 class CostMap {
 private:
     std::vector<std::vector<Cell>> cells;
@@ -55,4 +57,5 @@ public:
     double getRedundancyPenalty() const { return redundancy_penalty; }
 };
 
+} // namespace dcl::planner
 #endif // COSTMAP_H

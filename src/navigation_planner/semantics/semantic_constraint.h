@@ -18,6 +18,8 @@ struct ConstraintViolation {
         : object(obj), violation_point(point), description(desc), severity(sev) {}
 };
 
+namespace dcl::planner {
+
 class SemanticConstraintChecker {
 private:
     const SemanticMap& semantic_map;
@@ -59,5 +61,7 @@ public:
      */
     double getConstraintPenalty(const Point& point) const;
 };
+
+} // namespace dcl::planner
 
 #endif // SEMANTIC_CONSTRAINT_H

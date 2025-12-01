@@ -1,0 +1,47 @@
+debug: false
+
+AIObjectTypeTrigger:
+  priority: 21
+  subTopic: "/front_perception/detect2d_a"
+  subRoadConditionTopic: "/front_perception/road_condition"
+  containAny: true
+  pubRate: 20
+  frameSyncThresh: 50   # ms, 帧同步最大时间差 
+  
+AISkipFrameTrigger:
+  priority: 21
+  subTopic: "/front_perception/vision"
+  pubRate: 20
+  
+  lostAgeThresh: 10   # 跟踪目标超过帧数未检测到，删除改轨迹信息
+  visionTimeDuration: 100  # ms
+  triggerEnable: 3
+
+AILidarVisionCompTrigger:
+  priority: 21
+  subVisionTopic: "/front_perception/vision"
+  subLidarTopic: "/front_perception/lidar"
+  pubRate: 20
+  frameSyncThresh: 50   # ms, 帧同步最大时间差
+  
+ShadowABModelTrigger:
+  priority: 31
+  subModelATopic: "/front_perception/detect2d_a"
+  subModelBTopic: "/front_perception/detect2d_b"
+  pubRate: 20
+  frameSyncThresh: 50   # ms, 帧同步最大时间差
+  bboxIouThresh: 0.8
+
+ShadowManCtlCompTrigger:
+  priority: 31
+  subCtlTopic: "Control"
+  subCanTopic: "/smartcar/canbus/chassis"
+  pubRate: 20
+
+  compTimeDuration: 100  # ms， 比较的时间范围
+  ctlRate: 50
+  canRate: 100
+  bufferExtendRatio: 1.2 
+
+  # 分别时acc， brake， throtthle，方向盘转角，方向盘角速度
+  ctlMinMax: [-10.0, 10.0, 0.0, 200.0, 0.0, 1.0, -600.0, 600.0, -600.0, 600.0]

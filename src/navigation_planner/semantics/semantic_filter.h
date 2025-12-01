@@ -5,6 +5,8 @@
 #include "semantic_map.h"
 #include <vector>
 
+
+namespace dcl::planner {
 class SemanticFilter {
 private:
     double confidence_threshold;
@@ -53,4 +55,5 @@ public:
     void removeFilterType(SemanticType type);
 };
 
+} // namespace dcl::planner
 #endif // SEMANTIC_FILTER_H

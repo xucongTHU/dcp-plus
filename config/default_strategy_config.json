@@ -1,0 +1,584 @@
+{
+  "configId": "123456789",
+  "strategyId": 6,
+  "strategies": [
+    {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "EmergencyEvasionTrigger",
+        "triggerId": "170002",
+        "priority": 17,
+        "enabled": false,
+        "triggerCondition": "(steering_rate>140.0)and(yaw_rate>15.0)and(brake_pressure>80)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/EmergencyEvasionTrigger",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+     {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "EmergencyAccelerationTrigger",
+        "triggerId": "130001",
+        "priority": 13,
+        "enabled": false,
+        "triggerCondition": "(lon_acceleration>3.0)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/EmergencyAcceleration",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "EmergencyBrakingTrigger",
+        "triggerId": "140012",
+        "priority": 14,
+        "enabled": false,
+        "triggerCondition": "(lon_deceleration<-8.0)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/EmergencyDeceleration",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+     {
+      "businessType": "CNOP",
+      "trigger":
+      {
+        "triggerName": "CNOPQuitTrigger",
+        "triggerId": "140003",
+        "priority": 14,
+        "enabled": false,
+        "triggerCondition": "(cnopquit=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/nopquit",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+     {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "CurveDynamicDetectionTrigger",
+        "triggerId": "170001",
+        "priority": 17,
+        "enabled": false,
+        "triggerCondition": "(lat_acceleration > 0.3) and (yaw_rate > 10.0)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/curve",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "ACC",
+      "trigger":
+      {
+        "triggerName": "ACCQuitTrigger",
+        "triggerId": "170003",
+        "priority": 17,
+        "enabled": false,
+        "triggerCondition": "(accquit_=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/accquit",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "AEB",
+      "trigger":
+      {
+        "triggerName": "AEBActiveTrigger",
+        "triggerId": "120003",
+        "priority": 12,
+        "enabled": true,
+        "triggerCondition": "(aeb_active=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/canbus/vehicle_report",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "AVP",
+      "trigger":
+      {
+        "triggerName": "AVPTakeoverTrigger",
+        "triggerId": "170003",
+        "priority": 17,
+        "enabled": false,
+        "triggerCondition": "(avptakeover=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_te st/parking",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "CNOP",
+      "trigger":
+      {
+        "triggerName": "CNOPTakeoverTrigger",
+        "triggerId": "140002",
+        "priority": 14,
+        "enabled": false,
+        "triggerCondition": "(cnoptakeover=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/nopquit",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "DriveWheelSlipTrigger",
+        "triggerId": "130003",
+        "priority": 13,
+        "enabled": false,
+        "triggerCondition": "(is_slip_=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/snake",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "FCTB",
+      "trigger":
+      {
+        "triggerName": "FCTBActiveTrigger",
+        "triggerId": "120005",
+        "priority": 12,
+        "enabled": false,
+        "triggerCondition": "(fctb_active=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/statemachine",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "HPA",
+      "trigger":
+      {
+        "triggerName": "HPATakeoverTrigger",
+        "triggerId": "150003",
+        "priority": 15,
+        "enabled": false,
+        "triggerCondition": "(hpatakeover=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_te st/parking",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "FCW",
+      "trigger":
+      {
+        "triggerName": "FCWActiveTrigger",
+        "triggerId": "120004",
+        "priority": 12,
+        "enabled": false,
+        "triggerCondition": "(fcwactive=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/statemachine",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+     {
+      "businessType": "MEB",
+      "trigger":
+      {
+        "triggerName": "MEBActiveTrigger",
+        "triggerId": "120010",
+        "priority": 12,
+        "enabled": false,
+        "triggerCondition": "(meb_active_=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/meb",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "RCTB",
+      "trigger":
+      {
+        "triggerName": "RCTBActiveTrigger",
+        "triggerId": "120006",
+        "priority": 12,
+        "enabled": false,
+        "triggerCondition": "(fcwactive=true)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/statemachine",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "SlopeDetectionTrigger",
+        "triggerId": "130002",
+        "priority": 13,
+        "enabled": false,
+        "triggerCondition": "(throttle>50)and(pitch_angle>5)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/snake",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    },
+    {
+      "businessType": "EDR",
+      "trigger":
+      {
+        "triggerName": "SnakeDrivingDetectionTrigger",
+        "triggerId": "130002",
+        "priority": 13,
+        "enabled": false,
+        "triggerCondition": "(steering_angle>20)"
+      },
+      "mode":
+      {
+        "triggerMode": 0,
+        "cacheMode":
+        {
+          "forwardCaptureDurationSec": 15,
+          "backwardCaptureDurationSec": 5,
+          "cooldownDurationSec": 120
+        }
+      },
+      "enableMasking": false,
+      "channels":
+      {
+        "dds":
+        [
+          {
+            "topic": "/caic_pub_test/snake",
+            "type": "other",
+            "originalFrameRate": 100,
+            "capturedFrameRate": 100
+          }
+        ]
+      }
+    }
+  ]
+}

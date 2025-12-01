@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+namespace dcl::planner {
 void SemanticMap::addObject(const SemanticObject& obj) {
     objects.push_back(obj);
 }
@@ -116,3 +117,5 @@ void SemanticMap::updateMap(const std::vector<SemanticObject>& new_objects) {
 void SemanticMap::clear() {
     objects.clear();
 }
+
+} // namespace dcl::planner

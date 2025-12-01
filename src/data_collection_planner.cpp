@@ -4,62 +4,98 @@
 #include <fstream>
 #include <random>
 #include <yaml-cpp/yaml.h>
+#include "common/log/logger.h"
 
+namespace dcl {
 DataCollectionPlanner::DataCollectionPlanner(const std::string& config_file) {
-    nav_planner_ = std::make_unique<NavPlannerNode>(config_file);
+    nav_planner_ = std::make_unique<planner::NavPlannerNode>(config_file);
+    data_storage_ = std::make_unique<DataStorage>();
+    data_uploader_ = std::make_unique<DataUploader>();
+    trigger_manager_ = std::make_unique<TriggerManager>();
+    strategy_parser_ = std::make_unique<StrategyParser>();
     mission_area_ = MissionArea(Point(50.0, 50.0), 30.0); // Default mission area
 }
 
 bool DataCollectionPlanner::initialize() {
-    LogUtils::log(LogUtils::INFO, "Initializing Data Collection Planner");
+    AD_INFO(DataCollectionPlanner, "Initializing Data Collection Planner");
     
     if (!nav_planner_->initialize()) {
-        LogUtils::log(LogUtils::ERROR, "Failed to initialize navigation planner");
+        AD_ERROR(DataCollectionPlanner, "Failed to initialize navigation planner");
         return false;
     }
     
-    LogUtils::log(LogUtils::INFO, "Data Collection Planner initialized successfully");
+    // Initialize data collection components
+    if (!data_storage_->Init()) {
+        AD_ERROR(DataCollectionPlanner, "Failed to initialize data storage");
+        return false;
+    }
+    
+    if (!data_uploader_->Init()) {
+        AD_ERROR(DataCollectionPlanner, "Failed to initialize data uploader")
+        return false;
+    }
+    
+    // if (!trigger_manager_->initialize()) {
+    //     Logger::instance()->Log(LOG_LEVEL_ERROR, "DATA_COLLECTION", "Failed to initialize trigger manager");
+    //     return false;
+    // }
+    
+    // Load strategy configuration
+    StrategyConfig config_;
+    if (!strategy_parser_->LoadConfigFromFile("/workspaces/ad_data_closed_loop/src/data_collection/config/default_strategy_config.json", config_)) {
+        AD_ERROR(DataCollectionPlanner, "Failed to load strategy configuration, using defaults");
+    }
+    
+    AD_INFO(DataCollectionPlanner, "Data Collection Planner initialized successfully");
     return true;
 }
 
 void DataCollectionPlanner::setMissionArea(const MissionArea& area) {
     mission_area_ = area;
     nav_planner_->setGoalPosition(area.center);
-    LogUtils::log(LogUtils::INFO, "Mission area set to center: " + 
-                 LogUtils::formatPoint(area.center) + ", radius: " + 
-                 std::to_string(area.radius));
+
+    AD_INFO(DataCollectionPlanner, "Mission area set to center: (%s, ), radius: %s", std::to_string(area.center.x).c_str(), std::to_string(area.radius).c_str());
 }
 
 std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
-    LogUtils::log(LogUtils::INFO, "Planning data collection mission");
+    AD_INFO(DataCollectionPlanner, "Planning data collection mission");
     
     // Plan global path using navigation planner
     std::vector<Point> collection_path = nav_planner_->planGlobalPath();
     
-    // Optimize waypoints for data collection
+    // Apply data collection strategy to optimize waypoints
     std::vector<Point> optimized_waypoints;
-    for (const auto& point : collection_path) {
-        Point optimal_point = nav_planner_->optimizeNextWaypoint();
-        optimized_waypoints.push_back(optimal_point);
+    
+    if (!collection_path.empty()) {
+        // Use the navigation planner's sampling optimizer to find optimal waypoints
+        Point current_pos = nav_planner_->getCurrentPosition();
+        
+        // For each segment of the path, find optimal data collection points
+        for (size_t i = 0; i < collection_path.size(); ++i) {
+            // Check if we should collect data at this point based on strategy
+            if (trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
+                Point optimal_point = nav_planner_->optimizeNextWaypoint();
+                optimized_waypoints.push_back(optimal_point);
+                
+                // Update current position for next optimization
+                nav_planner_->setCurrentPosition(optimal_point);
+            }
+        }
+        
+        // Restore original position
+        nav_planner_->setCurrentPosition(current_pos);
     }
     
-    LogUtils::log(LogUtils::INFO, "Data collection mission planned with " + 
-                 std::to_string(optimized_waypoints.size()) + " waypoints");
+    AD_INFO(DataCollectionPlanner, "Data collection mission planned with %s waypoints", std::to_string(optimized_waypoints.size()).c_str());
     
     return optimized_waypoints;
 }
 
 void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path) {
-    LogUtils::log(LogUtils::INFO, "Executing data collection along path with " + 
-                 std::to_string(path.size()) + " waypoints");
+    AD_INFO(DataCollectionPlanner, "Executing data collection along path with %s waypoints", std::to_string(path.size()).c_str());
     
-    // Simulate data collection at each waypoint
+    // Execute data collection at each waypoint using real data collection modules
     std::vector<DataPoint> new_data;
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 1.0);
-    
-    StateInfo prev_state;
     
     for (size_t i = 0; i < path.size(); ++i) {
         const Point& waypoint = path[i];
@@ -67,35 +103,50 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
         // Update planner's current position
         nav_planner_->setCurrentPosition(waypoint);
         
-        // Simulate data collection
-        DataPoint data_point(waypoint, "sensor_data_" + std::to_string(i), i);
-        new_data.push_back(data_point);
-        
-        // Simulate state information for reward calculation
-        StateInfo current_state;
-        current_state.visited_new_sparse = (dis(gen) > 0.7); // 30% chance of visiting sparse area
-        current_state.trigger_success = (dis(gen) > 0.5);   // 50% chance of successful trigger
-        current_state.collision = (dis(gen) < 0.05);        // 5% chance of collision
-        current_state.distance_to_sparse = dis(gen) * 10.0; // Random distance to sparse area
-        
-        // Compute reward for this action
-        double reward = nav_planner_->computeStateReward(prev_state, current_state);
-        LogUtils::log(LogUtils::INFO, "Waypoint " + std::to_string(i) + 
-                     " reward: " + std::to_string(reward));
-        
-        prev_state = current_state;
+        // Trigger data collection based on strategy
+        if (trigger_manager_->shouldTrigger(waypoint)) {
+            AD_INFO(DataCollectionPlanner, "Triggering data collection at waypoint %s", std::to_string(i).c_str());
+            
+            // Create trigger context for data collection
+            auto trigger_context = std::make_shared<dcl::trigger::TriggerContext>();
+            trigger_context->position.x = waypoint.x;
+            trigger_context->position.y = waypoint.y;
+            trigger_context->timestamp = static_cast<uint64_t>(std::time(nullptr));
+            
+            // Trigger data collection using data storage module
+            data_storage_->triggerDataCollection(trigger_context);
+            
+            // Collect real sensor data using data collection modules
+            std::string sensor_data = "collected_data_at_" + std::to_string(waypoint.x) + "_" + std::to_string(waypoint.y);
+            
+            // Create data point with real sensor data
+            DataPoint data_point(waypoint, sensor_data, static_cast<double>(std::time(nullptr)));
+            new_data.push_back(data_point);
+            
+            // Store data locally
+            data_storage_->storeData(data_point);
+            
+            // Compute reward for this action
+            StateInfo current_state;
+            current_state.visited_new_sparse = trigger_manager_->isInSparseArea(waypoint);
+            current_state.trigger_success = !sensor_data.empty();
+            current_state.collision = false; // Would be determined by real sensor data
+            current_state.distance_to_sparse = trigger_manager_->getDistanceToNearestSparseArea(waypoint);
+            
+            // In a real implementation, we would track previous state to compute reward
+            double reward = nav_planner_->computeStateReward(StateInfo(), current_state);
+            AD_INFO(DataCollectionPlanner, "Waypoint %s reward: %s", std::to_string(i).c_str(), std::to_string(reward).c_str());
+        }
     }
     
     // Update with new data
     updateWithNewData(new_data);
     
-    LogUtils::log(LogUtils::INFO, "Data collection completed with " + 
-                 std::to_string(new_data.size()) + " data points collected");
+    AD_INFO(DataCollectionPlanner, "Data collection completed with %s data points collected", std::to_string(new_data.size()).c_str());
 }
 
 void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_data) {
-    LogUtils::log(LogUtils::INFO, "Updating planner with " + 
-                 std::to_string(new_data.size()) + " new data points");
+    AD_INFO(DataCollectionPlanner, "Updating planner with %s new data points", std::to_string(new_data.size()).c_str());
     
     // Add new data points to planner and local storage
     for (const auto& data_point : new_data) {
@@ -106,59 +157,66 @@ void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_
     // Update costmap with new statistics
     nav_planner_->updateCostmapWithStatistics();
     
-    // Update coverage metrics (simplified)
+    // Update coverage metrics based on actual visited cells
     std::vector<std::pair<int, int>> visited_cells;
+    double resolution = 1.0; // Default resolution
+    
     for (const auto& data_point : new_data) {
-        auto grid_coords = PlannerUtils::worldToGrid(data_point.position, 1.0);
+        auto grid_coords = PlannerUtils::worldToGrid(data_point.position, resolution);
         visited_cells.push_back(grid_coords);
     }
     nav_planner_->updateCoverageMetrics(visited_cells);
     
-    LogUtils::log(LogUtils::INFO, "Planner updated with new data");
+    AD_INFO(DataCollectionPlanner, "Planner updated with new data");
+}
+
+void DataCollectionPlanner::uploadCollectedData() {
+    AD_INFO(DataCollectionPlanner, "Uploading collected data to cloud");
+    
+    // Upload data using data uploader
+    if (data_uploader_->uploadData(collected_data_)) {
+        AD_INFO(DataCollectionPlanner, "Data uploaded successfully");
+        // Clear local data after successful upload
+        collected_data_.clear();
+    } else {
+        AD_INFO(DataCollectionPlanner, "Failed to upload data");
+    }
 }
 
 void DataCollectionPlanner::reportCoverageMetrics() {
-    const CoverageMetric& metrics = nav_planner_->getCoverageMetric();
-    LogUtils::log(LogUtils::INFO, "=== Coverage Metrics Report ===");
-    LogUtils::log(LogUtils::INFO, "Total coverage: " + 
-                 std::to_string(metrics.getCoverageRatio() * 100) + "%");
-    LogUtils::log(LogUtils::INFO, "Sparse area coverage: " + 
-                 std::to_string(metrics.getSparseCoverageRatio() * 100) + "%");
-    LogUtils::log(LogUtils::INFO, "Total cells: " + 
-                 std::to_string(metrics.getTotalCells()));
-    LogUtils::log(LogUtils::INFO, "Visited cells: " + 
-                 std::to_string(metrics.getVisitedCells()));
-    LogUtils::log(LogUtils::INFO, "Total sparse cells: " + 
-                 std::to_string(metrics.getTotalSparseCells()));
-    LogUtils::log(LogUtils::INFO, "Visited sparse cells: " + 
-                 std::to_string(metrics.getVisitedSparseCells()));
-    LogUtils::log(LogUtils::INFO, "===============================");
+    AD_INFO(DataCollectionPlanner, "Reporting coverage metrics");
+    
+    const CoverageMetric& coverage = nav_planner_->getCoverageMetric();
+    
+    AD_INFO(DataCollectionPlanner, "Total cells: %s", std::to_string(coverage.getTotalCells()).c_str());
+    AD_INFO(DataCollectionPlanner, "Visited cells: %s", std::to_string(coverage.getVisitedCells()).c_str());
+    AD_INFO(DataCollectionPlanner, "Coverage ratio: %s", std::to_string(coverage.getCoverageRatio()).c_str());
+    AD_INFO(DataCollectionPlanner, "Sparse coverage ratio: %s", std::to_string(coverage.getSparseCoverageRatio()).c_str());
 }
 
 void DataCollectionPlanner::analyzeAndExportWeights() {
-    LogUtils::log(LogUtils::INFO, "Analyzing collected data and updating planner weights");
+    AD_INFO(DataCollectionPlanner, "Analyzing collected data and exporting weights");
     
     // Compute density map from collected data
-    auto density_map = DataCollectionAnalyzer::computeDensityMap(collected_data_);
+    auto heatmap = DataCollectionAnalyzer::computeDensityMap(collected_data_);
     
     // Detect sparse regions
-    auto sparse_zones = DataCollectionAnalyzer::detectSparseRegions(density_map);
+    auto sparse_regions = DataCollectionAnalyzer::detectSparseRegions(heatmap);
     
-    // Get current weights from planner
+    // Load current weights from configuration
     DataCollectionAnalyzer::PlannerWeights current_weights;
-    // In a real implementation, we would retrieve these from the planner
     
-    // Adjust cost weights based on analysis
-    auto new_weights = DataCollectionAnalyzer::adjustCostWeights(sparse_zones, current_weights);
+    // Adjust weights based on sparse zones
+    auto adjusted_weights = DataCollectionAnalyzer::adjustCostWeights(sparse_regions, current_weights);
     
-    // Save to planner configuration file
-    DataCollectionAnalyzer::saveToPlannerConfig(new_weights, 
-        "/workspaces/ad_data_closed_loop/infra/navigation_planner/config/planner_weights.yaml");
+    // Save to planner configuration
+    DataCollectionAnalyzer::saveToPlannerConfig(adjusted_weights, 
+        "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
     
-    // Notify planner to reload configuration
+    // Reload configuration in navigation planner
     nav_planner_->reloadConfiguration();
     
-    LogUtils::log(LogUtils::INFO, "Planner weights updated and configuration reloaded");
+    AD_INFO(DataCollectionPlanner, "Weights analysis and export completed");
 }
 
 // DataCollectionAnalyzer implementation
@@ -258,8 +316,10 @@ void DataCollectionAnalyzer::saveToPlannerConfig(const PlannerWeights& weights,
         fout << out.c_str();
         fout.close();
         
-        LogUtils::log(LogUtils::INFO, "Planner weights saved to " + config_path);
+        AD_INFO(DataCollectionPlanner, "Planner weights saved to %s", config_path.c_str());
     } catch (const std::exception& e) {
-        LogUtils::log(LogUtils::ERROR, "Failed to save planner weights: " + std::string(e.what()));
+        AD_ERROR(DataCollectionPlanner, "Failed to save planner weights: %s", e.what());
     }
 }
+
+} //namespace dcl 

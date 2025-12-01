@@ -5,6 +5,8 @@
 #include <vector>
 #include "../costmap/costmap.h"
 
+namespace dcl::planner {
+
 class CoverageMetric {
 private:
     int total_cells;
@@ -62,4 +64,5 @@ public:
     void reset();
 };
 
+} // namespace dcl::planner
 #endif // COVERAGE_METRIC_H

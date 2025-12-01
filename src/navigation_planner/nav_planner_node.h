@@ -18,6 +18,8 @@
 #include "semantics/semantic_filter.h"
 #include "utils/planner_utils.h"
 
+namespace dcl::planner {
+
 class NavPlannerNode {
 private:
     // Core components
@@ -151,4 +153,5 @@ public:
     const std::vector<Point>& getLocalPath() const { return local_path_; }
 };
 
+} // namespace dcl::planner
 #endif // NAV_PLANNER_NODE_H

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
+namespace dcl::planner {
+
 NavPlannerNode::NavPlannerNode(const std::string& config_file)
     : config_file_path_(config_file)
     , current_position_(0.0, 0.0)
@@ -201,3 +203,5 @@ void NavPlannerNode::addDataPoint(const Point& point) {
     collected_data_points_.push_back(point);
     LogUtils::log(LogUtils::INFO, "Added data point: " + LogUtils::formatPoint(point));
 }
+
+} // namespace dcl::planner

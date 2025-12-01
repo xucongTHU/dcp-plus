@@ -16,7 +16,8 @@ add_subdirectory(navigation_planner)
 
 add_executable(ad_dcl 
                ./main.cpp
-               ./data_collection_planner.cpp)
+               ./data_collection_planner.cpp
+               ./state_machine.cpp)
 
 #############
 ##  CPack  ##

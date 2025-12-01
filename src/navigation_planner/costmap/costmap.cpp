@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 
+namespace dcl::planner {
 CostMap::CostMap(int width, int height, double resolution) 
     : width(width), height(height), resolution(resolution),
       sparse_threshold(0.2), exploration_bonus(0.5), redundancy_penalty(0.4) {
@@ -95,3 +96,5 @@ double CostMap::getCellCost(int x, int y) const {
 bool CostMap::isValidCell(int x, int y) const {
     return (x >= 0 && x < width && y >= 0 && y < height);
 }
+
+} // namespace dcl::planner
