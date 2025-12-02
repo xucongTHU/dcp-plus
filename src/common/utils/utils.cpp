@@ -237,25 +237,25 @@ bool CopyFileToFolderWithStructure(const std::string& source_file, const std::st
 //=========================================================
 // 时间处理
 //=========================================================
-uint64_t GetCurrentTimestampNs()
-{
-    auto now = std::chrono::system_clock::now();
-    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
-    return ns.count();
-}
-
-uint64_t GetCurrentTimestampUs()
-{
-    auto now = std::chrono::system_clock::now();
-    auto us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
-    return us.count();
-}
-
 uint64_t GetCurrentTimestampMs()
 {
     auto now = std::chrono::system_clock::now();
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     return milliseconds.count();
+}
+
+uint64_t GetCurrentTimestamp()
+{
+    // auto now = std::chrono::system_clock::now();
+    // auto us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    return GetCurrentTimestampMs() * 1000;
+}
+
+uint64_t GetCurrentTimestampNs()
+{
+    auto now = std::chrono::system_clock::now();
+    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
+    return ns.count();
 }
 
 long long getTime() {

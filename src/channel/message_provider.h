@@ -13,7 +13,7 @@ namespace dcl {
 namespace channel {
 
 
-class MessageProvider : public Observer{
+class MessageProvider : public Observer {
 public:
     explicit MessageProvider(const std::shared_ptr<senseAD::rscl::comm::Node>& node ):node_(node)
     {}

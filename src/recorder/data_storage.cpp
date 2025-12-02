@@ -61,7 +61,7 @@ bool DataStorage::Init(const std::shared_ptr<senseAD::rscl::comm::Node>& node,
 
     rscl_recorder_ = std::make_shared<RsclRecorder>(node_, strategy_);
     rscl_recorder_->Init();
-    last_trigger_finish_time = common::GetCurrentTimestampUs();
+    last_trigger_finish_time = common::GetCurrentTimestamp();
 
     collectionStatus_.store(CollectionStatus::Collecting, std::memory_order_relaxed);
 
@@ -107,7 +107,7 @@ bool DataStorage::handleTrigger(const dcl::trigger::TriggerContext& trigger){
 
     // std::string vin_id = data_reporter_->vin;
     // data_reporter_->getCollectBagDistance(bag_distance);
-    uint64_t now = common::GetCurrentTimestampUs();
+    uint64_t now = common::GetCurrentTimestamp();
     if ((now - trigger.triggerTimestampNs) >= 0.01*1e9) return false;
     std::string filepath = dataPath + "ActivelyReport" +
             common::MakeRecorderFileName(trigger.triggerId, trigger.businessType, trigger.triggerTimestampNs/1e9);
@@ -144,7 +144,7 @@ bool DataStorage::handleTrigger(const dcl::trigger::TriggerContext& trigger){
     }
 
     int cooldownDurationSec = strategy_->mode.cacheMode.cooldownDurationSec;
-    auto time_since_last_finish = common::GetCurrentTimestampUs() - last_trigger_finish_time;
+    auto time_since_last_finish = common::GetCurrentTimestamp() - last_trigger_finish_time;
     
     uint64_t required_cooldown_us = cooldownDurationSec * 1e6;
     uint64_t remaining_cooldown = (time_since_last_finish < required_cooldown_us)
@@ -156,7 +156,7 @@ bool DataStorage::handleTrigger(const dcl::trigger::TriggerContext& trigger){
         std::this_thread::sleep_for(std::chrono::microseconds(remaining_cooldown));
     }
 
-    last_trigger_finish_time = common::GetCurrentTimestampUs();
+    last_trigger_finish_time = common::GetCurrentTimestamp();
     AD_INFO(DataStorage, "Trigger finished at: %lld", last_trigger_finish_time);                            
 
     return true;

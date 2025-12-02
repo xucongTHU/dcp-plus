@@ -128,7 +128,7 @@ void C::handleNavigating(StateEvent event) {
                 // 这里应该使用真实的触发管理器来判断是否需要采集数据
                 // 为简化，我们假设每5个点采集一次数据
                 if (current_waypoint_index_ % 5 == 0) {
-                    transitionToState(SystemState::DATA_COLLECTION, StateEvent::TRIGGER_CONDITION);
+                    transitionToState(SystemState::DATA_COLLECTION, StateEvent::TRIGGERED);
                 } else {
                     // 移动到下一个路径点
                     current_waypoint_index_++;
@@ -281,7 +281,7 @@ void StateMachine::logStateTransition(SystemState from, SystemState to, StateEve
         case StateEvent::PLAN_COMPLETE: event_str = "PLAN_COMPLETE"; break;
         case StateEvent::NAVIGATION_START: event_str = "NAVIGATION_START"; break;
         case StateEvent::WAYPOINT_REACHED: event_str = "WAYPOINT_REACHED"; break;
-        case StateEvent::TRIGGER_CONDITION: event_str = "TRIGGER_CONDITION"; break;
+        case StateEvent::TRIGGERED: event_str = "TRIGGERED"; break;
         case StateEvent::DATA_COLLECTED: event_str = "DATA_COLLECTED"; break;
         case StateEvent::UPLOAD_REQUEST: event_str = "UPLOAD_REQUEST"; break;
         case StateEvent::UPLOAD_COMPLETE: event_str = "UPLOAD_COMPLETE"; break;

@@ -14,9 +14,9 @@ enum class TriggerState : int32_t {
 struct TriggerContext {
     std::string businessType;
     std::string triggerId;
-    int64_t triggerTimestampNs;
+    int64_t triggerTimestamp;
     std::string triggerName;
-    TriggerState triggerState;
+    // TriggerState triggerState;
 };
 
 }

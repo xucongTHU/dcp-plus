@@ -10,51 +10,45 @@ namespace dcl {
 namespace trigger {
 
 RuleTrigger::RuleTrigger() 
-    : trigger_name_("RuleTrigger"),
-      current_state_(TriggerContext::TriggerState::Untriggered) {
+    : current_state_(SystemState::IDLE) {
 }
 
 bool RuleTrigger::proc() {
-    if (current_state_ == TriggerContext::TriggerState::Triggered) {
-        LOG_DEBUG("[RuleTrigger]: Already triggered, skipping.");
+    if (current_state_ == SystemState::TRIGGERED) {
+        AD_WARN(RuleTrigger, "Already triggered, skipping.");
         return true;
     }
 
     bool condition_met = checkCondition();
     if (!condition_met) {
         // 条件不满足，重置状态为未触发
-        if (current_state_ != TriggerContext::TriggerState::Untriggered) {
-            current_state_ = TriggerContext::TriggerState::Untriggered;
-            LOG_INFO("[RuleTrigger]: Condition not met, reset state to Untriggered.");
+        if (current_state_ != SystemState::UNTRIGGERED) {
+            current_state_ = SystemState::UNTRIGGERED;
+            AD_INFO(RuleTrigger, "Condition not met, reset state to Untriggered.");
         }
         return false;
     }
 
     // 条件满足，执行触发逻辑
     TriggerContext context;
-    context.timeStamp = common::Timer::now();
-    context.triggerId = trigger_id_;
-    context.triggerName = trigger_name_;
-    context.businessType = business_type_;
-    context.triggerStatus = TriggerContext::TriggerState::Triggered;
-    NotifyTriggerContext(context);
+    context.triggerTimestamp = common::GetCurrentTimestamp();
+    context.triggerId = trigger_obj_->triggerId;
+    context.triggerName = trigger_obj_->triggerName;
+    // context.businessType = trigger_obj_->businessType;
+    // context.triggerState = SystemState::TRIGGERED;
 
     // 更新内部状态
-    current_state_ = context.triggerStatus;
-    LOG_INFO("[RuleTrigger]: Trigger fired successfully for condition: %s", trigger_condition_.c_str());
-
+    current_state_ = SystemState::TRIGGERED;
     return true;
 }
 
 bool RuleTrigger::checkCondition() {
     // 解析触发条件表达式
-    if (!trigger_checker_.parse(trigger_condition_)) {
-        LOG_ERROR("[RuleTrigger]: Failed to parse condition: %s", 
+    if (!trigger_checker_.parse(trigger_obj_->triggerCondition)) {
+        AD_ERROR(RuleTrigger, "Failed to parse condition: %s", 
                   trigger_checker_.lastError().c_str());
         return false;
     }
-
-    // 清空当前变量值
     current_variables_.clear();
     
     // 获取所有需要的变量值
@@ -62,7 +56,7 @@ bool RuleTrigger::checkCondition() {
         try {
             current_variables_[var_name] = getter();
         } catch (const std::exception& e) {
-            LOG_ERROR("[RuleTrigger]: Failed to get variable '%s': %s", 
+            AD_ERROR(RuleTrigger, "Failed to get variable '%s': %s", 
                       var_name.c_str(), e.what());
             return false;
         }
@@ -75,7 +69,7 @@ bool RuleTrigger::checkCondition() {
 }
 
 void RuleTrigger::registerVariableGetter(const std::string& var_name, 
-                                                   std::function<TriggerConditionChecker::Value()> getter) {
+                                         std::function<TriggerConditionChecker::Value()> getter) {
     variable_getters_[var_name] = std::move(getter);
 }
 

@@ -11,6 +11,7 @@
 #include <string>
 // #include "trigger/base/TriggerBase.h"
 #include "../strategy_config.h"
+#include "../trigger_base.h"
 
 namespace dcl {
 namespace trigger {
@@ -18,10 +19,11 @@ namespace trigger {
 enum class TaskState { WAITING, RUNNING, PAUSED, FINISHED };
 
 struct TriggerTask {
-    std::string trigger_name;
+    std::string triggerName;
+    std::string triggerId;
     int8_t priority;
     std::shared_ptr<TriggerBase> trigger;
-    strategy::StrategyConfig strategyConfig;
+    StrategyConfig strategyConfig;
     bool cancelled = false;
     TaskState state = TaskState::WAITING;
     int retry_count = 0;

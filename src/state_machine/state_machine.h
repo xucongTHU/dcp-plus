@@ -13,7 +13,8 @@ enum class SystemState {
     IDLE,                   // 空闲状态
     PLANNING,               // 路径规划中
     NAVIGATING,             // 导航中
-    TRIGGER_DETECTED,       // 触发条件检测中
+    TRIGGERED,              // 触发条件已满足
+    UNTRIGGERED,            // 触发条件未满足
     DATA_COLLECTION,        // 数据采集中
     UPLOADING,              // 数据上传中
     ERROR,                  // 错误状态
@@ -27,7 +28,8 @@ enum class StateEvent {
     PLAN_COMPLETE,          // 规划完成
     NAVIGATION_START,       // 开始导航
     WAYPOINT_REACHED,       // 到达路径点
-    TRIGGER_CONDITION,      // 触发条件满足
+    TRIGGERED,              // 触发条件满足
+    UNTRIGGERED,            // 触发条件不满足
     DATA_COLLECTED,         // 数据采集完成
     UPLOAD_REQUEST,         // 上传请求
     UPLOAD_COMPLETE,        // 上传完成

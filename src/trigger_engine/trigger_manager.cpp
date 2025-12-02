@@ -6,44 +6,101 @@
 #include "trigger_manager.h"
 #include "common/log/logger.h"
 #include "trigger_engine/common/trigger_checker.h"
+#include "channel/message_provider.h"
 
 namespace dcl {
 namespace trigger {
 
-void TriggerManager::InitTriggerChecker(std::shared_ptr<RuleTrigger> trigger) {
-    if (!trigger) return;
-    trigger->registerVariableGetter("speed", []() -> TriggerConditionChecker::Value {
-        return 65.0; // km/h
+bool TriggerManager::initTriggerChecker(std::shared_ptr<TriggerBase> trigger) {
+    if (!trigger) return false;
+    trigger->registerVariableGetter("speed", [this]() -> TriggerConditionChecker::Value {
+        return message_provider_->getChassisVehicleMps(); // m/s
     });
 
-    trigger->registerVariableGetter("distance_to_lead", []() -> TriggerConditionChecker::Value {
-        return 15.0; // meters
+    trigger->registerVariableGetter("automode", [this]() -> TriggerConditionChecker::Value {
+        return message_provider_->getAutoModeEnable();
     });
 
-    trigger->registerVariableGetter("collision_risk", []() -> TriggerConditionChecker::Value {
-        return true;
+    trigger->registerVariableGetter("gear", [this]() -> TriggerConditionChecker::Value {
+        return message_provider_->getGear();
     });
 
-    trigger->registerVariableGetter("takeover_requested", []() -> TriggerConditionChecker::Value {
-        return true;
+    trigger->registerVariableGetter("aeb_decel_req", [this]() -> TriggerConditionChecker::Value {
+        return message_provider_->getAebDecelReq();
     });
 }
-std::shared_ptr<RuleTrigger> TriggerManager::createTrigger(const Strategy& strategy) {
-    auto trigger = std::make_shared<RuleTrigger>();
-    
-    triggers_[strategy.triggerId] = trigger;
-    
-    LOG_INFO("Created RuleTrigger: %s", strategy.triggerId.c_str());
-    return trigger;
-}
 
-std::shared_ptr<RuleTrigger> TriggerManager::getTrigger(const std::string& trigger_id) const {
+std::shared_ptr<TriggerBase> TriggerManager::createTrigger(const std::string& trigger_id) {
+    std::unique_lock lock(mutex_);
     auto it = triggers_.find(trigger_id);
-    if (it != triggers_.end()) {
-        return it->second;
+    return (it != triggers_.end()) ? it->second : nullptr;
+}
+
+std::shared_ptr<TriggerBase> TriggerManager::getTrigger(const std::string& trigger_id) const {
+    std::shared_lock lock(mutex_);
+    auto it = triggers_.find(trigger_id);
+    return (it != triggers_.end()) ? it->second : nullptr;
+}
+
+bool TriggerManager::initScheduler(const StrategyConfig& strategy_config, const std::shared_ptr<Scheduler>& scheduler) {
+    strategy_config_ = strategy_config;
+    scheduler_ = scheduler;
+    if (!scheduler_) {
+        AD_ERROR(TriggerManager, "Scheduler is not initialized.");
+        return false;
     }
-    return nullptr;
+
+    std::vector<std::pair<std::string, int>> enabled_triggers;
+    int trigger_priority = std::numeric_limits<int>::max();
+
+    if (enabled_triggers.empty())
+    {
+        AD_WARN(TriggerManager, "No enabled triggers found.");
+    }
+
+    {
+        std::shared_lock lock(mutex_);
+        for (const auto& s : strategy_config_.strategies) {
+            if (s.trigger.enabled) {
+                enabled_triggers.emplace_back(
+                    s.trigger.triggerId,  
+                    s.trigger.priority
+                );
+            }
+        }
+    }
+
+    bool success = true;
+    for (const auto& [id, priority] : enabled_triggers)
+    {
+        auto trigger = createTrigger(id);
+        if (!trigger) {
+            AD_ERROR(TriggerManager, "Trigger not found for %s", id.c_str());
+            success = false;
+            continue;
+        }
+
+        success = trigger->init(id, strategy_config_);
+        CHECK_AND_RETURN(success, TriggerManager, "Trigger init failed", false);
+
+        TriggerTask task;
+        task.triggerId = id;
+        task.priority = priority;
+        task.trigger = std::move(trigger);
+        task.strategyConfig = strategy_config_;
+        scheduler_->AddTask(task);
+
+        trigger_instances_[id] = std::dynamic_pointer_cast<TriggerBase>(task.trigger);
+    }
+
+    return success;
+}
+
+bool TriggerManager::processScheduler() {
+    if (scheduler_) {
+        scheduler_->StartScheduling();
+    }
 }
 
 } // namespace trigger
-} // namespace shadow
+} // namespace dcl
