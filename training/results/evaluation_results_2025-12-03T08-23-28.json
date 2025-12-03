@@ -1,0 +1,8 @@
+{
+  "avg_reward": -241.25988462982158,
+  "std_reward": 0.0,
+  "success_rate": 0.0,
+  "avg_episode_length": 300.0,
+  "total_episodes": 10,
+  "successful_episodes": 0
+}
