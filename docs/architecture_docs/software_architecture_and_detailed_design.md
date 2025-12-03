@@ -23,6 +23,7 @@
 | DCL | Data Closed Loop (数据闭环) |
 | ROI | Region of Interest (感兴趣区域) |
 | RL | Reinforcement Learning (强化学习) |
+| PPO | Proximal Policy Optimization (近端策略优化) |
 
 ## 2. 系统架构设计
 
@@ -114,7 +115,7 @@ classDiagram
     
     class NavPlannerNode {
         - costmap_ : unique_ptr<CostMap>
-        - route_planner_ : unique_ptr<RoutePlanner>
+        - route_optimize_ : unique_ptr<PlannerRouteOptimize>
         - sampling_optimizer_ : unique_ptr<SamplingOptimizer>
         - semantic_map_ : unique_ptr<SemanticMap>
         - constraint_checker_ : unique_ptr<SemanticConstraintChecker>
@@ -127,6 +128,7 @@ classDiagram
         - global_path_ : vector<Point>
         - local_path_ : vector<Point>
         - collected_data_points_ : vector<Point>
+        - use_ppo_ : bool
         + NavPlannerNode(config_file: string)
         + initialize() : bool
         + loadConfiguration() : bool
@@ -139,6 +141,9 @@ classDiagram
         + computeStateReward(prev_state_info: StateInfo, new_state_info: StateInfo) : double
         + reloadConfiguration() : void
         + addDataPoint(point: Point) : void
+        + setUsePPO(use_ppo: bool) : void
+        + loadPPOWeights(filepath: string) : bool
+        + savePPOWeights(filepath: string) : bool
         + getCoverageMetric() : const CoverageMetric&
         + getCurrentPosition() : const Point&
         + setCurrentPosition(position: Point) : void
@@ -186,16 +191,9 @@ classDiagram
         + Point(x: double, y: double)
     }
     
-    class RoutePlanner {
-        - threshold_sparse : double
-        - exploration_bonus : double
-        - redundancy_penalty : double
-        + RoutePlanner(sparse_threshold: double, exploration_bonus: double, redundancy_penalty: double)
-        + optRoute(map: MapData, stats: DataStats) : void
+    class PlannerRouteOptimize {
+        + PlannerRouteOptimize(sparse_threshold: double, exploration_bonus: double, redundancy_penalty: double)
         + computeAStarPath(costmap: CostMap, start: Point, goal: Point) : vector<Point>
-        + setSparseThreshold(threshold: double) : void
-        + setExplorationBonus(bonus: double) : void
-        + setRedundancyPenalty(penalty: double) : void
     }
     
     class SamplingOptimizer {
@@ -392,6 +390,82 @@ classDiagram
         + dataDensity(position: Point) : double
     }
     
+    %% RL Training System Classes
+    class PPOAgent {
+        - config_ : PPOConfig
+        - actor_network_ : vector<vector<double>>
+        - critic_network_ : vector<vector<double>>
+        - state_dim_ : int
+        - hidden_dim_ : int
+        - action_dim_ : int
+        - total_reward_ : double
+        - episode_count_ : int
+        + PPOAgent(config: PPOConfig)
+        + selectAction(state: Point, deterministic: bool) : int
+        + getActionProbabilities(state: Point) : vector<double>
+        + getValue(state: Point) : double
+        + update(trajectories: vector<Trajectory>) : void
+        + saveWeights(filepath: string) : bool
+        + loadWeights(filepath: string) : bool
+        + getTotalReward() : double
+        + getEpisodeCount() : int
+        + resetStatistics() : void
+    }
+    
+    class PPOConfig {
+        + learning_rate : double
+        + gamma : double
+        + lam : double
+        + clip_epsilon : double
+        + entropy_coef : double
+        + value_loss_coef : double
+        + batch_size : int
+        + epochs : int
+        + PPOConfig()
+    }
+    
+    class Trajectory {
+        + states : vector<Point>
+        + actions : vector<int>
+        + rewards : vector<double>
+        + log_probs : vector<double>
+        + values : vector<double>
+        + dones : vector<bool>
+    }
+    
+    class State {
+        - position : Point
+        - distance_to_goal : double
+        + State(position: Point)
+    }
+    
+    class NeuralNetwork {
+        - layers : vector<Layer>
+        - input_dim : int
+        - output_dim : int
+        - hidden_dim : int
+        + NeuralNetwork(input_dim: int, output_dim: int, hidden_dim: int)
+        + forward(input: Tensor) : Tensor
+        + getParameters() : vector<Tensor>
+        + setParameters(params: vector<Tensor>) : void
+    }
+    
+    class TrainingStats {
+        - episode_reward : double
+        - episode_length : int
+        - loss : double
+        - success : bool
+        + TrainingStats()
+    }
+    
+    class EvaluationResult {
+        - avg_reward : double
+        - success_rate : double
+        - avg_length : double
+        - action_distribution : vector<double>
+        + EvaluationResult()
+    }
+    
     DataCollectionPlanner --> NavPlannerNode : uses
     DataCollectionPlanner --> DataStorage : uses
     DataCollectionPlanner --> DataUploader : uses
@@ -402,7 +476,7 @@ classDiagram
     DataCollectionPlanner --> DataCollectionAnalyzer : uses
     
     NavPlannerNode --> CostMap : contains
-    NavPlannerNode --> RoutePlanner : contains
+    NavPlannerNode --> PlannerRouteOptimize : contains
     NavPlannerNode --> SamplingOptimizer : contains
     NavPlannerNode --> SemanticMap : contains
     NavPlannerNode --> SemanticConstraintChecker : contains
@@ -444,6 +518,13 @@ classDiagram
     
     MapData --> CostMap : contains
     DataStats --> Point : uses
+    
+    %% RL System relationships
+    NavPlannerNode --> PPOAgent : uses
+    
+    PPOAgent --> PPOConfig : contains
+    PPOAgent --> Trajectory : uses
+    PPOAgent --> Point : uses
 ```    
 
 ```mermaid
@@ -471,7 +552,7 @@ sequenceDiagram
     
     M->>DCP: planDataCollectionMission()
     DCP->>NP: planGlobalPath()
-    NP->>NP: computeAStarPath(costmap, current_position, goal_position)
+    NP->>NP: PlannerRouteOptimize::computeAStarPath(costmap, current_position, goal_position)
     NP-->>DCP: collection_path
     
     DCP->>NP: getCurrentPosition()
@@ -551,6 +632,28 @@ sequenceDiagram
     DCP->>DU: uploadData(collected_data_)
     DU-->>DCP: true/false
     DCP->>collected_data_: clear()
+    
+    %% RL Training Sequence
+    participant PA as PPOAgent
+    participant T as Trajectory
+    
+    M->>PA: initialize(config)
+    PA->>PA: initialize networks
+    
+    loop Training Episodes
+        M->>PA: selectAction(state)
+        PA->>PA: forward pass through actor network
+        PA-->>M: action
+        
+        M->>PA: update(trajectories)
+        PA->>PA: compute advantages
+        PA->>PA: update actor and critic networks
+        PA-->>M: updated
+    end
+    
+    M->>PA: saveWeights(filepath)
+    PA->>PA: serialize networks
+    PA-->>M: saved
 ```    
 
 ## 3. 详细设计
@@ -967,9 +1070,159 @@ public:
 };
 ```
 
-## 4. 系统工作流程
+## 4. 强化学习训练与评估系统
 
-### 4.1 初始化流程
+### 4.1 系统概述
+
+强化学习训练与评估系统是自动驾驶数据闭环的重要组成部分，专门用于训练和评估基于PPO（Proximal Policy Optimization）算法的路径规划模型。该系统通过模拟环境与智能体的交互来优化路径规划策略，从而提高数据采集效率。
+
+### 4.2 架构设计
+
+系统采用模块化设计，主要包括以下组件：
+
+1. **环境模拟器** - 提供路径规划任务的模拟环境
+2. **智能体** - 实现PPO算法的路径规划策略
+3. **训练引擎** - 管理训练过程和参数更新
+4. **评估模块** - 评估模型性能
+5. **可视化工具** - 提供训练过程和结果的可视化
+
+```mermaid
+graph TD
+    A[强化学习训练系统] --> B(环境模拟器)
+    A --> C(智能体)
+    A --> D(训练引擎)
+    A --> E(评估模块)
+    A --> F(可视化工具)
+    
+    B --> B1[简单环境]
+    B --> B2[复杂环境]
+    
+    C --> C1[PPO算法实现]
+    C --> C2[网络架构]
+    
+    D --> D1[超参数配置]
+    D --> D2[课程学习]
+    D --> D3[训练监控]
+    
+    E --> E1[性能评估]
+    E --> E2[基准测试]
+    
+    F --> F1[训练过程可视化]
+    F --> F2[路径可视化]
+```
+
+### 4.3 环境设计
+
+#### 4.3.1 简单环境 (SimplePathPlanningEnv)
+
+简单环境是一个无障碍物的网格世界，智能体需要从起始位置移动到目标位置。
+
+**特性**：
+- 可配置的网格尺寸（默认20x20）
+- 4个动作：上、右、下、左
+- 基于距离的奖励函数
+- 稀疏奖励：只有到达目标时才获得正奖励
+
+#### 4.3.2 复杂环境 (PathPlanningEnvironment)
+
+复杂环境在简单环境的基础上增加了随机分布的障碍物。
+
+**特性**：
+- 可配置的障碍物比例
+- 碰撞检测和惩罚
+- 与简单环境相同的动作和奖励机制
+
+### 4.4 智能体设计
+
+#### 4.4.1 PPO算法实现
+
+PPO（Proximal Policy Optimization）是一种先进的策略梯度方法，通过限制策略更新的幅度来保证训练的稳定性。
+
+**核心组件**：
+1. **Actor网络** - 输出动作概率分布
+2. **Critic网络** - 估计状态价值
+3. **优势函数** - 评估动作相对于平均表现的优势
+
+#### 4.4.2 网络架构
+
+采用Actor-Critic架构，包含以下组件：
+
+1. **共享特征提取层** - 多层ReLU激活的全连接网络
+2. **策略头** - 输出动作概率分布
+3. **价值头** - 输出状态价值估计
+
+**可配置参数**：
+- 隐藏层维度
+- 网络层数
+- Dropout率
+- 激活函数
+
+### 4.5 训练策略
+
+#### 4.5.1 课程学习 (Curriculum Learning)
+
+采用课程学习策略，从简单任务逐步过渡到复杂任务：
+
+1. **阶段1** - 2x2网格，近距离目标
+2. **阶段2** - 5x5网格，中等距离目标
+3. **阶段3** - 10x10网格，远距离目标
+4. **阶段4** - 15x15网格，更远距离目标
+5. **阶段5** - 20x20网格，随机位置
+
+这种方法有助于模型逐步学习基本技能，然后应对更复杂的任务。
+
+#### 4.5.2 超参数调优
+
+系统支持自动超参数调优，包括：
+
+- 学习率
+- 折扣因子 (gamma)
+- GAE参数 (lambda)
+- 熵系数
+- 批大小
+
+### 4.6 评估与基准测试
+
+#### 4.6.1 性能指标
+
+评估模型性能的关键指标包括：
+
+1. **成功率** - 成功到达目标的回合比例
+2. **平均奖励** - 每个回合的平均累积奖励
+3. **平均步数** - 到达目标所需的平均步数
+4. **动作分布** - 智能体选择各动作的频率
+
+#### 4.6.2 基准测试
+
+系统支持多种基准测试：
+
+1. **模型间比较** - 比较不同训练策略的效果
+2. **环境适应性测试** - 测试模型在未见过环境中的表现
+3. **鲁棒性测试** - 测试模型对环境变化的适应能力
+
+### 4.7 可视化工具
+
+#### 4.7.1 训练过程可视化
+
+提供训练过程的实时可视化，包括：
+
+- 奖励曲线
+- 成功率变化
+- 损失函数值
+- 学习率变化
+
+#### 4.7.2 路径可视化
+
+可视化智能体在环境中的移动路径：
+
+- 智能体轨迹
+- 起点和目标点
+- 障碍物分布（复杂环境）
+- 实时动画展示
+
+## 5. 系统工作流程
+
+### 5.1 初始化流程
 
 1. 系统启动后进入INITIALIZING状态
 2. 初始化DataCollectionPlanner
@@ -978,7 +1231,7 @@ public:
 5. 加载配置文件
 6. 初始化完成后进入IDLE状态
 
-### 4.2 任务规划流程
+### 5.2 任务规划流程
 
 1. 在IDLE状态下接收PLAN_REQUEST事件
 2. 进入PLANNING状态
@@ -987,7 +1240,7 @@ public:
 5. 优化数据采集点
 6. 规划完成后进入NAVIGATING状态
 
-### 4.3 数据采集流程
+### 5.3 数据采集流程
 
 1. 在NAVIGATING状态下接收WAYPOINT_REACHED事件
 2. 检查是否满足触发条件
@@ -996,7 +1249,7 @@ public:
 5. 数据采集完成后返回NAVIGATING状态
 6. 继续导航到下一个路径点
 
-### 4.4 数据分析与优化流程
+### 5.4 数据分析与优化流程
 
 1. 任务完成后进入UPLOADING状态
 2. 上传采集的数据
@@ -1006,16 +1259,16 @@ public:
 6. 重新加载配置
 7. 上传完成后回到IDLE状态
 
-## 5. 关键技术实现
+## 6. 关键技术实现
 
-### 5.1 成本地图动态调整
+### 6.1 成本地图动态调整
 
 系统根据数据密度统计动态调整成本地图：
 - 对数据稀疏区域（低于sparse_threshold）给予exploration_bonus降低通行成本，鼓励探索
 - 对数据密集区域施加redundancy_penalty增加成本，避免重复采集
 - 使用grid_resolution控制密度计算粒度
 
-### 5.2 强化学习奖励机制
+### 6.2 强化学习奖励机制
 
 奖励函数设计：
 - 访问新稀疏区域：+10.0（主要正向激励）
@@ -1024,101 +1277,101 @@ public:
 - 每步操作：-0.01（路径长度惩罚）
 - 可选的形状奖励引导向稀疏区域移动
 
-### 5.3 语义感知规划
+### 6.3 语义感知规划
 
 语义对象类型包括道路、交通标志、数据采集区等，语义约束检查应用于路径规划，语义信息转化为成本地图修正项。
 
-## 6. 性能优化
+## 7. 性能优化
 
-### 6.1 内存优化
+### 7.1 内存优化
 
 1. 使用智能指针管理内存
 2. 及时释放不需要的资源
 3. 优化数据结构减少内存占用
 
-### 6.2 计算优化
+### 7.2 计算优化
 
 1. 使用高效的路径规划算法
 2. 优化成本地图更新逻辑
 3. 减少不必要的计算
 
-### 6.3 并发优化
+### 7.3 并发优化
 
 1. 合理使用多线程
 2. 避免竞态条件
 3. 优化锁的使用
 
-## 7. 错误处理与恢复
+## 8. 错误处理与恢复
 
-### 7.1 错误检测
+### 8.1 错误检测
 
 1. 初始化失败检测
 2. 路径规划失败检测
 3. 数据采集失败检测
 4. 数据上传失败检测
 
-### 7.2 错误恢复
+### 8.2 错误恢复
 
 1. 进入ERROR状态
 2. 记录错误日志
 3. 尝试恢复操作
 4. 恢复成功后回到IDLE状态
 
-## 8. 测试策略
+## 9. 测试策略
 
-### 8.1 单元测试
+### 9.1 单元测试
 
 1. 各模块功能测试
 2. 接口测试
 3. 边界条件测试
 
-### 8.2 集成测试
+### 9.2 集成测试
 
 1. 模块间接口测试
 2. 完整工作流程测试
 3. 异常处理测试
 
-### 8.3 性能测试
+### 9.3 性能测试
 
 1. 响应时间测试
 2. 资源占用测试
 3. 并发性能测试
 
-## 9. 部署与运维
+## 10. 部署与运维
 
-### 9.1 部署环境
+### 10.1 部署环境
 
 1. Linux操作系统
 2. C++14或更高版本编译器
 3. 相关依赖库
 
-### 9.2 配置管理
+### 10.2 配置管理
 
 1. 使用YAML配置文件
 2. 支持运行时动态加载
 3. 配置参数验证
 
-### 9.3 监控与日志
+### 10.3 监控与日志
 
 1. 状态转换日志
 2. 错误日志
 3. 性能日志
 
-## 10. 未来扩展
+## 11. 未来扩展
 
-### 10.1 功能扩展
+### 11.1 功能扩展
 
 1. 支持更多传感器类型
 2. 增加更多语义类别
 3. 支持更复杂的路径规划算法
 
-### 10.2 性能优化
+### 11.2 性能优化
 
 1. 进一步优化算法性能
 2. 支持分布式部署
 3. 增加缓存机制
 
-### 10.3 可靠性提升
+### 11.3 可靠性提升
 
 1. 增强错误处理机制
 2. 支持热备份
