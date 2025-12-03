@@ -18,6 +18,14 @@ DataCollectionPlanner::DataCollectionPlanner(const std::string& config_file) {
 
 bool DataCollectionPlanner::initialize() {
     AD_INFO(DataCollectionPlanner, "Initializing Data Collection Planner");
+
+    // Load strategy configuration
+    StrategyConfig s_config_;
+    if (!strategy_parser_->LoadConfigFromFile("/workspaces/ad_data_closed_loop/config/default_strategy_config.json", config_)) {
+        AD_ERROR(DataCollectionPlanner, "Failed to load strategy configuration, using defaults");
+    }
+
+    const auto& data_upload_config = common::AppConfig::getInstance().GetConfig().dataUpload;
     
     if (!nav_planner_->initialize()) {
         AD_ERROR(DataCollectionPlanner, "Failed to initialize navigation planner");
@@ -25,13 +33,13 @@ bool DataCollectionPlanner::initialize() {
     }
     
     // Initialize data collection components
-    if (!data_storage_->Init()) {
+    if (!data_storage_->Init(node_, s_config_)) {
         AD_ERROR(DataCollectionPlanner, "Failed to initialize data storage");
         return false;
     }
     
-    if (!data_uploader_->Init()) {
-        AD_ERROR(DataCollectionPlanner, "Failed to initialize data uploader")
+    if (!data_uploader_->Init(data_upload_config)) {
+        AD_ERROR(DataCollectionPlanner, "Failed to initialize data uploader");
         return false;
     }
     
@@ -40,11 +48,7 @@ bool DataCollectionPlanner::initialize() {
     //     return false;
     // }
     
-    // Load strategy configuration
-    StrategyConfig config_;
-    if (!strategy_parser_->LoadConfigFromFile("/workspaces/ad_data_closed_loop/src/data_collection/config/default_strategy_config.json", config_)) {
-        AD_ERROR(DataCollectionPlanner, "Failed to load strategy configuration, using defaults");
-    }
+    
     
     AD_INFO(DataCollectionPlanner, "Data Collection Planner initialized successfully");
     return true;
@@ -73,7 +77,7 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
         // For each segment of the path, find optimal data collection points
         for (size_t i = 0; i < collection_path.size(); ++i) {
             // Check if we should collect data at this point based on strategy
-            if (trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
+            if (trigger_manager_ && trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
                 Point optimal_point = nav_planner_->optimizeNextWaypoint();
                 optimized_waypoints.push_back(optimal_point);
                 
@@ -104,17 +108,17 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
         nav_planner_->setCurrentPosition(waypoint);
         
         // Trigger data collection based on strategy
-        if (trigger_manager_->shouldTrigger(waypoint)) {
+        if (trigger_manager_ && trigger_manager_->shouldTrigger(waypoint)) {
             AD_INFO(DataCollectionPlanner, "Triggering data collection at waypoint %s", std::to_string(i).c_str());
             
             // Create trigger context for data collection
             auto trigger_context = std::make_shared<dcl::trigger::TriggerContext>();
             trigger_context->position.x = waypoint.x;
             trigger_context->position.y = waypoint.y;
-            trigger_context->timestamp = static_cast<uint64_t>(std::time(nullptr));
+            trigger_context->triggerTimestamp = static_cast<uint64_t>(std::time(nullptr));
             
             // Trigger data collection using data storage module
-            data_storage_->triggerDataCollection(trigger_context);
+            data_storage_->AddTrigger(*trigger_context);
             
             // Collect real sensor data using data collection modules
             std::string sensor_data = "collected_data_at_" + std::to_string(waypoint.x) + "_" + std::to_string(waypoint.y);
@@ -162,7 +166,7 @@ void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_
     double resolution = 1.0; // Default resolution
     
     for (const auto& data_point : new_data) {
-        auto grid_coords = PlannerUtils::worldToGrid(data_point.position, resolution);
+        auto grid_coords = dcl::planner::PlannerUtils::worldToGrid(data_point.position, resolution);
         visited_cells.push_back(grid_coords);
     }
     nav_planner_->updateCoverageMetrics(visited_cells);
@@ -174,7 +178,7 @@ void DataCollectionPlanner::uploadCollectedData() {
     AD_INFO(DataCollectionPlanner, "Uploading collected data to cloud");
     
     // Upload data using data uploader
-    if (data_uploader_->uploadData(collected_data_)) {
+    if (data_uploader_->Start()) {
         AD_INFO(DataCollectionPlanner, "Data uploaded successfully");
         // Clear local data after successful upload
         collected_data_.clear();
@@ -322,4 +326,4 @@ void DataCollectionAnalyzer::saveToPlannerConfig(const PlannerWeights& weights,
     }
 }
 
-} //namespace dcl 
+} //namespace dcl

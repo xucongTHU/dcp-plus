@@ -31,8 +31,7 @@ class DataUploader {
     DataUploader() = default;
     ~DataUploader();
 
-    bool Init(const common::AppConfigData::DataUpload& config,
-              std::shared_ptr<DataReporter> data_reporter);
+    bool Init(const common::AppConfigData::DataUpload& config);
     bool Start();
     bool Stop();
     ErrorCode UploadFile(const std::string& full_path, common::UploadType upload_type);

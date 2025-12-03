@@ -3,6 +3,7 @@
 #define PLANNER_OPTROUTE_H
 
 #include "../costmap/costmap.h"
+#include "ppo_agent.h"
 #include <vector>
 
 
@@ -41,6 +42,9 @@ private:
     double threshold_sparse;
     double exploration_bonus;
     double redundancy_penalty;
+    
+    // PPO agent for reinforcement learning-based path planning
+    std::unique_ptr<rl::PPOAgent> ppo_agent_;
 
 public:
     RoutePlanner(double sparse_threshold = 0.2, 
@@ -65,10 +69,33 @@ public:
                                        const Point& start, 
                                        const Point& goal);
                                        
+    /**
+     * @brief Compute path using PPO-based reinforcement learning
+     * @param costmap Costmap with adjusted costs
+     * @param start Start position
+     * @param goal Goal position
+     * @return Planned path
+     */
+    std::vector<Point> computePPOPath(const CostMap& costmap,
+                                     const Point& start,
+                                     const Point& goal);
+                                       
     // Setters for parameters
     void setSparseThreshold(double threshold) { threshold_sparse = threshold; }
     void setExplorationBonus(double bonus) { exploration_bonus = bonus; }
     void setRedundancyPenalty(double penalty) { redundancy_penalty = penalty; }
+    
+    /**
+     * @brief Set PPO agent for RL-based planning
+     * @param agent PPO agent
+     */
+    void setPPOAgent(std::unique_ptr<rl::PPOAgent> agent) { ppo_agent_ = std::move(agent); }
+    
+    /**
+     * @brief Get PPO agent
+     * @return Reference to PPO agent
+     */
+    rl::PPOAgent* getPPOAgent() { return ppo_agent_.get(); }
 };
 
 } // namespace dcl::planner

@@ -11,6 +11,7 @@
 #include "costmap/costmap.h"
 #include "rl/planner_route_optimize.h"
 #include "rl/planner_reward.h"
+#include "rl/ppo_agent.h"
 #include "sampler/coverage_metric.h"
 #include "sampler/sampling_optimizer.h"
 #include "semantics/semantic_map.h"
@@ -43,6 +44,9 @@ private:
     
     // Data collection statistics
     std::vector<Point> collected_data_points_;
+    
+    // RL parameters
+    bool use_ppo_;  // Flag to enable PPO-based planning
     
 public:
     NavPlannerNode(const std::string& config_file = 
@@ -116,6 +120,21 @@ public:
      * @brief Add a new data point to collected data
      */
     void addDataPoint(const Point& point);
+    
+    /**
+     * @brief Enable or disable PPO-based planning
+     */
+    void setUsePPO(bool use_ppo) { use_ppo_ = use_ppo; }
+    
+    /**
+     * @brief Load PPO weights from file
+     */
+    bool loadPPOWeights(const std::string& filepath);
+    
+    /**
+     * @brief Save PPO weights to file
+     */
+    bool savePPOWeights(const std::string& filepath);
     
     /**
      * @brief Get current coverage metrics

@@ -19,6 +19,20 @@ add_subdirectory(uploader)
 add_subdirectory(navigation_planner)
 add_subdirectory(state_machine)
 
+set(NAVIGATION_PLANNER_SOURCES
+    navigation_planner/nav_planner_node.cpp
+    navigation_planner/costmap/costmap.cpp
+    navigation_planner/rl/planner_route_optimize.cpp
+    navigation_planner/rl/planner_reward.cpp
+    navigation_planner/rl/ppo_agent.cpp
+    navigation_planner/sampler/coverage_metric.cpp
+    navigation_planner/sampler/sampling_optimizer.cpp
+    navigation_planner/semantics/semantic_map.cpp
+    navigation_planner/semantics/semantic_constraint.cpp
+    navigation_planner/semantics/semantic_filter.cpp
+    navigation_planner/utils/planner_utils.cpp
+)
+
 add_executable(ad_dcl 
                ./main.cpp
                ./data_collection_planner.cpp

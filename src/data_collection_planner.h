@@ -9,7 +9,7 @@
 #include "navigation_planner/utils/planner_utils.h"
 
 // Include data collection components
-#include "trigger_engine/strategy_parser.h"
+#include "trigger_engine/strategy_parser/strategy_parser.h"
 #include "trigger_engine/trigger_manager.h"
 #include "recorder/data_storage.h"
 #include "uploader/data_uploader.h"
@@ -42,11 +42,14 @@ namespace dcl {
 
 class DataCollectionPlanner {
 private:
+    std::shared_ptr<rscl::Node> node_;
     std::unique_ptr<planner::NavPlannerNode> nav_planner_;
     std::unique_ptr<DataStorage> data_storage_;
     std::unique_ptr<DataUploader> data_uploader_;
     std::unique_ptr<TriggerManager> trigger_manager_;
     std::unique_ptr<StrategyParser> strategy_parser_;
+    StrategyConfig strategy_config_;
+    common::AppConfigData config_;
     
     std::vector<DataPoint> collected_data_;
     MissionArea mission_area_;

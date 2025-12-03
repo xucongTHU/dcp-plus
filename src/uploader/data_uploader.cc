@@ -18,8 +18,7 @@ using json = nlohmann::json;
 namespace dcl {
 namespace uploader {
 
-bool DataUploader::Init(const common::AppConfigData::DataUpload& config,
-                        std::shared_ptr<DataReporter> data_reporter) {
+bool DataUploader::Init(const common::AppConfigData::DataUpload& config) {
     config_ = config;
     data_reporter_ = data_reporter;   
     stop_flag_ = false;

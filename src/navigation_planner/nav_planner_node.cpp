@@ -8,7 +8,8 @@ namespace dcl::planner {
 NavPlannerNode::NavPlannerNode(const std::string& config_file)
     : config_file_path_(config_file)
     , current_position_(0.0, 0.0)
-    , goal_position_(0.0, 0.0) {
+    , goal_position_(0.0, 0.0)
+    , use_ppo_(false) {
     // Initialize with default values
     costmap_ = std::make_unique<CostMap>(100, 100, 1.0);
     route_planner_ = std::make_unique<RoutePlanner>();
@@ -95,8 +96,14 @@ std::vector<Point> NavPlannerNode::planGlobalPath() {
                  LogUtils::formatPoint(current_position_) + " to " + 
                  LogUtils::formatPoint(goal_position_));
     
-    // For demonstration, we'll use a simple A* implementation
-    global_path_ = route_planner_->computeAStarPath(*costmap_, current_position_, goal_position_);
+    // Choose planning algorithm based on configuration
+    if (use_ppo_) {
+        LogUtils::log(LogUtils::INFO, "Using PPO-based path planning");
+        global_path_ = route_planner_->computePPOPath(*costmap_, current_position_, goal_position_);
+    } else {
+        LogUtils::log(LogUtils::INFO, "Using A*-based path planning");
+        global_path_ = route_planner_->computeAStarPath(*costmap_, current_position_, goal_position_);
+    }
     
     // Validate path
     if (!validatePath(global_path_)) {
@@ -202,6 +209,36 @@ void NavPlannerNode::reloadConfiguration() {
 void NavPlannerNode::addDataPoint(const Point& point) {
     collected_data_points_.push_back(point);
     LogUtils::log(LogUtils::INFO, "Added data point: " + LogUtils::formatPoint(point));
+}
+
+bool NavPlannerNode::loadPPOWeights(const std::string& filepath) {
+    if (route_planner_->getPPOAgent()) {
+        bool success = route_planner_->getPPOAgent()->loadWeights(filepath);
+        if (success) {
+            LogUtils::log(LogUtils::INFO, "PPO weights loaded from " + filepath);
+            return true;
+        } else {
+            LogUtils::log(LogUtils::ERROR, "Failed to load PPO weights from " + filepath);
+            return false;
+        }
+    }
+    LogUtils::log(LogUtils::WARN, "PPO agent not available");
+    return false;
+}
+
+bool NavPlannerNode::savePPOWeights(const std::string& filepath) {
+    if (route_planner_->getPPOAgent()) {
+        bool success = route_planner_->getPPOAgent()->saveWeights(filepath);
+        if (success) {
+            LogUtils::log(LogUtils::INFO, "PPO weights saved to " + filepath);
+            return true;
+        } else {
+            LogUtils::log(LogUtils::ERROR, "Failed to save PPO weights to " + filepath);
+            return false;
+        }
+    }
+    LogUtils::log(LogUtils::WARN, "PPO agent not available");
+    return false;
 }
 
 } // namespace dcl::planner
