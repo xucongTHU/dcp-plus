@@ -37,11 +37,11 @@ void StrategyParser::ParseJsonConfig(const nlohmann::json &jsonData, StrategyCon
     for (const auto& strategyJson : jsonData["strategies"]) {
         Strategy st;
         st.businessType = strategyJson["businessType"];
-        st.trigger.triggerName = strategyJson["trigger"]["triggerName"];
         st.trigger.triggerId = strategyJson["trigger"]["triggerId"];
         st.trigger.priority = strategyJson["trigger"]["priority"];
         st.trigger.enabled = strategyJson["trigger"]["enabled"];
         st.trigger.triggerCondition =  strategyJson["trigger"] ["triggerCondition"];
+        st.trigger.triggerDesc = strategyJson["trigger"]["triggerDesc"];
 
         // parse mode
         st.mode.triggerMode = strategyJson["mode"]["triggerMode"];
@@ -78,8 +78,9 @@ bool StrategyParser::CheckValid(const std::string &jsonString) {
             }
 
             // trigger
-            if (!stJson["trigger"].contains("triggerName") || !stJson["trigger"].contains("triggerId") ||
-                !stJson["trigger"].contains("priority") || !stJson["trigger"].contains("enabled") || !stJson["trigger"].contains("triggerCondition")) {
+            if (!stJson["trigger"].contains("triggerId") ||
+                !stJson["trigger"].contains("priority") || !stJson["trigger"].contains("enabled") || 
+                !stJson["trigger"].contains("triggerCondition") || !stJson["trigger"].contains("triggerDesc")) {
                 return false;
             }
 
@@ -98,29 +99,7 @@ bool StrategyParser::CheckValid(const std::string &jsonString) {
     }
 }
 
-bool StrategyParser::getTriggerType(const std::string& filepath, std::vector<std::string>& trigger_vec) { 
-    // 读取storage配置文件
-    std::ifstream storage_config_file(filepath);
-    if (!storage_config_file.is_open())
-    {
-        std::cout << "Could not open the storage config file!" << std::endl;
-        return false;
-    }
 
-    // 获取有效的trigger name
-    json storage_config;
-    storage_config_file >> storage_config;
-    if(!(storage_config.contains("trigger_info_array"))) {
-        std::cout << "storage config file contains no trigger info array!" << std::endl;
-        return false; 
-    }
-    if (storage_config["trigger_info_array"].is_array()) {  
-        for (const auto& trigger_info: storage_config["trigger_info_array"]) {
-            trigger_vec.push_back((std::string)trigger_info["trigger_name"]);  
-        } 
-    }
-    return true;
-}
 
 bool StrategyParser::CheckMessage(const json &j, std::vector<std::string>& trigger_vec, int8_t& bag_duration)
 {
@@ -131,20 +110,12 @@ bool StrategyParser::CheckMessage(const json &j, std::vector<std::string>& trigg
                 && strategy.contains("rollingDeleteThreshold")
                 && strategy.contains("enableMasking")
                 && strategy.contains("channels"))) return false;    
-        if(!(strategy["trigger"].contains("triggerName")
-                && strategy["trigger"].contains("triggerId")
+        if(!(strategy["trigger"].contains("triggerId")
                 && strategy["trigger"].contains("priority")
                 && strategy["trigger"].contains("enabled")
-                && strategy["trigger"].contains("triggerCondition"))) return false; 
-        
-        std::cout << "judge:" << strategy["trigger"]["triggerName"] << "in trigger list\n";   
-        
-        // 查找触发器名称是否存在于列表中
-        auto it = std::find(trigger_vec.begin(), trigger_vec.end(), strategy["trigger"]["triggerName"]);
-        if (it == trigger_vec.end()) {
-            std::cout << "'" <<  strategy["trigger"]["triggerName"] << "' not exists in trigger list\n";   
-            return false;   
-        } 
+                && strategy["trigger"].contains("triggerCondition")
+                && strategy["trigger"].contains("triggerDesc"))) return false; 
+     
 
         if(!(strategy["mode"].contains("triggerMode")
                 && strategy["mode"].contains("cacheMode"))) return false;  

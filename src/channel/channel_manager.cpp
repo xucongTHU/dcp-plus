@@ -4,17 +4,14 @@
 namespace dcl {
 namespace channel {
 
-bool ChannelManager::Init
-        (const std::shared_ptr<senseAD::rscl::comm::Node>& node, 
-         const strategy::StrategyConfig& config,
-         const std::shared_ptr<TriggerFactory>& trigger_factory,
-         const std::shared_ptr<RsclRecorder>& rscl_recorder,
-         const std::shared_ptr<DataReporter>& data_reporter) {
+bool ChannelManager::Init(const std::shared_ptr<senseAD::rscl::comm::Node>& node, 
+                          const dcl::trigger::StrategyConfig& config,
+                          const std::shared_ptr<dcl::trigger::TriggerManager>& trigger_manager,
+                          const std::shared_ptr<dcl::recorder::RsclRecorder>& rscl_recorder) {
     node_ = node;
     strategy_config_ = config;
-    trigger_factory_ = trigger_factory;
+    trigger_manager_ = trigger_manager;
     rscl_recorder_ = rscl_recorder;
-    data_reporter_ = data_reporter;
 
     message_subject_ = std::make_unique<Subject>();
 
@@ -67,18 +64,13 @@ bool ChannelManager::InitObservers() {
         AD_INFO(ChannelManager, "Added RsclRecorder as observer");
     }
 
-    if (data_reporter_) {
-        AddObserver(data_reporter_);
-        AD_INFO(ChannelManager, "Added DataReporter as observer");
-    }
 
-    
-    if (trigger_factory_) {
+    if (trigger_manager_) {
         for (const auto& strategy : strategy_config_.strategies) {
-            auto trigger = trigger_factory_->GetTrigger(strategy.trigger.triggerName);
+            auto trigger = trigger_manager_->getTrigger(strategy.trigger.triggerId);
             if (trigger) {
                 AddObserver(trigger);
-                AD_INFO(ChannelManager, "Added %s as observer", strategy.trigger.triggerName.c_str());
+                AD_INFO(ChannelManager, "Added %s as observer", strategy.trigger.triggerId.c_str());
             }
 
         }
@@ -88,7 +80,7 @@ bool ChannelManager::InitObservers() {
     return true;
 }
 
-void ChannelManager::OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
+void ChannelManager::onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
     auto cur_clock_mode = senseAD::base::time::ClockMode::SYSTEM_TIME;
     uint64_t message_time = senseAD::base::time::Time::Now(&cur_clock_mode).ToMicrosecond();
     auto header = msg->Header();
@@ -110,15 +102,15 @@ void ChannelManager::OnMessageReceived(const std::string& topic, const TRawMessa
 }
 
 void ChannelManager::AddObserver(std::shared_ptr<Observer> observer) {
-    message_subject_->AddObserver(observer);
+    message_subject_->addObserver(observer);
 }
 
 void ChannelManager::RemoveObserver(std::shared_ptr<Observer> observer) {
-    message_subject_->RemoveObserver(observer);
+    message_subject_->removeObserver(observer);
 }
 
 void ChannelManager::Notify(const std::string& topic, const TRawMessagePtr& msg) {
-    message_subject_->NotifyAll(topic, msg);
+    message_subject_->notifyAll(topic, msg);
 }
 
 

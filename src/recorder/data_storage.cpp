@@ -77,12 +77,11 @@ bool DataStorage::saveTriggerInfoJson(std::string& output_json_filename,
     json["day_night"] = "day";
     json["dev_project"] = "dongfengL29Pro";
     json["shadow_tag_info"]["businessType"] = current_trigger.businessType;
-    json["shadow_tag_info"]["triggeId"] = current_trigger.triggerId;
-    json["shadow_tag_info"]["triggerName"] = current_trigger.triggerName;
-    json["shadow_tag_info"]["timeStamp"] = UnixSecondsToString(current_trigger.timeStamp/1e6);
+    json["shadow_tag_info"]["triggerId"] = current_trigger.triggerId;
+    json["shadow_tag_info"]["timeStamp"] = common::UnixSecondsToString(current_trigger.triggerTimestamp/1e6);
     json["shadow_tag_info"]["forward_time"] = strategy_->mode.cacheMode.forwardCaptureDurationSec;
     json["shadow_tag_info"]["backward_time"] = strategy_->mode.cacheMode.backwardCaptureDurationSec;
-    json["shadow_tag_info"]["triggeDesc"] = "testing AEB";
+    json["shadow_tag_info"]["triggerDesc"] = current_trigger.triggerDesc;
     json["is_cloud_upload"] = !appconfig.debug.closeDataUpload;
    
     std::ofstream ofs(output_json_filename);
@@ -182,10 +181,9 @@ bool DataStorage::Start() {
         auto ctx = triggerList_.front();
         triggerList_.pop();
         
-        AD_INFO(DataStorage, "Processed trigger - ID: %s, Name: %s, Timestamp: %lld", 
+        AD_INFO(DataStorage, "Processed trigger - ID: %s, Timestamp: %lld", 
                  ctx->triggerId.c_str(), 
-                 ctx->triggerName.c_str(), 
-                 ctx->timeStamp);
+                 ctx->triggerTimestamp);
         lock.unlock();
         handleTrigger(ctx);
     }

@@ -19,7 +19,6 @@ namespace trigger {
 enum class TaskState { WAITING, RUNNING, PAUSED, FINISHED };
 
 struct TriggerTask {
-    std::string triggerName;
     std::string triggerId;
     int8_t priority;
     std::shared_ptr<TriggerBase> trigger;

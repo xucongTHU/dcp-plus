@@ -15,7 +15,7 @@ struct TriggerContext {
     std::string businessType;
     std::string triggerId;
     int64_t triggerTimestamp;
-    std::string triggerName;
+    std::string triggerDesc;
     // TriggerState triggerState;
 };
 

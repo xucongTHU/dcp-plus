@@ -20,13 +20,6 @@ using json = nlohmann::json;
 class StrategyParser {
 public:
     static bool LoadConfigFromFile(const std::string& file_path, StrategyConfig& conf);
-    
-     /**
-     * @brief 获取支持的trigger类型
-     * @param trigger_vec trigger类型列表。
-     * @return 如果获取成功，返回 `true`；否则返回 `false`。
-     */
-    static bool getTriggerType(const std::string& filepath, std::vector<std::string>& trigger_vec); 
 
      /**
      * @brief 检查 JSON 消息的有效性

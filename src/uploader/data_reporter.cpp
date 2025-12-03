@@ -241,8 +241,9 @@ bool DataReporter::checkConfigValid(const json& jsonData) {
             }
 
             // trigger
-            if (!stJson["trigger"].contains("triggerName") || !stJson["trigger"].contains("triggerId") ||
-                !stJson["trigger"].contains("priority") || !stJson["trigger"].contains("enabled") || !stJson["trigger"].contains("triggerCondition")) {
+            if (!stJson["trigger"].contains("triggerId") ||
+                !stJson["trigger"].contains("priority") || !stJson["trigger"].contains("enabled") || 
+                !stJson["trigger"].contains("triggerCondition") || !stJson["trigger"].contains("triggerDesc")) {
                 return false;
             }
 

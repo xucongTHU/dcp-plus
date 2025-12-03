@@ -33,7 +33,7 @@ bool RuleTrigger::proc() {
     TriggerContext context;
     context.triggerTimestamp = common::GetCurrentTimestamp();
     context.triggerId = trigger_obj_->triggerId;
-    context.triggerName = trigger_obj_->triggerName;
+    context.triggerDesc = trigger_obj_->triggerDesc;
     // context.businessType = trigger_obj_->businessType;
     // context.triggerState = SystemState::TRIGGERED;
 

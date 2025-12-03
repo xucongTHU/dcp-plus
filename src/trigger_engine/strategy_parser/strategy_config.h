@@ -16,11 +16,11 @@ namespace dcl {
 namespace trigger {
 
 struct Trigger {
-    std::string triggerName;
     std::string triggerId;
     int8_t priority;
     bool enabled;
     std::string triggerCondition;
+    std::string triggerDesc;
 };
 
 struct CacheMode {
@@ -45,17 +45,12 @@ struct Dds {
     std::vector<Channel> channels;
 };
 
-struct Cyber {
-    std::vector<Channel> channels;
-};
-
 struct Strategy {
     std::string businessType;
     Trigger trigger;
     Mode mode;
     bool enableMasking;
     Dds dds;
-    Cyber cyber;
     std::unordered_map<std::string, std::string> upload;
 };
 
