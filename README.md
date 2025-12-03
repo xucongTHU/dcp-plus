@@ -24,6 +24,12 @@ A* is a classic pathfinding algorithm that works well for finding the shortest p
 #### PPO Algorithm
 PPO (Proximal Policy Optimization) is a state-of-the-art reinforcement learning algorithm that learns optimal policies through interaction with the environment. It can adapt to dynamic conditions and optimize for long-term rewards rather than just shortest paths.
 
+The PPO implementation includes:
+- Actor-Critic architecture with configurable network depth
+- Generalized Advantage Estimation (GAE) for better policy updates
+- Curriculum learning approach for progressive training
+- Configurable hyperparameters for fine-tuning
+
 ### Data Collection Planner
 Coordinates data collection missions, integrating with the navigation planner to optimize paths for data coverage and exploration of sparse areas.
 
@@ -65,7 +71,8 @@ mkdir build && cd build && cmake .. && make
 First, train a PPO model (typically done in the cloud):
 
 ```bash
-python tools/train_ppo_model.py -o models/ppo_weights.txt -e 1000
+cd training
+python curriculum_train.py --config config/advanced_ppo_config.yaml
 ```
 
 Then run the system with the PPO algorithm:
@@ -116,6 +123,72 @@ Then run the system with the PPO algorithm:
 5. **Inference**: Vehicles use the trained PPO model for improved path planning
 
 This creates a closed-loop system where real-world experience continuously improves the planning algorithm.
+
+### Reinforcement Learning Implementation Details
+
+The reinforcement learning component is implemented in the [training/](file:///workspaces/ad_data_closed_loop/training/) directory with the following features:
+
+#### Environment
+- Grid-world environment with customizable size (default 20x20)
+- Two environment types: simple (no obstacles) and complex (with obstacles)
+- 4-directional movement actions (up, right, down, left)
+- Reward function based on distance to goal with time penalties
+
+#### Training Approach
+- **Curriculum Learning**: Progressive training starting from simple tasks to complex ones:
+  1. Stage 1: 2x2 environment with nearby goal
+  2. Stage 2: 5x5 environment with medium-distance goal
+  3. Stage 3: 10x10 environment with farther goal
+  4. Stage 4: 15x15 environment with distant goal
+  5. Stage 5: Full 20x20 environment with random positions
+  
+- **PPO Algorithm**: Uses Proximal Policy Optimization with:
+  - Actor-Critic architecture
+  - Generalized Advantage Estimation (GAE)
+  - Configurable network layers and hyperparameters
+  - Entropy bonus for exploration
+
+#### Model Architecture
+- Configurable shared ReLU hidden layers for feature extraction
+- Separate heads for policy (actor) and value (critic) estimation
+- Softmax activation for action probability distribution
+- Dropout layers for regularization
+
+#### Configuration
+Training is controlled by YAML configuration files in the [training/config/](file:///workspaces/ad_data_closed_loop/training/config/) directory:
+- [advanced_ppo_config.yaml](file:///workspaces/ad_data_closed_loop/training/config/advanced_ppo_config.yaml): Recommended configuration with tuned hyperparameters
+- [example_ppo_config.yaml](file:///workspaces/ad_data_closed_loop/training/config/example_ppo_config.yaml): Basic example configuration
+- [optimized_ppo_config.yaml](file:///workspaces/ad_data_closed_loop/training/config/optimized_ppo_config.yaml): Configuration with optimized hyperparameters
+
+Key hyperparameters include:
+- `state_dim`: Dimension of the state space (2 for x,y position)
+- `action_dim`: Number of possible actions (4 for 4-directional movement)
+- `hidden_dim`: Size of hidden layers in the neural network
+- `learning_rate`: Learning rate for the optimizer
+- `gamma`: Discount factor for future rewards
+- `lam`: Lambda parameter for Generalized Advantage Estimation
+- `epsilon`: PPO clipping parameter
+- `epochs`: Number of update epochs per iteration
+- `batch_size`: Mini-batch size for updates
+- `episodes`: Total number of training episodes
+- `max_steps`: Maximum steps per episode
+- `entropy_coef`: Coefficient for entropy bonus (exploration)
+
+### Training Scripts
+Several scripts are available for training and evaluation:
+- [curriculum_train.py](file:///workspaces/ad_data_closed_loop/training/curriculum_train.py): Main training script using curriculum learning (recommended)
+- [planner_rl_train.py](file:///workspaces/ad_data_closed_loop/training/planner_rl_train.py): Standard PPO training script
+- [planner_rl_eval.py](file:///workspaces/ad_data_closed_loop/training/planner_rl_eval.py): Basic model evaluation
+- [enhanced_eval.py](file:///workspaces/ad_data_closed_loop/training/enhanced_eval.py): Detailed model evaluation with metrics
+- [final_evaluation.py](file:///workspaces/ad_data_closed_loop/training/final_evaluation.py): Evaluation on specific tasks to demonstrate learning
+- [benchmark/benchmark_planner.py](file:///workspaces/ad_data_closed_loop/training/benchmark/benchmark_planner.py): Performance benchmarking
+
+### Results
+Training results are saved in the [training/models/](file:///workspaces/ad_data_closed_loop/training/models/) directory:
+- `curriculum_final_weights.pth`: Final trained model
+- `curriculum_stage_N_weights.pth`: Intermediate models from each curriculum stage
+
+Evaluation results are saved in JSON format in the [training/results/](file:///workspaces/ad_data_closed_loop/training/results/) directory.
 
 ## Configuration
 
