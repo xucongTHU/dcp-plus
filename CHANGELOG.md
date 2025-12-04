@@ -36,6 +36,24 @@
 
 
 
+#  (2025-12-04)
+
+
+### Features
+
+* **architecture:** add submodule and update project structure ([1fcdc5b](https://github.com/xucongTHU/ad_data_closed_loop/commit/1fcdc5b196d0f29e2d2fc882295e80444cd2c7b9))
+* **data-processor:** remove costmap_builder and feature_alignment modules ([b831e7a](https://github.com/xucongTHU/ad_data_closed_loop/commit/b831e7a5a0e0ce4b6a9cfd64801849120ddd68b7))
+* **logger:** migrate logging macros to AD_* format ([25e2577](https://github.com/xucongTHU/ad_data_closed_loop/commit/25e257759fdf8a468e324d3b53d65a509d3985db))
+* **navigation-planner:** add PPO-based path planning support ([b26ba05](https://github.com/xucongTHU/ad_data_closed_loop/commit/b26ba053de393ecf279dd9473015648d77be516b))
+* **planner:** implement navigation planning core, RL route optimization, and planning utils ([5ff2fcb](https://github.com/xucongTHU/ad_data_closed_loop/commit/5ff2fcb82d8bf499bb3c26bcb35a1ed6d7f99f51))
+* **state-machine:** integrate state machine for data collection and navigation coordination ([c09fb7a](https://github.com/xucongTHU/ad_data_closed_loop/commit/c09fb7a89f962769ae068ffd8335eda7fdcdd90a))
+* **training:** implement advanced PPO training with configurable network and environment ([864865d](https://github.com/xucongTHU/ad_data_closed_loop/commit/864865d2052ee08edd0ec5cbad52d27e9910d43c))
+* **utils:** add microsecond timestamp utility function ([86f1030](https://github.com/xucongTHU/ad_data_closed_loop/commit/86f1030199780ce85d6ab834e18e3d9f96aac3ea))
+
+
+
+
+
 #  (2025-12-03)
 
 

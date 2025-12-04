@@ -7,25 +7,6 @@
 ### 1.1 左绕障变道 (left_nudge)
 
 在效率变道的基础上，自车轨迹终点处于当前自车车道，注意绕障不变更灯。
-```angular
-1. 计算 efficiency_lane_change:
-    - 安全间隙判断
-    - 左右车道速度/成本计算
-    - 返回 true/false
-
-2. 计算 ego_trajectory_end_in_current_lane:
-    - 获取轨迹终点
-    - 判断是否在当前车道范围内
-
-3. 计算 changing_light_for_obstacle:
-    - 感知障碍物
-    - 判断是否需要变道开灯
-
-4. 触发条件:
-    trigger = efficiency_lane_change 
-           && ego_trajectory_end_in_current_lane 
-           && !changing_light_for_obstacle
-```
 ```cpp
 // 左绕障效率变道触发器函数
 bool checkLeftObstacleLaneChange(
@@ -280,7 +261,45 @@ bool checkRightLaneChangeWithCIPV(
 - 自车的结尾帧yaw大于0.3（rad）
 - 车道线末端和轨迹末端夹角大于15度(排除曲率弯)
 - 自车中点的yaw>0.1且与末端yaw反向
+```cpp
+bool checkUnprotectedLeftTurn(
+    bool at_intersection,          // 是否处于路口
+    double yaw_rate,               // 横摆角速度 rad/s
+    double final_frame_yaw,        // 最终帧 yaw (rad)
+    double lane_end_yaw,           // 车道线末端方向 yaw (rad)
+    double traj_end_yaw,           // 轨迹末端方向 yaw (rad)
+    double mid_ego_yaw             // 自车中点的 yaw (rad)
+){
+    // 1️⃣ 横摆角速度条件 yaw_rate > 0.2 rad/s
+    bool cond_yaw_rate = yaw_rate > 0.2;
 
+    // 2️⃣ 最终帧 yaw > 0.3 rad
+    bool cond_final_frame_yaw = final_frame_yaw > 0.3;
+
+    // 3️⃣ 车道线末端 vs 轨迹末端夹角 > 15°
+    //    (15° ≈ 0.261799 rad)
+    double angle_diff = fabs(lane_end_yaw - traj_end_yaw);
+    bool cond_lane_end_traj_angle = angle_diff > (15.0 * M_PI / 180.0);
+
+    // 4️⃣ 中段自车 yaw > 0.1 并且方向与最终帧 yaw 相反
+    //    “反向”用叉乘符号判断：mid * final < 0
+    bool mid_yaw_gt_01 = fabs(mid_ego_yaw) > 0.1;
+    bool opposite_dir   = (mid_ego_yaw * final_frame_yaw) < 0;
+    bool cond_mid_and_opposite = mid_yaw_gt_01 && opposite_dir;
+
+    // 5️⃣ 总触发条件
+    bool trigger =
+        at_intersection &&
+        cond_yaw_rate &&
+        cond_final_frame_yaw &&
+        cond_lane_end_traj_angle &&
+        cond_mid_and_opposite;
+
+    return trigger;
+}
+
+
+```
 ### 2.2 无交互右转
 
 触发条件：
@@ -289,6 +308,42 @@ bool checkRightLaneChangeWithCIPV(
 - 自车的结尾帧yaw小于-0.3（rad）
 - 车道线末端和轨迹末端夹角大于15度(排除曲率弯)
 - 自车中点的yaw>0.1且与末端yaw反向
+```cpp
+bool checkUnprotectedRightTurn(
+    bool at_intersection,          // 是否处于路口
+    double yaw_rate,               // 横摆角速度 rad/s
+    double final_frame_yaw,        // 最终帧 yaw (rad)
+    double lane_end_yaw,           // 车道线末端方向 yaw (rad)
+    double traj_end_yaw,           // 轨迹末端方向 yaw (rad)
+    double mid_ego_yaw             // 自车中点 yaw (rad)
+){
+    // 1️⃣ 横摆角速度 > 0.2 rad/s
+    bool cond_yaw_rate = yaw_rate > 0.2;
+
+    // 2️⃣ 最终帧 yaw < -0.3 rad（右转）
+    bool cond_final_yaw = final_frame_yaw < -0.3;
+
+    // 3️⃣ 车道线末端 vs 轨迹末端夹角 > 15°
+    double angle_diff = fabs(lane_end_yaw - traj_end_yaw);
+    bool cond_lane_traj_angle = angle_diff > (15.0 * M_PI / 180.0);
+
+    // 4️⃣ 中段自车 yaw > 0.1 且方向与最终帧 yaw 反向
+    bool mid_yaw_gt_01 = fabs(mid_ego_yaw) > 0.1;
+    bool opposite_dir   = (mid_ego_yaw * final_frame_yaw) < 0;
+    bool cond_mid_and_opposite = mid_yaw_gt_01 && opposite_dir;
+
+    // 5️⃣ 总触发条件
+    bool trigger =
+        at_intersection &&
+        cond_yaw_rate &&
+        cond_final_yaw &&
+        cond_lane_traj_angle &&
+        cond_mid_and_opposite;
+
+    return trigger;
+}
+
+```
 
 ### 2.3 有交互左转
 
@@ -296,6 +351,41 @@ bool checkRightLaneChangeWithCIPV(
 - 根据他车与自车未来轨迹点之间的距离（是否小于4m，并且自车时刻晚于他车时刻，不超过4s）
 - 根据polygon判断是否存在交集
 - 考虑他车是否减速
+```cpp
+bool checkInteractiveLeftTurn(
+    bool non_interactive_left_turn,   // 已经满足无交互左转
+    double dist_other_to_ego_future,  // 他车与自车未来轨迹最近距离
+    double ego_arrival_time,          // 自车到达交叉点的时间 (s)
+    double other_arrival_time,        // 他车到达交叉点的时间 (s)
+    bool polygons_intersect,          // 未来轨迹是否有交集(多边形)
+    double other_vehicle_acc,         // 他车加速度 (m/s^2)
+    double decel_threshold = -0.5     // 减速判断阈值，可调
+){
+    // 1️⃣ 他车距离自车未来轨迹 < 4m
+    bool other_vehicle_distance_lt_4m = (dist_other_to_ego_future < 4.0);
+
+    // 2️⃣ 自车到达时间比他车晚 ≤ 4s
+    double dt = ego_arrival_time - other_arrival_time;
+    bool ego_later_than_other_le_4s = (dt >= 0.0 && dt <= 4.0);
+
+    // 3️⃣ 是否存在未来轨迹或碰撞区域交集
+    bool polygon_intersection_exists = polygons_intersect;
+
+    // 4️⃣ 他车正在减速
+    bool other_vehicle_decelerating = (other_vehicle_acc < decel_threshold);
+
+    // 5️⃣ 总触发条件
+    bool trigger =
+        non_interactive_left_turn &&
+        other_vehicle_distance_lt_4m &&
+        ego_later_than_other_le_4s &&
+        polygon_intersection_exists &&
+        other_vehicle_decelerating;
+
+    return trigger;
+}
+
+```
 
 ### 2.4 有交互右转
 
@@ -303,22 +393,117 @@ bool checkRightLaneChangeWithCIPV(
 - 根据他车与自车未来轨迹点之间的距离（是否小于4m，并且自车时刻晚于他车时刻，不超过4s）
 - 根据polygon判断是否存在交集
 - 考虑他车是否减速
+```cpp
+bool checkInteractiveRightTurn(
+    bool non_interactive_right_turn,  // 已满足无交互右转
+    double dist_other_to_ego_future,  // 他车到自车未来轨迹最近距离（m）
+    double ego_arrival_time,          // 自车到冲突点的到达时间（s）
+    double other_arrival_time,        // 他车到冲突点到达时间（s）
+    bool polygons_intersect,          // 未来轨迹多边形是否有交集
+    double other_vehicle_acc,         // 他车加速度（负值表示减速）
+    double decel_threshold = -0.5     // 减速阈值，可调
+){
+    // 1️⃣ 他车与自车未来轨迹点距离 < 4m
+    bool other_vehicle_distance_lt_4m =
+        (dist_other_to_ego_future < 4.0);
+
+    // 2️⃣ 自车比他车到达晚，且不超过 4s（代表存在交互）
+    double dt = ego_arrival_time - other_arrival_time;
+    bool ego_later_than_other_le_4s =
+        (dt >= 0.0 && dt <= 4.0);
+
+    // 3️⃣ 是否存在未来轨迹空间交集 (碰撞区域)
+    bool polygon_intersection_exists = polygons_intersect;
+
+    // 4️⃣ 他车减速（通常意味着为右转让行）
+    bool other_vehicle_decelerating =
+        (other_vehicle_acc < decel_threshold);
+
+    // 5️⃣ 综合触发
+    bool trigger =
+        non_interactive_right_turn &&
+        other_vehicle_distance_lt_4m &&
+        ego_later_than_other_le_4s &&
+        polygon_intersection_exists &&
+        other_vehicle_decelerating;
+
+    return trigger;
+}
+
+```
 
 ### 2.5 左转弯静止
 
 在左转基础上，判断自车是否静止：速度小于0.01m/s，触发回传时间点静止
+```cpp
+bool checkStaticLeftTurn(
+    bool left_turn,      // 已满足左转触发（无交互 or 有交互左转）
+    double ego_speed_mps // 自车速度（m/s）
+){
+    // 自车速度 < 0.01 m/s
+    bool ego_speed_lt_001 = (ego_speed_mps < 0.01);
+
+    // 触发逻辑
+    bool trigger = left_turn && ego_speed_lt_001;
+
+    return trigger;
+}
+
+```
 
 ### 2.6 右转弯静止
 
 在右转基础上，判断自车是否静止：速度小于0.01m/s，触发回传时间点静止
+```cpp
+bool checkStaticRightTurn(
+    bool right_turn,     // 已满足右转触发（无交互 or 有交互右转）
+    double ego_speed_mps // 自车当前速度（m/s）
+){
+    // 自车速度 < 0.01 m/s
+    bool ego_speed_lt_001 = (ego_speed_mps < 0.01);
+
+    // 总触发：右转中 + 静止
+    bool trigger = right_turn && ego_speed_lt_001;
+
+    return trigger;
+}
+
+```
 
 ### 2.7 左转交互静止
 
 在左转交互基础上，判断自车是否静止：速度小于0.01m/s
+```cpp
+bool checkInteractiveLeftTurnStatic(
+    bool interactive_left_turn, // 已满足“有交互左转”（210011）
+    double ego_speed_mps        // 自车速度（m/s）
+){
+    // 自车速度 < 0.01 m/s → 静止
+    bool ego_speed_lt_001 = (ego_speed_mps < 0.01);
+
+    // 触发逻辑
+    bool trigger = interactive_left_turn && ego_speed_lt_001;
+
+```
 
 ### 2.8 右转交互静止
 
 在右转交互基础上，判断自车是否静止：速度小于0.01m/s
+```cpp
+bool checkInteractiveRightTurnStatic(
+    bool interactive_right_turn, // 已满足“有交互右转”（210012）
+    double ego_speed_mps         // 自车速度（m/s）
+){
+    // 自车速度 < 0.01 m/s → 静止
+    bool ego_speed_lt_001 = (ego_speed_mps < 0.01);
+
+    // 触发逻辑
+    bool trigger = interactive_right_turn && ego_speed_lt_001;
+
+    return trigger;
+}
+
+```
 
 ## 3. 静止场景 (Standstill)
 
@@ -326,6 +511,20 @@ bool checkRightLaneChangeWithCIPV(
 - 自车速度小于0.1m/s
 - 单次采集90s
 - 触发间隔在10分钟
+```cpp
+bool checkStandstill(
+    double ego_speed_mps // 自车当前速度（m/s）
+){
+    // 自车速度 < 0.1 m/s
+    bool ego_speed_lt_01 = (ego_speed_mps < 0.1);
+
+    // 触发条件
+    bool trigger = ego_speed_lt_01;
+
+    return trigger;
+}
+
+```
 
 ## 4. 交互场景 (Interaction)
 
