@@ -646,7 +646,7 @@ strategies:
       triggerId: 220002
       priority: 10
       enabled: true
-      # 表达式: 转向稳定 且 自车不压线 且 自车速度大于3m/s 且 最大加速度大于0.15
+      # 表达式: 转向稳定(固定距离轨迹曲率判断) 且 自车不压线 且 自车速度大于3m/s 且 最大加速度大于0.15
       triggerCondition: "steering_stable and not_pressing_line and ego_speed_gt_3 and max_acceleration_gt_015"
     mode:
       triggerMode: 1
