@@ -7,10 +7,12 @@
 ### 1.1 左绕障变道 (left_nudge)
 
 在效率变道的基础上，自车轨迹终点处于当前自车车道，注意绕障不变更灯。
+![left_nudge](images/image1.png)
 
 ### 1.2 右绕障变道 (right_nudge)
 
 与左绕障变道类似。
+![right_nudge](images/image2.png)
 
 ### 1.3 左变道
 
@@ -21,6 +23,7 @@
 - 变道点x位置小于轨迹的一半左右(防止变道太晚)
 - 轨迹终点小于车道线终点(防止路口导航变道误判)
 - 不能跨多个车道线
+![left_turn](images/image3.png)
 
 ### 1.4 右变道
 
@@ -31,18 +34,21 @@
 - 变道点x位置小于轨迹的一半左右(防止变道太晚)
 - 轨迹终点小于车道线终点(防止路口导航变道误判)
 - 不能跨多个车道线
+![right_turn](images/image4.png)
 
 ### 1.5 左效率变道
 
 在左变道基础上增加以下判断逻辑：
 - 存在自车道的cipv
 - 判断cipv是否小于未来自车最大速度
+![left_efficient_turn](images/image5.png)
 
 ### 1.6 右效率变道
 
 在右变道基础上增加以下判断逻辑：
 - 存在自车道的cipv
 - 判断cipv是否小于未来自车最大速度
+![right_efficient_turn](images/image6.png)
 
 ## 2. 转弯场景 (Turn)
 
@@ -54,6 +60,7 @@
 - 自车的结尾帧yaw大于0.3（rad）
 - 车道线末端和轨迹末端夹角大于15度(排除曲率弯)
 - 自车中点的yaw>0.1且与末端yaw反向
+![left_turn](images/image7.png)
 
 ### 2.2 无交互右转
 
@@ -63,6 +70,7 @@
 - 自车的结尾帧yaw小于-0.3（rad）
 - 车道线末端和轨迹末端夹角大于15度(排除曲率弯)
 - 自车中点的yaw>0.1且与末端yaw反向
+![right_turn](images/image8.png)
 
 ### 2.3 有交互左转
 
@@ -70,6 +78,7 @@
 - 根据他车与自车未来轨迹点之间的距离（是否小于4m，并且自车时刻晚于他车时刻，不超过4s）
 - 根据polygon判断是否存在交集
 - 考虑他车是否减速
+![left_turn_interaction](images/image9.png)
 
 ### 2.4 有交互右转
 
@@ -77,22 +86,27 @@
 - 根据他车与自车未来轨迹点之间的距离（是否小于4m，并且自车时刻晚于他车时刻，不超过4s）
 - 根据polygon判断是否存在交集
 - 考虑他车是否减速
+![right_turn_interaction](images/image10.png)
 
 ### 2.5 左转弯静止
 
 在左转基础上，判断自车是否静止：速度小于0.01m/s，触发回传时间点静止
+![left_turn_still](images/image11.png)
 
 ### 2.6 右转弯静止
 
 在右转基础上，判断自车是否静止：速度小于0.01m/s，触发回传时间点静止
+![right_turn_still](images/image12.png)
 
 ### 2.7 左转交互静止
 
 在左转交互基础上，判断自车是否静止：速度小于0.01m/s
+![left_turn_still_interaction](images/image13.png)
 
 ### 2.8 右转交互静止
 
 在右转交互基础上，判断自车是否静止：速度小于0.01m/s
+![right_turn_still_interaction](images/image14.png)
 
 ## 3. 静止场景 (Standstill)
 
@@ -123,6 +137,7 @@
 触发条件：
 - 不能处于转弯／曲率弯道／路口场景
 - 自车前3/8轨迹有压线趋势, 自车后半段轨迹居中行驶
+![deviation_correction](images/image15.png)
 
 ## 6. 大曲率弯道场景 (High Curvature Turn)
 
@@ -132,6 +147,7 @@
 - 车道线的c2,c3大于0.001
 - 自车未来yaw大于0.02
 - 自车不压线
+![high_curvature_turn](images/image16.png)
 
 ## 7. 加减速场景 (Acceleration/Deceleration)
 
@@ -140,18 +156,21 @@
 触发条件：
 - 转向稳定(固定距离轨迹曲率判断)并且自车不压线后
 - 自车加速度小于-0.15，且存在交互他车
+![brake](images/image17.png)
 
 ### 7.2 刹停
 
 触发条件：
 - 转向稳定(固定距离轨迹曲率判断)并且自车不压线后
 - 固定时间轨迹中，速度包含0.01m/s以下轨迹点
+![stop](images/image18.png)
 
 ### 7.3 加速
 
 触发条件：
 - 转向稳定(固定距离轨迹曲率判断)并且自车不压线后
 - 自车速度大于3/s，且最大加速度大于0.15
+![accelerate](images/image19.png)
 
 ### 7.4 安全加速 (safe_acc)
 
@@ -167,6 +186,7 @@
 - 自车速度大于5m/s
 - 自车左右都存在车道线，且自车未来轨迹在两条车道线之间，自车位于两条车道线中间
 - 自车不压线
+![lane_keeping](images/image20.png)
 
 ### 8.2 过路口车道保持
 
@@ -174,6 +194,7 @@
 - 自车速度大于5m/s
 - 自车在路口附近
 - 自车未来一段时间的轨迹，被夹在两段远处平行车道线之间
+![lane_keeping_intersection](images/image21.png)
 
 ## 9. 路口场景 (Intersection)
 
@@ -183,6 +204,7 @@
 - 有红绿灯信号（表示在路口附近）
 - 固定时间轨迹和任意水平车道线保持1m以上的距离
 - 自车速度大于5m/s
+![intersection](images/image22.png)
 
 ## 10. 分合流场景 (Merge/Diverge)
 
@@ -203,6 +225,8 @@
   - 分流车道线起点距右车道线距离dis < dis_th
   - 分流车道线起点方向和右车道线终点方向夹角>theta_th
 - 注意：当前场景判断逻辑不覆盖路口少变多类型的分流
+![merge](images/image23-1.png)
+![merge](images/image23-2.png)
 
 ### 10.2 合流
 
@@ -213,8 +237,10 @@
 - 合流车道线终点距旁车道线距离dis<dis_th
 - 合流车道线终点方向合旁车道线起点方向夹角>theta_th
 - 注意：当前场景判断逻辑不覆盖路口多变少类型的分流
+![diverge](images/image24.png)
 
 ## 11. 环岛场景 (Roundabout)
 
 触发条件：
 - 自车靠近环岛
+![roundabout](images/image25.png)
