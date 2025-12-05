@@ -9,10 +9,15 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import json
 import torch
+import yaml
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from environment import SimplePathPlanningEnv
 from planner_rl_train import ActorCritic
-import yaml
 
 
 def visualize_path(env, path, title="Path Visualization"):

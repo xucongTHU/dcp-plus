@@ -11,6 +11,11 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 import argparse
 import torch
 from pathlib import Path
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment import PathPlanningEnvironment, SimplePathPlanningEnv
 from planner_rl_train import ActorCritic
@@ -33,8 +38,12 @@ def create_policy_animation(env, model=None, save_path='agent_movement.gif', max
     fig, ax = plt.subplots(1, 1, figsize=(10, 10))
     
     # Initialize visualization elements
-    agent_circle = plt.Circle(state, 0.3, color='blue')
-    goal_square = patches.Rectangle((env.goal_pos[0]-0.5, env.goal_pos[1]-0.5), 
+    # Extract actual position from state (first two elements)
+    agent_pos = state[:2] * np.array([env.width-1, env.height-1])  # Denormalize
+    agent_circle = plt.Circle(agent_pos, 0.3, color='blue')
+    
+    goal_pos = env.goal_pos
+    goal_square = patches.Rectangle((goal_pos[0]-0.5, goal_pos[1]-0.5), 
                                    1, 1, linewidth=2, edgecolor='green', facecolor='none')
     
     # For complex environment, draw obstacles
@@ -63,7 +72,7 @@ def create_policy_animation(env, model=None, save_path='agent_movement.gif', max
     title = ax.text(0.5, 1.02, '', transform=ax.transAxes, ha='center')
     
     # Store positions for animation
-    positions = [state.copy()]
+    positions = [agent_pos.copy()]
     rewards = [0]
     done_flags = [False]
     
@@ -80,8 +89,9 @@ def create_policy_animation(env, model=None, save_path='agent_movement.gif', max
             # Use trained model to select action
             with torch.no_grad():
                 state_tensor = torch.tensor(state, dtype=torch.float32)
-                policy, _ = model(state_tensor)
-                action = torch.argmax(policy).item()
+                logits, _ = model(state_tensor)
+                # Use logits directly for action selection (argmax)
+                action = torch.argmax(logits).item()
         else:
             # Random action
             action = np.random.choice(env.action_space)
@@ -90,7 +100,9 @@ def create_policy_animation(env, model=None, save_path='agent_movement.gif', max
         next_state, reward, done, _ = env.step(action)
         state = next_state
         
-        positions.append(state.copy())
+        # Extract actual position from state
+        current_pos = state[:2] * np.array([env.width-1, env.height-1])  # Denormalize
+        positions.append(current_pos.copy())
         rewards.append(reward)
         done_flags.append(done)
         

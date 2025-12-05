@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """
-Benchmark script for comparing different path planning algorithms
+Benchmark script for comparing different planners
+Measures performance metrics of trained models vs baselines
 """
 
 import numpy as np
 import torch
+import yaml
 import argparse
 import logging
-import json
+import time
 from pathlib import Path
-import matplotlib.pyplot as plt
+import sys
+import os
 
-from environment import SimplePathPlanningEnv, PathPlanningEnvironment
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from environment import SimplePathPlanningEnv
 from planner_rl_train import ActorCritic
 
 # Configure logging
@@ -19,161 +25,225 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class BenchmarkSuite:
+def benchmark_random_policy(episodes=100):
     """
-    Suite for benchmarking path planning algorithms
+    Benchmark random policy baseline.
+    
+    Args:
+        episodes: Number of episodes to run
+        
+    Returns:
+        Dictionary with benchmark results
     """
+    logger.info("Benchmarking random policy...")
     
-    def __init__(self, env_type='simple'):
-        self.env_type = env_type
-        if env_type == 'simple':
-            self.env_factory = lambda: SimplePathPlanningEnv(width=20, height=20)
-        else:
-            self.env_factory = lambda: PathPlanningEnvironment(width=20, height=20, obstacle_ratio=0.2)
+    # Initialize environment
+    env = SimplePathPlanningEnv(width=20, height=20)
     
-    def benchmark_algorithm(self, model_path, config_path, num_episodes=100):
-        """
-        Benchmark a trained algorithm
-        """
-        # Load configuration
-        import yaml
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
-        
-        # Initialize environment
-        env = self.env_factory()
-        
-        # Initialize model
-        model = ActorCritic(
-            state_dim=config['state_dim'],
-            action_dim=config['action_dim'],
-            hidden_dim=config['hidden_dim'],
-            num_layers=config.get('network_layers', 2),
-            dropout_rate=config.get('dropout_rate', 0.0)
-        )
-        
-        # Load trained weights
-        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-        model.eval()
-        
-        # Metrics
-        total_rewards = []
-        episode_lengths = []
-        success_count = 0
-        
-        logger.info(f"Running benchmark with {num_episodes} episodes...")
-        
-        # Run benchmark
-        for episode in range(num_episodes):
-            state = env.reset()
-            total_reward = 0
-            steps = 0
-            done = False
-            
-            while not done and steps < config.get('max_steps', 200):
-                # Select action greedily
-                with torch.no_grad():
-                    state_tensor = torch.tensor(state, dtype=torch.float32)
-                    policy, _ = model(state_tensor)
-                    action = torch.argmax(policy).item()
-                
-                state, reward, done, _ = env.step(action)
-                total_reward += reward
-                steps += 1
-            
-            total_rewards.append(total_reward)
-            episode_lengths.append(steps)
-            
-            if done:
-                success_count += 1
-            
-            if episode % (num_episodes // 10) == 0 and episode > 0:
-                logger.info(f"Benchmark progress: {episode}/{num_episodes} episodes")
-        
-        # Calculate metrics
-        metrics = {
-            'mean_reward': float(np.mean(total_rewards)),
-            'std_reward': float(np.std(total_rewards)),
-            'mean_length': float(np.mean(episode_lengths)),
-            'std_length': float(np.std(episode_lengths)),
-            'success_rate': float(success_count / num_episodes),
-            'total_episodes': num_episodes
-        }
-        
-        return metrics
+    # Metrics
+    episode_rewards = []
+    episode_lengths = []
+    successes = 0
+    inference_times = []
     
-    def compare_algorithms(self, models_configs, num_episodes=100):
-        """
-        Compare multiple algorithms
-        """
-        results = {}
+    for episode in range(episodes):
+        # Reset environment
+        state = env.reset()
+        total_reward = 0
+        steps = 0
+        done = False
         
-        for name, (model_path, config_path) in models_configs.items():
-            logger.info(f"Benchmarking {name}...")
-            metrics = self.benchmark_algorithm(model_path, config_path, num_episodes)
-            results[name] = metrics
-            logger.info(f"{name} results: {metrics}")
+        while not done and steps < 200:
+            # Time the action selection
+            start_time = time.time()
+            
+            # Random action
+            action = np.random.choice(env.action_space)
+            
+            end_time = time.time()
+            inference_times.append(end_time - start_time)
+            
+            # Execute action
+            next_state, reward, done, _ = env.step(action)
+            state = next_state
+            total_reward += reward
+            steps += 1
         
-        return results
+        # Record metrics
+        episode_rewards.append(total_reward)
+        episode_lengths.append(steps)
+        if done:
+            successes += 1
     
-    def plot_comparison(self, results, save_path=None):
-        """
-        Plot comparison results
-        """
-        algorithms = list(results.keys())
-        metrics = ['mean_reward', 'mean_length', 'success_rate']
+    # Calculate statistics
+    avg_reward = np.mean(episode_rewards)
+    std_reward = np.std(episode_rewards)
+    success_rate = successes / episodes
+    avg_length = np.mean(episode_lengths)
+    avg_inference_time = np.mean(inference_times) * 1000  # Convert to milliseconds
+    
+    results = {
+        'policy_type': 'random',
+        'avg_reward': float(avg_reward),
+        'std_reward': float(std_reward),
+        'success_rate': success_rate,
+        'avg_episode_length': float(avg_length),
+        'avg_inference_time_ms': float(avg_inference_time),
+        'total_episodes': episodes
+    }
+    
+    logger.info(f"Random Policy Results:")
+    logger.info(f"  Average Reward: {avg_reward:.2f} ± {std_reward:.2f}")
+    logger.info(f"  Success Rate: {success_rate:.2%}")
+    logger.info(f"  Average Episode Length: {avg_length:.2f}")
+    logger.info(f"  Average Inference Time: {avg_inference_time:.4f} ms")
+    
+    return results
+
+
+def benchmark_trained_model(model_path, config_path, episodes=100):
+    """
+    Benchmark trained model.
+    
+    Args:
+        model_path: Path to trained model
+        config_path: Path to configuration file
+        episodes: Number of episodes to run
         
-        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        fig.suptitle('Algorithm Comparison')
+    Returns:
+        Dictionary with benchmark results
+    """
+    logger.info(f"Benchmarking trained model from {model_path}...")
+    
+    # Load configuration
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Initialize environment
+    env = SimplePathPlanningEnv(width=20, height=20)
+    
+    # Initialize model
+    model = ActorCritic(
+        state_dim=config['state_dim'],
+        action_dim=config['action_dim'],
+        hidden_dim=config['hidden_dim'],
+        num_layers=config.get('network_layers', 2),
+        dropout_rate=config.get('dropout_rate', 0.0)
+    )
+    
+    # Load trained weights
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    model.eval()
+    
+    # Metrics
+    episode_rewards = []
+    episode_lengths = []
+    successes = 0
+    inference_times = []
+    
+    for episode in range(episodes):
+        # Reset environment
+        state = env.reset()
+        total_reward = 0
+        steps = 0
+        done = False
         
-        for i, metric in enumerate(metrics):
-            values = [results[alg][metric] for alg in algorithms]
-            axes[i].bar(algorithms, values)
-            axes[i].set_title(metric)
-            axes[i].set_ylabel(metric)
-            plt.setp(axes[i].get_xticklabels(), rotation=45, ha="right")
+        while not done and steps < 200:
+            # Time the action selection
+            start_time = time.time()
+            
+            # Get action from trained model
+            with torch.no_grad():
+                state_tensor = torch.tensor(state, dtype=torch.float32)
+                logits, _ = model(state_tensor)
+                # Use logits directly for action selection (argmax)
+                action = torch.argmax(logits).item()
+            
+            end_time = time.time()
+            inference_times.append(end_time - start_time)
+            
+            # Execute action
+            next_state, reward, done, _ = env.step(action)
+            state = next_state
+            total_reward += reward
+            steps += 1
         
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
-            logger.info(f"Comparison plot saved to {save_path}")
-        
-        plt.show()
+        # Record metrics
+        episode_rewards.append(total_reward)
+        episode_lengths.append(steps)
+        if done:
+            successes += 1
+    
+    # Calculate statistics
+    avg_reward = np.mean(episode_rewards)
+    std_reward = np.std(episode_rewards)
+    success_rate = successes / episodes
+    avg_length = np.mean(episode_lengths)
+    avg_inference_time = np.mean(inference_times) * 1000  # Convert to milliseconds
+    
+    results = {
+        'policy_type': 'trained_model',
+        'model_path': model_path,
+        'avg_reward': float(avg_reward),
+        'std_reward': float(std_reward),
+        'success_rate': success_rate,
+        'avg_episode_length': float(avg_length),
+        'avg_inference_time_ms': float(avg_inference_time),
+        'total_episodes': episodes
+    }
+    
+    logger.info(f"Trained Model Results:")
+    logger.info(f"  Average Reward: {avg_reward:.2f} ± {std_reward:.2f}")
+    logger.info(f"  Success Rate: {success_rate:.2%}")
+    logger.info(f"  Average Episode Length: {avg_length:.2f}")
+    logger.info(f"  Average Inference Time: {avg_inference_time:.4f} ms")
+    
+    return results
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Benchmark path planning algorithms')
+    parser = argparse.ArgumentParser(description='Benchmark path planning policies')
     parser.add_argument('--model-path', type=str, required=True,
                         help='Path to trained model weights')
-    parser.add_argument('--config-path', type=str, default='config/advanced_ppo_config.yaml',
-                        help='Path to model configuration')
+    parser.add_argument('--config', type=str, default='config/advanced_ppo_config.yaml',
+                        help='Path to configuration file')
     parser.add_argument('--episodes', type=int, default=100,
-                        help='Number of episodes to run')
-    parser.add_argument('--env-type', type=str, default='simple',
-                        choices=['simple', 'complex'],
-                        help='Type of environment for benchmarking')
-    parser.add_argument('--output', type=str,
+                        help='Number of episodes for benchmarking')
+    parser.add_argument('--output', type=str, default='benchmark_results.json',
                         help='Path to save benchmark results')
     
     args = parser.parse_args()
     
-    # Run benchmark
-    benchmark_suite = BenchmarkSuite(env_type=args.env_type)
-    metrics = benchmark_suite.benchmark_algorithm(
-        args.model_path, args.config_path, args.episodes
-    )
+    # Validate paths
+    if not os.path.exists(args.model_path):
+        logger.error(f"Model file not found: {args.model_path}")
+        return
     
-    # Print results
-    print("\n=== BENCHMARK RESULTS ===")
-    for key, value in metrics.items():
-        print(f"{key}: {value}")
+    if not os.path.exists(args.config):
+        logger.error(f"Config file not found: {args.config}")
+        return
+    
+    # Run benchmarks
+    logger.info("Starting benchmarks...")
+    
+    # Benchmark random policy
+    random_results = benchmark_random_policy(args.episodes)
+    
+    # Benchmark trained model
+    model_results = benchmark_trained_model(args.model_path, args.config, args.episodes)
+    
+    # Combine results
+    benchmark_results = {
+        'random_policy': random_results,
+        'trained_model': model_results
+    }
     
     # Save results
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(metrics, f, indent=2)
-        logger.info(f"Results saved to {args.output}")
+    import json
+    with open(args.output, 'w') as f:
+        json.dump(benchmark_results, f, indent=2)
+    
+    logger.info(f"Benchmarking completed. Results saved to {args.output}")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,11 @@ import yaml
 import argparse
 import logging
 import json
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment import SimplePathPlanningEnv
 from planner_rl_train import ActorCritic
@@ -73,22 +78,23 @@ def evaluate_on_specific_tasks(model_path: str, config_path: str) -> dict:
         done = False
         
         # Track path for visualization
-        path = [state.copy()]
+        path = [state[:2].copy()]  # Only track actual positions
         
         # Execute episode
         while not done and steps < max_steps:
             # Get action from policy
             with torch.no_grad():
                 state_tensor = torch.tensor(state, dtype=torch.float32)
-                policy, _ = model(state_tensor)
-                action = torch.argmax(policy).item()  # Greedy action selection
+                logits, _ = model(state_tensor)
+                # Use logits directly for action selection (argmax)
+                action = torch.argmax(logits).item()  # Greedy action selection
             
             # Execute action
             next_state, reward, done, info = env.step(action)
             state = next_state
             total_reward += reward
             steps += 1
-            path.append(state.copy())
+            path.append(state[:2].copy())  # Only track actual positions
             
         # Record results
         case_key = f"case_{i+1}_{case['start']}_to_{case['goal']}"
@@ -125,7 +131,7 @@ def main():
     parser = argparse.ArgumentParser(description='Final evaluation of trained models')
     parser.add_argument('--model-path', type=str, required=True,
                         help='Path to trained model weights')
-    parser.add_argument('--config', type=str, default='configs/ppo_config.yaml',
+    parser.add_argument('--config', type=str, default='config/advanced_ppo_config.yaml',
                         help='Path to configuration file')
     parser.add_argument('--output', type=str, default='final_evaluation.json',
                         help='Path to save evaluation results')

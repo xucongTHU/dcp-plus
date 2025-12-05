@@ -14,6 +14,11 @@ import argparse
 import os
 import logging
 from pathlib import Path
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,13 +34,21 @@ except ImportError:
             self.width = width
             self.height = height
             self.action_space = 4
-            self.observation_space = 2
+            self.observation_space = 24  # Updated to match specification
             self.actions = {0: (1, 0), 1: (0, 1), 2: (-1, 0), 3: (0, -1)}
             
         def reset(self, start_pos=None, goal_pos=None):
             self.agent_pos = np.array([0.0, 0.0])
             self.goal_pos = np.array([float(self.width-1), float(self.height-1)])
-            return self.agent_pos.copy()
+            return self._get_state()
+            
+        def _get_state(self):
+            """Return extended state representation"""
+            # Simple state with all zeros except position
+            state = np.zeros(24)
+            state[0] = self.agent_pos[0] / (self.width - 1)  # norm_lat
+            state[1] = self.agent_pos[1] / (self.height - 1)  # norm_lon
+            return state
             
         def step(self, action):
             dx, dy = self.actions[action]
@@ -52,7 +65,7 @@ except ImportError:
                 done = True
             reward -= 0.1
             info = {'distance_to_goal': distance_to_goal}
-            return self.agent_pos.copy(), reward, done, info
+            return self._get_state(), reward, done, info
 
 
 class ActorCritic(nn.Module):
@@ -72,12 +85,12 @@ class ActorCritic(nn.Module):
         
         self.shared_layers = nn.Sequential(*shared_layers)
         
-        # Actor head (policy)
+        # Actor head (policy) - outputs logits, not probabilities
         self.actor_head = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim),
-            nn.Softmax(dim=-1)
+            nn.Linear(hidden_dim, action_dim)
+            # No softmax here - output raw logits as required by specification
         )
         
         # Critic head (value)
@@ -89,9 +102,9 @@ class ActorCritic(nn.Module):
         
     def forward(self, state):
         shared_features = self.shared_layers(state)
-        policy = self.actor_head(shared_features)
+        logits = self.actor_head(shared_features)  # Raw logits
         value = self.critic_head(shared_features)
-        return policy, value
+        return logits, value  # Return logits, not probabilities
 
 
 class PPOTrainer:
@@ -195,8 +208,9 @@ class PPOTrainer:
                 batch_returns = returns[batch_indices]
                 
                 # Forward pass
-                policy, value = self.actor_critic(batch_states)
-                dist = Categorical(policy)
+                logits, value = self.actor_critic(batch_states)
+                # Use logits directly for Categorical distribution
+                dist = Categorical(logits=logits)
                 entropy = dist.entropy().mean()
                 
                 # New log probabilities
@@ -323,8 +337,9 @@ def main():
             state_tensor = torch.tensor(state, dtype=torch.float32)
             
             # Get action probabilities and value
-            policy, value = trainer.actor_critic(state_tensor)
-            dist = Categorical(policy)
+            logits, value = trainer.actor_critic(state_tensor)
+            # Use logits directly for Categorical distribution
+            dist = Categorical(logits=logits)
             
             # Sample action
             action = dist.sample()

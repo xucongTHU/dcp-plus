@@ -8,6 +8,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import argparse
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment import PathPlanningEnvironment, SimplePathPlanningEnv
 
@@ -32,11 +37,13 @@ def visualize_environments(save_path='static_environments.png'):
     
     # Visualize simple environment
     # Draw agent
-    agent_circle = plt.Circle(simple_env.agent_pos, 0.3, color='blue')
+    agent_pos = simple_env.agent_pos
+    agent_circle = plt.Circle(agent_pos, 0.3, color='blue')
     ax1.add_patch(agent_circle)
     
     # Draw goal
-    goal_square = patches.Rectangle((simple_env.goal_pos[0]-0.5, simple_env.goal_pos[1]-0.5), 
+    goal_pos = simple_env.goal_pos
+    goal_square = patches.Rectangle((goal_pos[0]-0.5, goal_pos[1]-0.5), 
                                    1, 1, linewidth=2, edgecolor='green', facecolor='none')
     ax1.add_patch(goal_square)
     
@@ -59,11 +66,13 @@ def visualize_environments(save_path='static_environments.png'):
                 ax2.add_patch(rect)
     
     # Draw agent
-    agent_circle = plt.Circle(complex_env.agent_pos, 0.3, color='blue')
+    agent_pos = complex_env.agent_pos
+    agent_circle = plt.Circle(agent_pos, 0.3, color='blue')
     ax2.add_patch(agent_circle)
     
     # Draw goal
-    goal_square = patches.Rectangle((complex_env.goal_pos[0]-0.5, complex_env.goal_pos[1]-0.5), 
+    goal_pos = complex_env.goal_pos
+    goal_square = patches.Rectangle((goal_pos[0]-0.5, goal_pos[1]-0.5), 
                                    1, 1, linewidth=2, edgecolor='green', facecolor='none')
     ax2.add_patch(goal_square)
     

@@ -12,6 +12,10 @@ import argparse
 import json
 import os
 from pathlib import Path
+import sys
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment import SimplePathPlanningEnv
 from planner_rl_train import PPOTrainer, ActorCritic
@@ -53,7 +57,9 @@ def train_with_params(config):
             state_tensor = torch.tensor(np.array(state), dtype=torch.float32)
             
             # Get action probabilities and value
-            policy, value = trainer.actor_critic(state_tensor)
+            logits, value = trainer.actor_critic(state_tensor)
+            # Apply softmax to convert logits to probabilities for action selection
+            policy = torch.softmax(logits, dim=-1)
             dist = torch.distributions.Categorical(policy)
             
             # Sample action
@@ -166,7 +172,7 @@ def main():
     
     # Base configuration
     base_config = {
-        'state_dim': 2,
+        'state_dim': 24,  # Updated to match specification
         'action_dim': 4,
         'hidden_dim': 64,
         'learning_rate': 0.0003,

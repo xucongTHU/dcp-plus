@@ -12,6 +12,11 @@ import logging
 from pathlib import Path
 import itertools
 import json
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment import SimplePathPlanningEnv
 from planner_rl_train import PPOTrainer
@@ -63,8 +68,9 @@ def evaluate_hyperparams(config):
             state_tensor = torch.tensor(state, dtype=torch.float32)
             
             # Get action probabilities and value
-            policy, value = trainer.actor_critic(state_tensor)
-            dist = torch.distributions.Categorical(policy)
+            logits, value = trainer.actor_critic(state_tensor)
+            # Use logits directly for Categorical distribution
+            dist = torch.distributions.Categorical(logits=logits)
             
             # Sample action
             action = dist.sample()

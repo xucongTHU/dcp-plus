@@ -13,6 +13,11 @@ import os
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
+import sys
+import os
+
+# Add parent directory to path to import environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment import PathPlanningEnvironment, SimplePathPlanningEnv
 from planner_rl_train import ActorCritic
@@ -92,8 +97,9 @@ def evaluate_model_detailed(model_path: str, config_path: str, num_episodes: int
             # Get action from policy
             with torch.no_grad():
                 state_tensor = torch.tensor(state, dtype=torch.float32)
-                policy, _ = model(state_tensor)
-                action = torch.argmax(policy).item()  # Greedy action selection
+                logits, _ = model(state_tensor)
+                # Use logits directly for action selection (argmax)
+                action = torch.argmax(logits).item()  # Greedy action selection
                 
             # Track action distribution
             action_counts[action] += 1
@@ -110,7 +116,7 @@ def evaluate_model_detailed(model_path: str, config_path: str, num_episodes: int
             
             # Render if requested (only for first few episodes)
             if render and episode < 3:
-                print(f"Episode {episode}, Step {steps}: Position={state}, "
+                print(f"Episode {episode}, Step {steps}: Position={state[:2]}, "  # Only show position
                       f"Distance to goal={info['distance_to_goal']:.2f}")
         
         # Record metrics
