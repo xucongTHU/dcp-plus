@@ -1,0 +1,3 @@
+/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/CMakeFiles/onnxruntime-populate.dir
+/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/CMakeFiles/edit_cache.dir
+/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/CMakeFiles/rebuild_cache.dir

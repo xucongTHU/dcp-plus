@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -5,18 +7,11 @@
 
 namespace dcl::trigger {
 
-enum class TriggerState : int32_t {
-    None =0,
-    UnTrigger,
-    Triggered,
-};
-
 struct TriggerContext {
     std::string businessType;
     std::string triggerId;
     int64_t triggerTimestamp;
     std::string triggerDesc;
-    // TriggerState triggerState;
 };
 
 }

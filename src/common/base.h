@@ -10,15 +10,15 @@
 
 #include <filesystem>
 #include <optional>
-#include <boost/any.hpp>
+#include <any>
 namespace dcl {
     namespace fs = std::filesystem;
     template <typename T>
     using optional = std::optional<T>;
-    using any = boost::any;
+    using any = std::any;
     template <typename T>
     T any_cast(const any& a) {
-        return boost::any_cast<T>(a);
+        return std::any_cast<T>(a);
     }
     const auto nullopt = std::nullopt;
     const auto overwrite_if_exists = std::filesystem::copy_options::overwrite_existing;

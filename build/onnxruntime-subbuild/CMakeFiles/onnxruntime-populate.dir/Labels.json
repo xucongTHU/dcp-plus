@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/CMakeFiles/onnxruntime-populate"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/CMakeFiles/onnxruntime-populate.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/CMakeFiles/onnxruntime-populate-complete.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-build.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-configure.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-download.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-install.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-mkdir.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-patch.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-test.rule"
+		},
+		{
+			"file" : "/workspaces/ad_data_closed_loop/build/onnxruntime-subbuild/onnxruntime-populate-prefix/src/onnxruntime-populate-stamp/onnxruntime-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"onnxruntime-populate"
+		],
+		"name" : "onnxruntime-populate"
+	}
+}

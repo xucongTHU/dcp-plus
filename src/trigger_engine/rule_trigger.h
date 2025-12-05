@@ -27,7 +27,7 @@ public:
     bool checkCondition() override;
     void registerVariableGetter(const std::string& var_name, 
                                 std::function<TriggerConditionChecker::Value()> getter) override;
-    void onMessageReceived(const std::string& topic, const TRawMessagePtr& subject) override;                            
+    void OnMessageReceived(const std::string& topic, const TRawMessagePtr& subject) override;                            
 
 private:
     TriggerConditionChecker trigger_checker_;

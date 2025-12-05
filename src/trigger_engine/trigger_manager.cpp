@@ -5,8 +5,6 @@
 
 #include "trigger_manager.h"
 #include "common/log/logger.h"
-#include "trigger_engine/common/trigger_checker.h"
-#include "channel/message_provider.h"
 
 namespace dcl {
 namespace trigger {

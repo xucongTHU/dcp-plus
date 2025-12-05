@@ -29,6 +29,27 @@ The PPO implementation includes:
 - Generalized Advantage Estimation (GAE) for better policy updates
 - Curriculum learning approach for progressive training
 - Configurable hyperparameters for fine-tuning
+- Cloud-edge architecture for distributed training and inference
+
+##### Cloud-Edge Architecture
+
+The PPO implementation follows a cloud-edge architecture:
+
+**Cloud-side (Training)**:
+- Training PPO models using curriculum learning
+- Using collected telemetry data from edge devices
+- Exporting trained models as ONNX files
+
+**Edge-side (Inference)**:
+- Loading ONNX models using ONNX Runtime
+- Performing real-time inference for path planning decisions
+- Maintaining trigger engines and ring buffers for data collection
+
+This architecture allows for:
+1. Scalable training in the cloud with powerful hardware
+2. Low-latency inference on the edge device
+3. Easy model updates by replacing ONNX files
+4. Privacy preservation by keeping raw data on the edge
 
 ### Data Collection Planner
 Coordinates data collection missions, integrating with the navigation planner to optimize paths for data coverage and exploration of sparse areas.
@@ -49,7 +70,7 @@ Manages the overall system state, transitioning between idle, planning, executin
 
 ```bash
 cd /workspaces/ad_data_closed_loop
-make tgz_thor
+make
 ```
 
 Or using CMake:
@@ -57,6 +78,8 @@ Or using CMake:
 ```bash
 mkdir build && cd build && cmake .. && make
 ```
+
+During the build process, ONNX Runtime will be automatically downloaded if not present in the `3rdparty` directory.
 
 ## Usage
 
@@ -75,17 +98,19 @@ cd training
 python curriculum_train.py --config config/advanced_ppo_config.yaml
 ```
 
+Convert the trained model to ONNX format (this is typically done as part of the training script):
+
 Then run the system with the PPO algorithm:
 
 ```bash
-./ad_data_closed_loop --algorithm ppo --weights models/ppo_weights.txt
+./ad_data_closed_loop --algorithm ppo --weights models/ppo_model.onnx
 ```
 
 ### Command Line Options
 
 - `-h, --help`: Show help message
 - `-a, --algorithm ALG`: Planning algorithm (astar or ppo)
-- `-w, --weights PATH`: Path to PPO weights file
+- `-w, --weights PATH`: Path to PPO weights file (ONNX format)
 - `-c, --config PATH`: Path to planner configuration file
 
 ## System Architecture
@@ -99,18 +124,18 @@ Then run the system with the PPO algorithm:
            |
 +----------v----------+
 |   Module Layer      |
-| - Data Collection   |
 | - Navigation Planner|
+| - Data Collection   |
+| - Recorder          |
+| - Trigger Engine    |
+| - Uploader          |
+| - Channel Manager   |
 +----------+----------+
            |
 +----------v----------+
-|   Communication     |
-| - ad_comm (ROS/Apollo)|
-+----------+----------+
-           |
-+----------v----------+
-|   Data & Storage    |
-| - Bag files, Upload |
+|  Middleware Layer   |
+| - senseauto-rscl    |
+| - ROS2 Bridge       |
 +---------------------+
 ```
 
@@ -119,14 +144,14 @@ Then run the system with the PPO algorithm:
 1. **Data Collection**: Vehicle collects data during operation using A* or PPO algorithms
 2. **Data Upload**: Collected data is uploaded to the cloud for processing
 3. **Model Training**: PPO model is trained in the cloud using the collected data
-4. **Model Deployment**: Trained model weights are deployed to vehicles
+4. **Model Deployment**: Trained model weights are converted to ONNX and deployed to vehicles
 5. **Inference**: Vehicles use the trained PPO model for improved path planning
 
 This creates a closed-loop system where real-world experience continuously improves the planning algorithm.
 
 ### Reinforcement Learning Implementation Details
 
-The reinforcement learning component is implemented in the [training/](file:///workspaces/ad_data_closed_loop/training/) directory with the following features:
+The reinforcement learning component is implemented in the [training/](training/) directory with the following features:
 
 #### Environment
 - Grid-world environment with customizable size (default 20x20)
@@ -154,14 +179,38 @@ The reinforcement learning component is implemented in the [training/](file:///w
 - Softmax activation for action probability distribution
 - Dropout layers for regularization
 
+#### State Representation
+
+The PPO model uses a rich state representation according to the following specification:
+
+```
+state = [
+  norm_lat, norm_lon,            // 归一化坐标
+  heatmap_summary(16 values),    // 局部热力图池化向量
+  last_n_actions(4),             // 历史动作 one-hot 或 embeddings
+  remaining_budget_norm,         // 时间/距离
+  local_traffic_density,         // scalar
+  ...                            // 总长度 = state_dim
+]
+```
+
+Where:
+- norm_lat, norm_lon: Normalized latitude and longitude coordinates (range [0, 1])
+- heatmap_summary: 16-value vector representing pooled local heatmap features
+- last_n_actions: One-hot encoding or embeddings of the last 4 actions
+- remaining_budget_norm: Normalized remaining time/distance budget (range [0, 1])
+- local_traffic_density: Local traffic density scalar value (range [0, 1])
+
+Minimum state_dim is 24 (2 + 16 + 4 + 1 + 1).
+
 #### Configuration
-Training is controlled by YAML configuration files in the [training/config/](file:///workspaces/ad_data_closed_loop/training/config/) directory:
-- [advanced_ppo_config.yaml](file:///workspaces/ad_data_closed_loop/training/config/advanced_ppo_config.yaml): Recommended configuration with tuned hyperparameters
-- [example_ppo_config.yaml](file:///workspaces/ad_data_closed_loop/training/config/example_ppo_config.yaml): Basic example configuration
-- [optimized_ppo_config.yaml](file:///workspaces/ad_data_closed_loop/training/config/optimized_ppo_config.yaml): Configuration with optimized hyperparameters
+Training is controlled by YAML configuration files in the [training/config/](training/config/) directory:
+- [advanced_ppo_config.yaml](training/config/advanced_ppo_config.yaml): Recommended configuration with tuned hyperparameters
+- [example_ppo_config.yaml](training/config/example_ppo_config.yaml): Basic example configuration
+- [optimized_ppo_config.yaml](training/config/optimized_ppo_config.yaml): Configuration with optimized hyperparameters
 
 Key hyperparameters include:
-- `state_dim`: Dimension of the state space (2 for x,y position)
+- `state_dim`: Dimension of the state space (minimum 24 for full specification compliance)
 - `action_dim`: Number of possible actions (4 for 4-directional movement)
 - `hidden_dim`: Size of hidden layers in the neural network
 - `learning_rate`: Learning rate for the optimizer
@@ -176,40 +225,26 @@ Key hyperparameters include:
 
 ### Training Scripts
 Several scripts are available for training and evaluation:
-- [curriculum_train.py](file:///workspaces/ad_data_closed_loop/training/curriculum_train.py): Main training script using curriculum learning (recommended)
-- [planner_rl_train.py](file:///workspaces/ad_data_closed_loop/training/planner_rl_train.py): Standard PPO training script
-- [planner_rl_eval.py](file:///workspaces/ad_data_closed_loop/training/planner_rl_eval.py): Basic model evaluation
-- [enhanced_eval.py](file:///workspaces/ad_data_closed_loop/training/enhanced_eval.py): Detailed model evaluation with metrics
-- [final_evaluation.py](file:///workspaces/ad_data_closed_loop/training/final_evaluation.py): Evaluation on specific tasks to demonstrate learning
-- [benchmark/benchmark_planner.py](file:///workspaces/ad_data_closed_loop/training/benchmark/benchmark_planner.py): Performance benchmarking
-
-### Results
-Training results are saved in the [training/models/](file:///workspaces/ad_data_closed_loop/training/models/) directory:
-- `curriculum_final_weights.pth`: Final trained model
-- `curriculum_stage_N_weights.pth`: Intermediate models from each curriculum stage
-
-Evaluation results are saved in JSON format in the [training/results/](file:///workspaces/ad_data_closed_loop/training/results/) directory.
-
-## Configuration
-
-Main configuration files:
-- `config/planner_weights.yaml`: Navigation planner weights
-- `config/default_strategy_config.json`: Data collection strategy
-- `config/app_config.json`: Application configuration
-
-## Directory Structure
-
-- `src/`: Source code
-- `config/`: Configuration files
-- `models/`: Trained model weights
-- `tools/`: Utility scripts
-- `training/`: Training scripts and utilities
-- `3rdparty/`: Third-party libraries
+- [curriculum_train.py](training/curriculum_train.py): Main training script using curriculum learning (recommended)
+- [planner_rl_train.py](training/planner_rl_train.py): Standard PPO training script
+- [planner_rl_eval.py](training/planner_rl_eval.py): Model evaluation script
+- [final_evaluation.py](training/final_evaluation.py): Final model evaluation script
+- [hyperparameter_tuning.py](training/hyperparameter_tuning.py): Automatic hyperparameter tuning script
 
 ## Contributing
 
-Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/repository/tags).
+
+## Authors
+
+- **Your Name** - *Initial work* - [YourOrganization](https://github.com/YourOrganization)
+
+See also the list of [contributors](https://github.com/your/repository/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.

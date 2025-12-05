@@ -8,83 +8,40 @@
 #define DATA_STORAGE_H
 
 #include <string>
-#include <vector>
 #include <memory>
-#include <atomic>
-#include <mutex>
+#include <vector>
 #include "nlohmann/json.hpp"
 
-// #include "data_upload/DataReporter.h"
-#include "recorder/common/diskspace_checker.hpp"
-#include "recorder/common/file_compress.h"
-#include "recorder/common/file_roller.h"
-#include "trigger_engine/strategy_config.h"
-#include "trigger_engine/dcl_trigger.h"
-// #include "cyber_recorder/CyberRecorder.h"
-#include "recorder/rscl_recorder.h"
-// #include "common/time/Timer.h"
-#include "common/utils/utils.h"
+#include "trigger_engine/idl/dcl_trigger.h"
+#include "trigger_engine/strategy_parser/strategy_config.h"
 #include "common/config/app_config.h"
-
+#include "recorder/common/diskspace_checker.hpp"
 
 namespace dcl {
 namespace recorder {
 
-enum class CollectionStatus : int32_t {
-    None = 0,
-    Collecting,     // 采集中
-    Completed       // 采集完成
-};
-
 class DataStorage {
 public:
     DataStorage() = default;
-    virtual ~DataStorage() = default;
+    ~DataStorage() = default;
 
-    bool Init(const std::shared_ptr<senseAD::rscl::comm::Node>& node,
-              const dcl::trigger::StrategyConfig& strategy_config);
-
-    bool Start();
-    bool Stop();
-    void AddTrigger(const dcl::trigger::TriggerContext& trigger);
-    std::shared_ptr<RsclRecorder> GetRsclRecorder() const { return rscl_recorder_; }
-
-private:
-    bool saveTriggerInfoJson(std::string& output_json_filename, const dcl::trigger::TriggerContext& current_trigger);
-    bool compressFiles(const std::vector<std::string>& inputFilePaths, const std::string& outputFilePath);
-    bool handleTrigger(const dcl::trigger::TriggerContext& current_trigger);
-    bool checkDiskSpace() const;
+    bool Init(const std::shared_ptr<void>& node, 
+              const trigger::StrategyConfig& config);
+    
+    void AddTrigger(const trigger::TriggerContext& context);
+    
+    void storeData(const struct DataPoint& data_point);
+    
+    bool SaveToFile(const std::string& filepath);
+    
+    bool LoadFromFile(const std::string& filepath);
 
 private:
-    std::shared_ptr<senseAD::rscl::comm::Node> node_{nullptr};
-    dcl::trigger::StrategyConfig strategy_config_;
-    std::shared_ptr<dcl::trigger::Strategy> strategy_{nullptr};
-    std::unique_ptr<FileRoller> fileRoller;
-    std::shared_ptr<DiskSpaceChecker> diskSpaceChecker;
-    // std::shared_ptr<uploader::DataReporter> data_reporter_;
-    std::shared_ptr<RsclRecorder> rscl_recorder_;
-
-
-    std::string dataPath;
-    std::thread rollThread;
-    std::atomic<bool> isRollThreadRunning{false};
-    std::chrono::seconds rollInterval{60}; 
-    mutable std::mutex rollMutex;
-    std::mutex triggerMutex;
-    std::condition_variable cv_;
-
-    bool debug = false;
-
-    std::atomic<CollectionStatus> collectionStatus_{CollectionStatus::None};
-    std::atomic<bool> stop_{false};
-    std::queue<dcl::trigger::TriggerContext> triggerList_; 
-    // trigger::TriggerContext current_trigger_;
-    double bag_distance = 0.0;
-
-    uint64_t last_trigger_finish_time;
+    std::shared_ptr<void> node_;
+    trigger::StrategyConfig config_;
 };
 
-} 
-} 
+} // namespace recorder
+} // namespace dcl
 
 #endif // DATA_STORAGE_H

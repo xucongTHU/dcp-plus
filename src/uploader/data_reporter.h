@@ -63,7 +63,7 @@ class DataReporter : public Observer {
     /**
      * @brief 回调函数，用于处理接收到的智能驾驶算法消息。
      */
-    void onMessageReceived(const std::string& topic, const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) override;
+    void OnMessageReceived(const std::string& topic, const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) override;
     void UpdateVehicleInfo(const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>> msg);
     // void UpdatePoseInfo(const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>> msg);
     // void UpdateImageInfo(const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>> msg);

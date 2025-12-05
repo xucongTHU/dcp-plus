@@ -2,7 +2,7 @@
 
 #include <atomic>
 #include "common/base.h"
-#include "channel/Observer.h"
+#include "channel/observer.h"
 // #include "ad_rscl/common/message_print.h"
 #include "ad_rscl/ad_rscl.h"
 
@@ -19,7 +19,7 @@ public:
     {}
     virtual ~MessageProvider() = default;
 
-    void onMessageReceived(const std::string& topic, const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) override;
+    void OnMessageReceived(const std::string& topic, const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) override;
     dcl::any getGear(){return static_cast<int32_t>(gear_.load());}
     dcl::any getVehicleState(){return static_cast<int32_t>(vehicle_state_.load());}
     dcl::any getAutoModeEnable() {return autoModeEnable_.load();}

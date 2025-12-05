@@ -2,6 +2,7 @@
 #include "planner_reward.h"
 #include <cmath>
 
+namespace dcl::planner {
 double RewardCalculator::computeReward(const StateInfo& prev_state_info, 
                                       const StateInfo& new_state_info) {
     double reward = 0.0;
@@ -38,4 +39,5 @@ double RewardCalculator::computeShapedReward(double distance_to_sparse) {
         return 0.0;
     }
     return 2.0 * exp(-0.1 * distance_to_sparse);
+}
 }

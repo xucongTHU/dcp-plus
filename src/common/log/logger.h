@@ -36,31 +36,14 @@ enum LOG_LEVEL {
 /**
  * log API short definition
  */
-
-// #define LOG_ERROR(...)                                                  \
-//   logger::Logger::instance()->Log(LOG_LEVEL_ERROR, LOG_TAG, __FILE__,   \
-//                                        __LINE__, __VA_ARGS__)
-// #define LOG_WARN(...)                                                   \
-//   logger::Logger::instance()->Log(LOG_LEVEL_WARNING, LOG_TAG, __FILE__, \
-//                                        __LINE__, __VA_ARGS__)
-// #define LOG_INFO(...)                                                   \
-//   logger::Logger::instance()->Log(LOG_LEVEL_INFO, LOG_TAG, __FILE__,    \
-//                                        __LINE__, __VA_ARGS__)
-// #define LOG_CSV(...)                                                    \
-//   logger::Logger::instance()->Log( LOG_LEVEL_INFO, __FILE__,            \
-//                                        __LINE__, __VA_ARGS__)
-// #define LOG_V(v, ...)                                                   \
-//   logger::Logger::instance()->Log(v, LOG_TAG, __FILE__, __LINE__,       \
-//                                        __VA_ARGS__)
-
-#define AD_INFO(TAG,...)                                                \
-  dcl::common::Logger::instance()->Log(LOG_LEVEL_INFO, #TAG, __FILE__,       \
+#define AD_INFO(TAG,...)                                                 \
+  dcl::common::Logger::instance()->Log(LOG_LEVEL_INFO, #TAG, __FILE__,   \
     __LINE__, __VA_ARGS__)
-#define AD_ERROR(TAG, ...)                                              \
-  dcl::common::Logger::instance()->Log(LOG_LEVEL_ERROR, #TAG, __FILE__,      \
+#define AD_ERROR(TAG, ...)                                               \
+  dcl::common::Logger::instance()->Log(LOG_LEVEL_ERROR, #TAG, __FILE__,  \
     __LINE__, __VA_ARGS__)
-#define AD_WARN(TAG,...)                                                \
-  dcl::common::Logger::instance()->Log(LOG_LEVEL_WARNING, #TAG, __FILE__,    \
+#define AD_WARN(TAG,...)                                                  \
+  dcl::common::Logger::instance()->Log(LOG_LEVEL_WARNING, #TAG, __FILE__, \
     __LINE__, __VA_ARGS__)
 
 

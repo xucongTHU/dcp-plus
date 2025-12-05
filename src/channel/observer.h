@@ -7,7 +7,7 @@
 #ifndef OBSERVER_H
 #define OBSERVER_H
 
-#include "ad_rscl/ad_rscl.h"
+// #include "ad_rscl/ad_rscl.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -15,6 +15,26 @@
 #include <string>
 #include <functional>
 
+
+// TODO: 替换为实际的ReceivedMsg定义
+struct ReceivedMsgBase {
+    virtual ~ReceivedMsgBase() = default;
+};
+
+template<typename T>
+struct ReceivedMsg : public ReceivedMsgBase {
+    T data;
+};
+
+namespace senseAD {
+namespace rscl {
+namespace comm {
+    struct RawMessage {
+        std::string content;
+    };
+}
+}
+}
 
 using TRawMessagePtr = std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>;
 
@@ -25,7 +45,7 @@ class Observer {
 public:
     virtual ~Observer() = default;
 
-    virtual void onMessageReceived(const std::string& topic, const TRawMessagePtr& subject) = 0;
+    virtual void OnMessageReceived(const std::string& topic, const TRawMessagePtr& subject) = 0;
 };
 
 class Subject {
@@ -46,7 +66,7 @@ public:
 
     void notifyAll(const std::string& topic, const TRawMessagePtr& subject) {
         for (const auto& observer : observers_) {
-            observer->onMessageReceived(topic, subject);
+            observer->OnMessageReceived(topic, subject);
         }
         // std::cout << "notify all observers, topic: " << topic << std::endl;
     }

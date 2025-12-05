@@ -2,6 +2,7 @@
 #include "semantic_filter.h"
 #include <algorithm>
 
+namespace dcl::planner {
 SemanticFilter::SemanticFilter(double conf_threshold)
     : confidence_threshold(conf_threshold) {
     // By default, don't filter any specific types
@@ -68,4 +69,5 @@ void SemanticFilter::removeFilterType(SemanticType type) {
         std::remove(filter_types.begin(), filter_types.end(), type), 
         filter_types.end()
     );
+}
 }

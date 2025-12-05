@@ -5,10 +5,10 @@
 #include <memory>
 #include <string>
 
-#include "channel/observer.h"
+#include "observer.h"
 #include "recorder/data_storage.h"
 #include "trigger_engine/trigger_manager.h"
-// #include "uploader/data_reporter.h"
+// #include "../uploader/data_reporter.h"
 
 
 namespace dcl {
@@ -31,7 +31,7 @@ class ChannelManager : public Observer {
   private:
     bool InitSubscribers(); 
     bool InitObservers();
-    void onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) override;
+    void OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) override;
 
 
     std::shared_ptr<senseAD::rscl::comm::Node> node_{nullptr};

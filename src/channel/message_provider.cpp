@@ -5,7 +5,7 @@
 namespace dcl {
 namespace channel {
 
-void MessageProvider::onMessageReceived(const std::string& topic,
+void MessageProvider::OnMessageReceived(const std::string& topic,
             const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg)
 {
     ///TODO

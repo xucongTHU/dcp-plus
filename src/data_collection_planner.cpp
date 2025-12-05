@@ -9,18 +9,18 @@
 namespace dcl {
 DataCollectionPlanner::DataCollectionPlanner(const std::string& config_file) {
     nav_planner_ = std::make_unique<planner::NavPlannerNode>(config_file);
-    data_storage_ = std::make_unique<DataStorage>();
-    data_uploader_ = std::make_unique<DataUploader>();
-    trigger_manager_ = std::make_unique<TriggerManager>();
-    strategy_parser_ = std::make_unique<StrategyParser>();
-    mission_area_ = MissionArea(Point(50.0, 50.0), 30.0); // Default mission area
+    data_storage_ = std::make_unique<recorder::DataStorage>();
+    data_uploader_ = std::make_unique<uploader::DataUploader>();
+    trigger_manager_ = std::make_unique<trigger::TriggerManager>();
+    strategy_parser_ = std::make_unique<trigger::StrategyParser>();
+    mission_area_ = MissionArea(dcl::planner::Point(50.0, 50.0), 30.0); // Default mission area
 }
 
 bool DataCollectionPlanner::initialize() {
     AD_INFO(DataCollectionPlanner, "Initializing Data Collection Planner");
 
     // Load strategy configuration
-    StrategyConfig s_config_;
+    trigger::StrategyConfig s_config_;
     if (!strategy_parser_->LoadConfigFromFile("/workspaces/ad_data_closed_loop/config/default_strategy_config.json", config_)) {
         AD_ERROR(DataCollectionPlanner, "Failed to load strategy configuration, using defaults");
     }
@@ -48,8 +48,6 @@ bool DataCollectionPlanner::initialize() {
     //     return false;
     // }
     
-    
-    
     AD_INFO(DataCollectionPlanner, "Data Collection Planner initialized successfully");
     return true;
 }
@@ -61,24 +59,24 @@ void DataCollectionPlanner::setMissionArea(const MissionArea& area) {
     AD_INFO(DataCollectionPlanner, "Mission area set to center: (%s, ), radius: %s", std::to_string(area.center.x).c_str(), std::to_string(area.radius).c_str());
 }
 
-std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
+std::vector<dcl::planner::Point> DataCollectionPlanner::planDataCollectionMission() {
     AD_INFO(DataCollectionPlanner, "Planning data collection mission");
     
     // Plan global path using navigation planner
-    std::vector<Point> collection_path = nav_planner_->planGlobalPath();
+    std::vector<dcl::planner::Point> collection_path = nav_planner_->planGlobalPath();
     
     // Apply data collection strategy to optimize waypoints
-    std::vector<Point> optimized_waypoints;
+    std::vector<dcl::planner::Point> optimized_waypoints;
     
     if (!collection_path.empty()) {
         // Use the navigation planner's sampling optimizer to find optimal waypoints
-        Point current_pos = nav_planner_->getCurrentPosition();
+        dcl::planner::Point current_pos = nav_planner_->getCurrentPosition();
         
         // For each segment of the path, find optimal data collection points
         for (size_t i = 0; i < collection_path.size(); ++i) {
             // Check if we should collect data at this point based on strategy
             if (trigger_manager_ && trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
-                Point optimal_point = nav_planner_->optimizeNextWaypoint();
+                dcl::planner::Point optimal_point = nav_planner_->optimizeNextWaypoint();
                 optimized_waypoints.push_back(optimal_point);
                 
                 // Update current position for next optimization
@@ -95,14 +93,14 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
     return optimized_waypoints;
 }
 
-void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path) {
+void DataCollectionPlanner::executeDataCollection(const std::vector<dcl::planner::Point>& path) {
     AD_INFO(DataCollectionPlanner, "Executing data collection along path with %s waypoints", std::to_string(path.size()).c_str());
     
     // Execute data collection at each waypoint using real data collection modules
     std::vector<DataPoint> new_data;
     
     for (size_t i = 0; i < path.size(); ++i) {
-        const Point& waypoint = path[i];
+        const dcl::planner::Point& waypoint = path[i];
         
         // Update planner's current position
         nav_planner_->setCurrentPosition(waypoint);
@@ -273,7 +271,7 @@ std::vector<DataCollectionAnalyzer::Region> DataCollectionAnalyzer::detectSparse
     for (int y = 0; y < heatmap.height; y++) {
         for (int x = 0; x < heatmap.width; x++) {
             if (heatmap.density_values[y][x] < sparse_threshold) {
-                Point center(x * heatmap.resolution, y * heatmap.resolution);
+                dcl::planner::Point center(x * heatmap.resolution, y * heatmap.resolution);
                 Region region(center, heatmap.resolution, true);
                 sparse_regions.push_back(region);
             }

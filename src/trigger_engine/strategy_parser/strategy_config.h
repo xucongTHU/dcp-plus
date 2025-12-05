@@ -4,8 +4,7 @@
 // Tsung Xu<xucong@t3caic.com>
 //
 
-#ifndef STRATEGYCONFIG_H
-#define STRATEGYCONFIG_H
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -62,4 +61,3 @@ struct StrategyConfig {
 
 }
 }
-#endif //STRATEGYCONFIG_H

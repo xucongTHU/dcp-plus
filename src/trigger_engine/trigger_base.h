@@ -13,6 +13,7 @@
 #include "common/log/logger.h"
 #include "strategy_parser/strategy_config.h"
 #include "idl/dcl_trigger.h"
+#include "common/trigger_checker.h"
 #include "channel/observer.h"
 
 namespace dcl {

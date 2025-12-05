@@ -13,7 +13,7 @@
 #include <memory>
 #include <functional>
 
-namespace shadow {
+namespace dcl {
 namespace trigger {
 
 class ExpressionParser {

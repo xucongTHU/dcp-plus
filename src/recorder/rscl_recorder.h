@@ -73,7 +73,7 @@ class RsclRecorder : public Observer {
 
   private:
     bool InitRingBuffers();
-    void onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) override;
+    void OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) override;
     bool WriteBuffersToFile(const std::string& outputfilePath);
 
   private: 

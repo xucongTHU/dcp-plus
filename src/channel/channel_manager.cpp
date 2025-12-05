@@ -80,7 +80,7 @@ bool ChannelManager::InitObservers() {
     return true;
 }
 
-void ChannelManager::onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
+void ChannelManager::OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
     auto cur_clock_mode = senseAD::base::time::ClockMode::SYSTEM_TIME;
     uint64_t message_time = senseAD::base::time::Time::Now(&cur_clock_mode).ToMicrosecond();
     auto header = msg->Header();

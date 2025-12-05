@@ -67,43 +67,149 @@ RewardCalculator 实现了强化学习的奖励函数：
 
 ## 3. 工作流程
 
-- 初始化：NavPlannerNode 初始化所有组件并加载配置参数
-- 成本地图更新：使用收集的数据点更新成本地图
-- 路径规划：根据算法选择（A*或PPO）进行路径规划
-- 路径验证：检查规划的路径是否满足约束条件
-- 采样优化：优化下一个数据采集点
-- 奖励计算：计算状态转移的奖励
-- 覆盖率更新：更新覆盖率度量
+### Overview
 
-## 4. 算法特点
+This document describes the cloud-edge architecture for reinforcement learning-based path planning. The system consists of two main components:
 
-### 4.1 双模式路径规划
+1. **Cloud-side Training**: Training PPO models using collected data
+2. **Edge-side Inference**: Deploying trained models for real-time path planning
 
-系统支持两种路径规划算法的动态切换：
+### Architecture
 
-- A*算法：稳定可靠的启发式搜索算法，适合基础应用
-- PPO算法：基于强化学习的先进算法，能够适应动态环境并优化长期奖励
+```
+┌─────────────────────┐                    ┌─────────────────────┐
+│     Cloud Side      │    ONNX Model      │     Edge Side       │
+│                     │    (Export)        │                     │
+│  ┌──────────────┐   │    Format          │   ┌─────────────┐   │
+│  │   Training   │───┼────────────────────┼──▶│  Inference  │   │
+│  │  (Python)    │   │                    │   │ (C++/ONNX RT) │
+│  └──────────────┘   │                    │   └─────────────┘   │
+│          │          │                    │          │          │
+│          ▼          │                    │          ▼          │
+│  ┌──────────────┐   │    Data Logs       │   ┌─────────────┐   │
+│  │ Data Storage │   │    (Telemetry)     │   │    PPO      │   │
+│  └──────────────┘◀──┼────────────────────┼───┤  Agent      │   │
+│                     │                    │   └─────────────┘   │
+└─────────────────────┘                    └─────────────────────┘
+```
 
-### 4.2 数据驱动的成本调整
+### Cloud-Side Training
 
-成本地图会根据历史数据采集模式动态调整：
+The cloud-side component is responsible for training the PPO models using data collected from edge devices:
 
-- 稀疏区域成本降低，鼓励探索
-- 高密度区域成本增加，避免冗余采集
+1. Collect telemetry data from vehicles
+2. Train PPO models using curriculum learning
+3. Export trained models as ONNX files
 
-### 4.3 强化学习集成
+#### Model Training Process
 
-通过PPO算法，系统可以学习到更优的路径规划策略：
+1. **Data Collection**: Vehicles collect path planning experiences during operation
+2. **Data Upload**: Telemetry data is uploaded to the cloud
+3. **Model Training**: PPO models are trained using the collected data
+4. **Model Export**: Trained models are exported as ONNX files
 
-- 使用演员-评论家架构
-- 支持在线学习和权重更新
-- 可以通过奖励函数优化特定目标
+#### Training Commands
 
-## 5. 配置和参数
+```bash
+cd training
+python curriculum_train.py --config config/advanced_ppo_config.yaml
+```
 
-系统通过YAML配置文件进行配置，主要参数包括：
+### Edge-Side Inference
 
-- `sparse_threshold`：稀疏区域的数据密度阈值
-- `exploration_bonus`：对访问稀疏区域的行为给予成本奖励
-- `redundancy_penalty`：对高密度区域增加额外成本
-- `grid_resolution`：密度计算所用网格分辨率
+The edge-side component performs real-time inference using the deployed models:
+
+1. Load ONNX models using ONNX Runtime
+2. Perform inference for state-action selection
+3. Execute path planning decisions
+
+#### Inference Process
+
+1. **Model Loading**: Load ONNX model at startup
+2. **State Observation**: Gather current state information
+3. **Action Selection**: Use model to select optimal action
+4. **Execution**: Execute the selected action
+
+#### Integration with Other Modules
+
+The PPO agent integrates with other modules in the navigation planner:
+
+1. **RoutePlanner**: Uses PPO agent for reinforcement learning-based path planning
+2. **CostMap**: Provides cost information for state representation
+3. **Trigger Engine**: Determines when to record data based on exploration needs
+4. **Ring Buffer**: Stores recent experiences for potential retraining
+
+### Model Format
+
+Models are exported in ONNX format for easy deployment:
+
+1. **Format**: ONNX (.onnx files)
+2. **Serialization**: Contains both network architecture and weights
+3. **Portability**: Can be loaded directly in ONNX Runtime without Python dependencies
+
+### Implementation Details
+
+#### ONNX Runtime Integration
+
+The PPO agent uses ONNX Runtime for inference:
+
+1. **Model Loading**: Models are loaded using `Ort::Session`
+2. **Inference**: Forward passes are performed using the loaded session
+3. **Fallback**: Random action selection if model loading fails
+
+#### State Representation
+
+States are represented as feature vectors with normalized values according to the following specification:
+
+```
+state = [
+  norm_lat, norm_lon,            // 归一化坐标
+  heatmap_summary(16 values),    // 局部热力图池化向量
+  last_n_actions(4),             // 历史动作 one-hot 或 embeddings
+  remaining_budget_norm,         // 时间/距离
+  local_traffic_density,         // scalar
+  ...                            // 总长度 = state_dim
+]
+```
+
+Where:
+- norm_lat, norm_lon: Normalized latitude and longitude coordinates (range [0, 1])
+- heatmap_summary: 16-value vector representing pooled local heatmap features
+- last_n_actions: One-hot encoding or embeddings of the last 4 actions
+- remaining_budget_norm: Normalized remaining time/distance budget (range [0, 1])
+- local_traffic_density: Local traffic density scalar value (range [0, 1])
+
+Minimum state_dim is 24 (2 + 16 + 4 + 1 + 1).
+
+#### Action Space
+
+The action space consists of 4 discrete movements:
+1. Right (x+1, y)
+2. Up (x, y+1)
+3. Left (x-1, y)
+4. Down (x, y-1)
+
+### Expected ONNX Model Format
+
+The ONNX model should have:
+- **Input**: Named "input" with shape [batch_size, state_dim] 
+  - state_dim >= 24 for full specification compliance
+- **Outputs**: 
+  - "output_policy" with shape [batch_size, action_dim] containing logits (action_dim=4)
+  - "output_value" with shape [batch_size, 1] (state value)
+
+### Deployment Process
+
+1. **Train Model**: Train PPO model in the cloud
+2. **Export Model**: Export as ONNX using `torch.onnx.export()` or similar
+3. **Deploy Model**: Transfer to edge device
+4. **Load Model**: Load using ONNX Runtime at startup
+5. **Run Inference**: Perform real-time inference
+
+### Benefits of Cloud-Edge Architecture
+
+1. **Scalable Training**: Leverage cloud computing resources for training
+2. **Low Latency**: Real-time inference on edge devices
+3. **Bandwidth Efficient**: Only transfer model weights, not raw data
+4. **Privacy Preserving**: Keep raw data on edge devices
+5. **Continuous Improvement**: Regular model updates from cloud

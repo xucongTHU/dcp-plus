@@ -1,38 +1,39 @@
-// planner_optRoute.h
-#ifndef PLANNER_OPTROUTE_H
-#define PLANNER_OPTROUTE_H
+// planner_route_optimize.h
+#ifndef PLANNER_ROUTE_OPTIMIZE_H
+#define PLANNER_ROUTE_OPTIMIZE_H
 
+#include <vector>
+#include <memory>
 #include "../costmap/costmap.h"
 #include "ppo_agent.h"
-#include <vector>
 
+namespace dcl {
+namespace planner {
 
-namespace dcl::planner {
+// Forward declarations
+class PPOAgent;
 struct MapData {
-    CostMap costmap;
+    int width, height;
+    double resolution;
     
-    MapData(int width, int height, double resolution) : costmap(width, height, resolution) {}
+    MapData(int w = 0, int h = 0, double res = 1.0) 
+        : width(w), height(h), resolution(res) {}
     
     CostMap toCostMap() const {
-        return costmap;
+        return CostMap(width, height, resolution);
     }
 };
 
 struct DataStats {
-    std::vector<std::vector<double>> density_map;
-    int width, height;
+    double sparse_threshold;
+    double exploration_bonus;
+    double redundancy_penalty;
     
-    DataStats(int width, int height) : width(width), height(height) {
-        density_map.resize(height, std::vector<double>(width, 0.0));
-    }
+    DataStats(double threshold = 0.2, double bonus = 0.5, double penalty = 0.4)
+        : sparse_threshold(threshold), exploration_bonus(bonus), redundancy_penalty(penalty) {}
     
     double dataDensity(const Point& position) const {
-        int x = static_cast<int>(position.x);
-        int y = static_cast<int>(position.y);
-        
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-            return density_map[y][x];
-        }
+        // Simplified implementation
         return 0.0;
     }
 };
@@ -43,8 +44,7 @@ private:
     double exploration_bonus;
     double redundancy_penalty;
     
-    // PPO agent for reinforcement learning-based path planning
-    std::unique_ptr<rl::PPOAgent> ppo_agent_;
+    std::unique_ptr<PPOAgent> ppo_agent_;
 
 public:
     RoutePlanner(double sparse_threshold = 0.2, 
@@ -89,15 +89,20 @@ public:
      * @brief Set PPO agent for RL-based planning
      * @param agent PPO agent
      */
-    void setPPOAgent(std::unique_ptr<rl::PPOAgent> agent) { ppo_agent_ = std::move(agent); }
+    void setPPOAgent(std::unique_ptr<PPOAgent> agent) { 
+        ppo_agent_ = std::move(agent); 
+    }
     
     /**
      * @brief Get PPO agent
-     * @return Reference to PPO agent
+     * @return Pointer to PPO agent
      */
-    rl::PPOAgent* getPPOAgent() { return ppo_agent_.get(); }
+    PPOAgent* getPPOAgent() { 
+        return ppo_agent_.get(); 
+    }
 };
 
-} // namespace dcl::planner
+} // namespace planner
+} // namespace dcl
 
-#endif // PLANNER_OPTROUTE_H
+#endif // PLANNER_ROUTE_OPTIMIZE_H

@@ -6,7 +6,8 @@
 #include <random>
 
 
-namespace dcl::planner {
+namespace dcl {
+namespace planner {
 RoutePlanner::RoutePlanner(double sparse_threshold, 
                           double exploration_bonus,
                           double redundancy_penalty)
@@ -14,8 +15,13 @@ RoutePlanner::RoutePlanner(double sparse_threshold,
     , exploration_bonus(exploration_bonus)
     , redundancy_penalty(redundancy_penalty) {
     // Initialize PPO agent with default configuration
-    rl::PPOConfig config;
-    ppo_agent_ = std::make_unique<rl::PPOAgent>(config);
+    PPOConfig config;
+    ppo_agent_ = std::make_unique<PPOAgent>(config);
+    
+    // 设置默认state_dim为24，符合规范中的最小值
+    if (ppo_agent_) {
+        ppo_agent_->setStateDim(24);
+    }
 }
 
 void RoutePlanner::optRoute(const MapData& map, const DataStats& stats) {
@@ -88,11 +94,71 @@ std::vector<Point> RoutePlanner::computePPOPath(const CostMap& costmap,
         Point(0, -1)   // Down
     };
     
+    // Track last n actions (简化版本，只记录最后4个动作)
+    std::vector<int> last_actions(4, 0);  // 初始化为0（假设动作0是默认动作）
+    
     // Move until goal is reached or max steps exceeded
     while (steps < max_steps && 
            (std::abs(current_pos.x - goal.x) > 0.5 || std::abs(current_pos.y - goal.y) > 0.5)) {
-        // Select action using PPO agent
-        int action_idx = ppo_agent_->selectAction(current_pos, false);
+        // Create a complex state representation according to the specification
+        State state;
+        
+        // 1. 归一化坐标 (norm_lat, norm_lon)
+        double norm_x = static_cast<double>(current_pos.x) / costmap.getWidth();
+        double norm_y = static_cast<double>(current_pos.y) / costmap.getHeight();
+        state.addFeature(norm_x);
+        state.addFeature(norm_y);
+        
+        // 2. 热力图Summary (heatmap_summary, 16个值)
+        // 简化实现：使用周围区域的数据密度作为热力图特征
+        for (int i = 0; i < 16; i++) {
+            // 模拟16个热力图特征值
+            int offset_x = (i % 4) - 1;
+            int offset_y = (i / 4) - 1;
+            int check_x = static_cast<int>(current_pos.x) + offset_x;
+            int check_y = static_cast<int>(current_pos.y) + offset_y;
+            
+            if (costmap.isValidCell(check_x, check_y)) {
+                state.addFeature(costmap.getDataDensity(check_x, check_y));
+            } else {
+                state.addFeature(0.0);
+            }
+        }
+        
+        // 3. 历史动作 (last_n_actions, 4个值)
+        for (int action : last_actions) {
+            state.addFeature(static_cast<double>(action));
+        }
+        
+        // 4. 剩余预算 (remaining_budget_norm)
+        double remaining_budget = static_cast<double>(max_steps - steps) / max_steps;
+        state.addFeature(remaining_budget);
+        
+        // 5. 局部交通密度 (local_traffic_density)
+        // 简化实现：使用当前位置附近单元格的平均成本作为交通密度的代理
+        double local_density = 0.0;
+        int count = 0;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int check_x = static_cast<int>(current_pos.x) + dx;
+                int check_y = static_cast<int>(current_pos.y) + dy;
+                if (costmap.isValidCell(check_x, check_y)) {
+                    local_density += costmap.getCellCost(check_x, check_y);
+                    count++;
+                }
+            }
+        }
+        if (count > 0) {
+            local_density /= count;
+        }
+        state.addFeature(local_density);
+        
+        // Select action using PPO agent (deterministic for path planning)
+        int action_idx = ppo_agent_->selectAction(state, true);
+        
+        // 更新历史动作队列
+        last_actions.erase(last_actions.begin());
+        last_actions.push_back(action_idx);
         
         // Apply action
         if (action_idx >= 0 && action_idx < static_cast<int>(actions.size())) {
@@ -116,4 +182,5 @@ std::vector<Point> RoutePlanner::computePPOPath(const CostMap& costmap,
     return path;
 }
 
-} // namespace dcl::planner
+} // namespace planner
+} // namespace dcl

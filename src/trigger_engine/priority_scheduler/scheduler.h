@@ -9,8 +9,6 @@
 
 #include <memory>
 #include <string>
-// #include "trigger/base/TriggerBase.h"
-#include "../strategy_config.h"
 #include "../trigger_base.h"
 
 namespace dcl {

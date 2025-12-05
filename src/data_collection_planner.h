@@ -14,28 +14,21 @@
 #include "recorder/data_storage.h"
 #include "uploader/data_uploader.h"
 
-
-using namespace dcl;
-using namespace dcl::common;
-using namespace dcl::uploader;
-using namespace dcl::recorder;
-using namespace dcl::trigger;
-
 // Forward declarations for data collection components
 struct DataPoint {
-    Point position;
+    dcl::planner::Point position;
     std::string sensor_data;
     double timestamp;
     
-    DataPoint(const Point& pos = Point(), const std::string& data = "", double time = 0.0)
+    DataPoint(const dcl::planner::Point& pos = dcl::planner::Point(), const std::string& data = "", double time = 0.0)
         : position(pos), sensor_data(data), timestamp(time) {}
 };
 
 struct MissionArea {
-    Point center;
+    dcl::planner::Point center;
     double radius;
     
-    MissionArea(const Point& c = Point(), double r = 0.0) : center(c), radius(r) {}
+    MissionArea(const dcl::planner::Point& c = dcl::planner::Point(), double r = 0.0) : center(c), radius(r) {}
 };
 
 namespace dcl {
@@ -44,11 +37,11 @@ class DataCollectionPlanner {
 private:
     std::shared_ptr<rscl::Node> node_;
     std::unique_ptr<planner::NavPlannerNode> nav_planner_;
-    std::unique_ptr<DataStorage> data_storage_;
-    std::unique_ptr<DataUploader> data_uploader_;
-    std::unique_ptr<TriggerManager> trigger_manager_;
-    std::unique_ptr<StrategyParser> strategy_parser_;
-    StrategyConfig strategy_config_;
+    std::unique_ptr<recorder::DataStorage> data_storage_;
+    std::unique_ptr<uploader::DataUploader> data_uploader_;
+    std::unique_ptr<trigger::TriggerManager> trigger_manager_;
+    std::unique_ptr<trigger::StrategyParser> strategy_parser_;
+    trigger::StrategyConfig strategy_config_;
     common::AppConfigData config_;
     
     std::vector<DataPoint> collected_data_;
@@ -75,13 +68,13 @@ public:
      * @brief Plan an optimal path for data collection mission
      * @return Path that optimizes data coverage
      */
-    std::vector<Point> planDataCollectionMission();
+    std::vector<dcl::planner::Point> planDataCollectionMission();
     
     /**
      * @brief Execute data collection along a path using real data collection modules
      * @param path Path to follow for data collection
      */
-    void executeDataCollection(const std::vector<Point>& path);
+    void executeDataCollection(const std::vector<dcl::planner::Point>& path);
     
     /**
      * @brief Update planner with newly collected data
@@ -125,11 +118,11 @@ public:
     };
     
     struct Region {
-        Point center;
+        dcl::planner::Point center;
         double radius;
         bool is_sparse;
         
-        Region(const Point& c = Point(), double r = 0.0, bool sparse = false)
+        Region(const dcl::planner::Point& c = dcl::planner::Point(), double r = 0.0, bool sparse = false)
             : center(c), radius(r), is_sparse(sparse) {}
     };
     

@@ -69,7 +69,7 @@ bool RsclRecorder::InitRingBuffers() {
     return true;
 }
 
-void RsclRecorder::onMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
+void RsclRecorder::OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
     if (!msg) return;
     uint64_t message_timestamp = common::GetCurrentTimestamp();
     // LOG_INFO("Received message on topic: %s, timestamp: %llu", topic.c_str(), message_timestamp);

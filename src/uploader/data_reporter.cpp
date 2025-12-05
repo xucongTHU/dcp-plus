@@ -35,7 +35,7 @@ bool DataReporter::Init(const std::shared_ptr<senseAD::rscl::comm::Node>& node, 
     return true;
 }
 
-void DataReporter::onMessageReceived(const std::string& topic, const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) {
+void DataReporter::OnMessageReceived(const std::string& topic, const std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>& msg) {
     if (topic == "/canbus/vehicle_report") {
         UpdateVehicleInfo(msg);
     }

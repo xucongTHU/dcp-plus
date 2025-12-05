@@ -6,7 +6,15 @@
 #include <memory>
 #include "../costmap/costmap.h"
 
-namespace dcl::planner::rl {
+// Forward declarations for ONNX Runtime
+namespace Ort {
+class Env;
+class Session;
+class Allocator;
+struct SessionOptions;
+}
+
+namespace dcl::planner {
 
 struct PPOConfig {
     double learning_rate = 3e-4;
@@ -34,14 +42,23 @@ class PPOAgent {
 private:
     PPOConfig config_;
     
-    // Neural network parameters (simplified representation)
-    // In a full implementation, these would be matrices and biases
-    std::vector<std::vector<double>> actor_network_;
-    std::vector<std::vector<double>> critic_network_;
+    // ONNX Runtime components for inference
+    std::unique_ptr<Ort::Env> env_;
+    std::unique_ptr<Ort::Session> session_;
+    std::unique_ptr<Ort::Allocator> allocator_;
     
     // Network dimensions
+    // state_dim_: 输入状态维度，根据 MODEL_SPEC.md 规范:
+    // state = [
+    //   norm_lat, norm_lon,            # 归一化坐标 (2个值)
+    //   heatmap_summary(16 values),    # 局部热力图池化向量 (16个值)
+    //   last_n_actions(4),             # 历史动作 one-hot 或 embeddings (4个值)
+    //   remaining_budget_norm,         # 时间/距离 (1个值)
+    //   local_traffic_density,         # 局部交通密度 (1个值)
+    //   ...                            # 其他特征
+    // ]
+    // 最小 state_dim_ 为 24 (2+16+4+1+1)
     int state_dim_;
-    int hidden_dim_;
     int action_dim_;
     
     // Training statistics
@@ -58,6 +75,7 @@ public:
      * @return Selected action index
      */
     int selectAction(const Point& state, bool deterministic = false);
+    int selectAction(const State& state, bool deterministic = false);
     
     /**
      * @brief Compute action probabilities for given state
@@ -65,6 +83,7 @@ public:
      * @return Action probabilities
      */
     std::vector<double> getActionProbabilities(const Point& state);
+    std::vector<double> getActionProbabilities(const State& state);
     
     /**
      * @brief Compute state value
@@ -72,6 +91,7 @@ public:
      * @return State value
      */
     double getValue(const Point& state);
+    double getValue(const State& state);
     
     /**
      * @brief Update agent based on collected trajectories
@@ -94,6 +114,13 @@ public:
     bool loadWeights(const std::string& filepath);
     
     /**
+     * @brief Load an ONNX model for inference
+     * @param filepath Path to the ONNX model
+     * @return True if successful
+     */
+    bool loadOnnxModel(const std::string& filepath);
+    
+    /**
      * @brief Get current total reward
      */
     double getTotalReward() const { return total_reward_; }
@@ -107,8 +134,20 @@ public:
      * @brief Reset training statistics
      */
     void resetStatistics();
+    
+    /**
+     * @brief Set state dimension
+     * @param dim New state dimension
+     */
+    void setStateDim(int dim) { state_dim_ = dim; }
+    
+    /**
+     * @brief Get state dimension
+     * @return Current state dimension
+     */
+    int getStateDim() const { return state_dim_; }
 };
 
-} // namespace dcl::planner::rl
+} // namespace dcl::planner
 
 #endif // PPO_AGENT_H
