@@ -1,18 +1,3 @@
-cmake_minimum_required(VERSION 3.14.0)
-
-project(ad_dcl)
-set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7)
-        set(CMAKE_CXX_STANDARD 17)
-    else()
-        set(CMAKE_CXX_STANDARD 14)
-    endif()
-endif()
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-# 收集所有源文件，排除main.cpp
 file(GLOB_RECURSE SOURCES 
     "*.cc" 
     "*.cpp" 
@@ -40,7 +25,6 @@ add_executable(${APP} main.cpp)
 target_link_libraries(${APP} PUBLIC
     ${PROJECT_NAME}
     yaml-cpp
-    Threads::Threads
 )
 
 # 如果启用了ONNX Runtime，则链接相关库
@@ -68,11 +52,23 @@ if(ENABLE_ROS2)
     target_compile_definitions(${APP} PRIVATE ENABLE_ROS2)
 endif()
 
+# 链接yaml-cpp相关库
+target_include_directories(${APP} PRIVATE ${YAMLCPP_PATH}/include)
+target_link_libraries(${APP} PRIVATE ${YAMLCPP_PATH}/lib/libyaml-cpp.so)
+
+# 复制yaml-cpp库文件到构建目录以便运行时链接
+file(GLOB YAMLCPP_LIBS "${YAMLCPP_PATH}/lib/*.so")
+file(COPY ${YAMLCPP_LIBS} DESTINATION ${CMAKE_BINARY_DIR})
+
 # 包含目录
 target_include_directories(${APP} 
     PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${YAML_CPP_INCLUDE_DIR}
+)
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # 安装目标

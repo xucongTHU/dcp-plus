@@ -5,31 +5,41 @@ cmake_minimum_required(VERSION 3.20)
 project(ad_data_closed_loop VERSION 1.0.0 LANGUAGES CXX)
 
 # 设置C++标准
-set(CMAKE_CXX_STANDARD 17)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7)
+        set(CMAKE_CXX_STANDARD 17)
+    else()
+        set(CMAKE_CXX_STANDARD 17)
+    endif()
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 编译器标志
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3")
 
-include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/exprtk
-        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nlohmann
-)
-
 # 检查是否启用ROS2支持
 option(ENABLE_ROS2 "Enable ROS2 support" OFF)
 option(DOWNLOAD_ONNXRUNTIME "Download ONNX Runtime if not found" ON)
+option(DOWNLOAD_YAMLCPP "Download yaml-cpp if not found" ON)
 
 # 查找包
-find_package(yaml-cpp REQUIRED)
 find_package(Threads REQUIRED)
 
 # ONNX Runtime支持
 set(ONNXRUNTIME_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/onnxruntime")
 set(CMAKE_PREFIX_PATH "${ONNXRUNTIME_PATH};${CMAKE_PREFIX_PATH}")
+
+# yaml-cpp支持
+set(YAMLCPP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/yaml-cpp")
+
+# include headers
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/exprtk
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nlohmann
+        ${YAMLCPP_PATH}/include
+)
 
 # 检查ONNX Runtime是否可用或需要下载
 if(NOT EXISTS "${ONNXRUNTIME_PATH}" AND DOWNLOAD_ONNXRUNTIME)
@@ -64,24 +74,32 @@ if(EXISTS "${ONNXRUNTIME_PATH}")
     message(STATUS "ONNX Runtime found: ${ONNXRUNTIME_PATH}")
 endif()
 
+# 检查yaml-cpp是否可用或需要下载
+if(NOT EXISTS "${YAMLCPP_PATH}" AND DOWNLOAD_YAMLCPP)
+    message(STATUS "yaml-cpp not found. Downloading...")
+    
+    # 下载并解压yaml-cpp
+    include(FetchContent)
+    FetchContent_Populate(
+        yamlcpp
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.tar.gz
+        SOURCE_DIR ${YAMLCPP_PATH}
+    )
+    message(STATUS "yaml-cpp downloaded to ${YAMLCPP_PATH}")
+endif()
+
+# 尝试查找yaml-cpp
+if(EXISTS "${YAMLCPP_PATH}")
+    set(HAVE_YAMLCPP TRUE)
+    message(STATUS "yaml-cpp found: ${YAMLCPP_PATH}")
+endif()
+
 # 条件性包含ROS2
 if(ENABLE_ROS2)
     find_package(rclcpp REQUIRED)
     find_package(sensor_msgs REQUIRED)
     find_package(nav_msgs REQUIRED)
     find_package(geometry_msgs REQUIRED)
-endif()
-
-# 查找ad_rscl库
-find_path(AD_RSCL_INCLUDE_DIR 
-    NAMES ad_rscl/ad_rscl.h
-    PATHS /usr/local/include /usr/include
-)
-
-if(AD_RSCL_INCLUDE_DIR)
-    message(STATUS "Found ad_rscl include directory: ${AD_RSCL_INCLUDE_DIR}")
-else()
-    message(WARNING "ad_rscl include directory not found")
 endif()
 
 # 获取所有链接目录

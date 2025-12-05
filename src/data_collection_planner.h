@@ -16,19 +16,19 @@
 
 // Forward declarations for data collection components
 struct DataPoint {
-    dcl::planner::Point position;
+    Point position;
     std::string sensor_data;
     double timestamp;
     
-    DataPoint(const dcl::planner::Point& pos = dcl::planner::Point(), const std::string& data = "", double time = 0.0)
+    DataPoint(const Point& pos = Point(), const std::string& data = "", double time = 0.0)
         : position(pos), sensor_data(data), timestamp(time) {}
 };
 
 struct MissionArea {
-    dcl::planner::Point center;
+    Point center;
     double radius;
     
-    MissionArea(const dcl::planner::Point& c = dcl::planner::Point(), double r = 0.0) : center(c), radius(r) {}
+    MissionArea(const Point& c = Point(), double r = 0.0) : center(c), radius(r) {}
 };
 
 namespace dcl {
@@ -68,13 +68,13 @@ public:
      * @brief Plan an optimal path for data collection mission
      * @return Path that optimizes data coverage
      */
-    std::vector<dcl::planner::Point> planDataCollectionMission();
+    std::vector<Point> planDataCollectionMission();
     
     /**
      * @brief Execute data collection along a path using real data collection modules
      * @param path Path to follow for data collection
      */
-    void executeDataCollection(const std::vector<dcl::planner::Point>& path);
+    void executeDataCollection(const std::vector<Point>& path);
     
     /**
      * @brief Update planner with newly collected data
@@ -118,11 +118,11 @@ public:
     };
     
     struct Region {
-        dcl::planner::Point center;
+        Point center;
         double radius;
         bool is_sparse;
         
-        Region(const dcl::planner::Point& c = dcl::planner::Point(), double r = 0.0, bool sparse = false)
+        Region(const Point& c = Point(), double r = 0.0, bool sparse = false)
             : center(c), radius(r), is_sparse(sparse) {}
     };
     
