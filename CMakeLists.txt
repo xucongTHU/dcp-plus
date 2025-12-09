@@ -35,10 +35,11 @@ set(YAMLCPP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/yaml-cpp")
 # include headers
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
         ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/exprtk
         ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nlohmann
-        ${YAMLCPP_PATH}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/yaml-cpp/include
 )
 
 # 检查ONNX Runtime是否可用或需要下载

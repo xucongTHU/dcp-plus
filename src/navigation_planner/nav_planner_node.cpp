@@ -33,7 +33,7 @@ bool NavPlannerNode::initialize() {
     double sparse_threshold = planner_parameters_["sparse_threshold"];
     double exploration_bonus = planner_parameters_["exploration_bonus"];
     double redundancy_penalty = planner_parameters_["redundancy_penalty"];
-    double grid_resolution = planner_parameters_["grid_resolution"];
+    // double grid_resolution = planner_parameters_["grid_resolution"]; // 未使用的变量
     
     // Update costmap resolution
     // Note: In a real implementation, we would recreate the costmap with new dimensions

@@ -17,9 +17,11 @@ namespace dcl::planner {
 PPOAgent::PPOAgent(const PPOConfig& config)
     : config_(config), state_dim_(24), action_dim_(4),  // 默认state_dim设为24，符合规范中的最小值
       total_reward_(0.0), episode_count_(0) {
+#ifdef HAVE_ONNXRUNTIME
     // Initialize ONNX Runtime environment
     env_ = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "");
     allocator_ = std::make_unique<Ort::Allocator>();
+#endif
     
     AD_INFO(PLANNER, "PPO Agent initialized with state_dim=%d, action_dim=%d", state_dim_, action_dim_);
 }
@@ -58,6 +60,7 @@ std::vector<double> PPOAgent::getActionProbabilities(const Point& state) {
 
 std::vector<double> PPOAgent::getActionProbabilities(const State& state) {
     // If we have a trained model, use it for inference
+#ifdef HAVE_ONNXRUNTIME
     if (session_) {
         try {
             // Create input tensor
@@ -121,6 +124,7 @@ std::vector<double> PPOAgent::getActionProbabilities(const State& state) {
             AD_ERROR(PLANNER, "ONNX model inference error: %s", e.what());
         }
     }
+#endif
     
     // Fallback to random probabilities if no model or error occurred
     std::vector<double> probs(action_dim_, 1.0 / action_dim_);
@@ -137,6 +141,7 @@ double PPOAgent::getValue(const Point& state) {
 
 double PPOAgent::getValue(const State& state) {
     // If we have a trained model, use it for inference
+#ifdef HAVE_ONNXRUNTIME
     if (session_) {
         try {
             // Create input tensor
@@ -184,6 +189,7 @@ double PPOAgent::getValue(const State& state) {
             AD_ERROR(PLANNER, "ONNX model inference error: %s", e.what());
         }
     }
+#endif
     
     // Fallback to zero value if no model or error occurred
     return 0.0;
@@ -222,6 +228,7 @@ bool PPOAgent::loadWeights(const std::string& filepath) {
 }
 
 bool PPOAgent::loadOnnxModel(const std::string& filepath) {
+#ifdef HAVE_ONNXRUNTIME
     try {
         // Create session options
         Ort::SessionOptions session_options;
@@ -237,6 +244,10 @@ bool PPOAgent::loadOnnxModel(const std::string& filepath) {
         AD_ERROR(PLANNER, "Failed to load ONNX model: %s", e.what());
         return false;
     }
+#else
+    AD_WARN(PLANNER, "ONNX Runtime not enabled, cannot load model from %s", filepath.c_str());
+    return false;
+#endif
 }
 
 void PPOAgent::resetStatistics() {

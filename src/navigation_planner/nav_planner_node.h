@@ -50,7 +50,7 @@ private:
     
 public:
     NavPlannerNode(const std::string& config_file = 
-                   "/workspaces/ad_data_closed_loop/infra/navigation_planner/config/planner_weights.yaml");
+                   "/workspaces/ad_data_closed_loop/src/navigation_planner/config/planner_weights.yaml");
     
     ~NavPlannerNode() = default;
     

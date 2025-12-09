@@ -19,6 +19,31 @@
 * **training:** implement advanced PPO training with configurable network and environment ([864865d](https://github.com/xucongTHU/ad_data_closed_loop/commit/864865d2052ee08edd0ec5cbad52d27e9910d43c))
 * **training:** implement extended state representation and benchmark improvements ([19d9918](https://github.com/xucongTHU/ad_data_closed_loop/commit/19d991842888e81e814007849d85d85c0ab126a8))
 * **utils:** add microsecond timestamp utility function ([86f1030](https://github.com/xucongTHU/ad_data_closed_loop/commit/86f1030199780ce85d6ab834e18e3d9f96aac3ea))
+* **yaml-cpp:** add the yaml-cpp shared library file. ([c0022f6](https://github.com/xucongTHU/ad_data_closed_loop/commit/c0022f6f72901c26566c43c7d46b8dc6bc98fe9e))
+
+
+
+
+
+#  (2025-12-09)
+
+
+### Features
+
+* **architecture:** add submodule and update project structure ([1fcdc5b](https://github.com/xucongTHU/ad_data_closed_loop/commit/1fcdc5b196d0f29e2d2fc882295e80444cd2c7b9))
+* **build:** add yaml-cpp dependency management and build support ([7193f57](https://github.com/xucongTHU/ad_data_closed_loop/commit/7193f5780e4c708ab2850c00bd5d887728cc906c))
+* **data-processor:** remove costmap_builder and feature_alignment modules ([b831e7a](https://github.com/xucongTHU/ad_data_closed_loop/commit/b831e7a5a0e0ce4b6a9cfd64801849120ddd68b7))
+* **logger:** migrate logging macros to AD_* format ([25e2577](https://github.com/xucongTHU/ad_data_closed_loop/commit/25e257759fdf8a468e324d3b53d65a509d3985db))
+* **navigation_planner:** add vehicle–edge PPO inference pipeline with ONNX Runtime integration ([2f9d363](https://github.com/xucongTHU/ad_data_closed_loop/commit/2f9d36310384afe940b9c62f4a89c267e8136637))
+* **navigation-planner:** add PPO-based path planning support ([b26ba05](https://github.com/xucongTHU/ad_data_closed_loop/commit/b26ba053de393ecf279dd9473015648d77be516b))
+* **planner:** implement navigation planning core, RL route optimization, and planning utils ([5ff2fcb](https://github.com/xucongTHU/ad_data_closed_loop/commit/5ff2fcb82d8bf499bb3c26bcb35a1ed6d7f99f51))
+* **scenario:** add implementation details for turn detection and standstill scenarios ([bd28ff4](https://github.com/xucongTHU/ad_data_closed_loop/commit/bd28ff4668c9a892df4cc55bf3540dcbdf9334be))
+* **scenario:** implement efficiency lane change and update scenario triggers ([51fbe0a](https://github.com/xucongTHU/ad_data_closed_loop/commit/51fbe0a6817a0410b86d8250faeccfa99189fc38))
+* **signal_smoother:** implement signal smoothing with EMA and SMA options ([d5787cd](https://github.com/xucongTHU/ad_data_closed_loop/commit/d5787cdd9e5feb77cd7e5e819c281f7ddff2776f))
+* **state-machine:** integrate state machine for data collection and navigation coordination ([c09fb7a](https://github.com/xucongTHU/ad_data_closed_loop/commit/c09fb7a89f962769ae068ffd8335eda7fdcdd90a))
+* **training:** implement advanced PPO training with configurable network and environment ([864865d](https://github.com/xucongTHU/ad_data_closed_loop/commit/864865d2052ee08edd0ec5cbad52d27e9910d43c))
+* **training:** implement extended state representation and benchmark improvements ([19d9918](https://github.com/xucongTHU/ad_data_closed_loop/commit/19d991842888e81e814007849d85d85c0ab126a8))
+* **utils:** add microsecond timestamp utility function ([86f1030](https://github.com/xucongTHU/ad_data_closed_loop/commit/86f1030199780ce85d6ab834e18e3d9f96aac3ea))
 * **yaml-cpp:** add the yaml-cpp shared library file. ([e86188f](https://github.com/xucongTHU/ad_data_closed_loop/commit/e86188fe1150228d795e1ad7a9cf124eb6d97bfc))
 
 

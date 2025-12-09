@@ -8,13 +8,14 @@
 #include <cmath>
 #include <limits>
 #include <yaml-cpp/yaml.h>
+#include <iostream>
 
 // Path implementation
 void Path::addPoint(const Point& point) {
     waypoints.push_back(point);
     if (waypoints.size() > 1) {
         Point prev = waypoints[waypoints.size()-2];
-        length += PlannerUtils::euclideanDistance(prev, point);
+        length += dcl::planner::PlannerUtils::euclideanDistance(prev, point);
     }
 }
 

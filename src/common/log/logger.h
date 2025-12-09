@@ -81,11 +81,11 @@ enum LogOutputMode {
   LOG_TO_FILE = 1 << 1,     // log output to file
 };
 
-// #define LOG_CHECK_AND_RETURN(EXPR)                                       \
-//   if (!(EXPR)) {                                                         \
-//     printf("Log is not inited, return\n");                               \
-//     return;                                                              \
-//   }
+#define LOG_CHECK_AND_RETURN(EXPR)                                       \
+  if (!(EXPR)) {                                                         \
+    printf("Log is not inited, return\n");                               \
+    return;                                                              \
+  }
 
 #define CHECK_AND_RETURN(condition, tag, msg, rval)                     \
   do {                                                                  \

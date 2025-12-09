@@ -9,10 +9,10 @@
 namespace dcl {
 DataCollectionPlanner::DataCollectionPlanner(const std::string& config_file) {
     nav_planner_ = std::make_unique<planner::NavPlannerNode>(config_file);
-    data_storage_ = std::make_unique<recorder::DataStorage>();
-    data_uploader_ = std::make_unique<uploader::DataUploader>();
-    trigger_manager_ = std::make_unique<trigger::TriggerManager>();
-    strategy_parser_ = std::make_unique<trigger::StrategyParser>();
+    // data_storage_ = std::make_unique<recorder::DataStorage>();
+    // data_uploader_ = std::make_unique<uploader::DataUploader>();
+    // trigger_manager_ = std::make_unique<trigger::TriggerManager>();
+    // strategy_parser_ = std::make_unique<trigger::StrategyParser>();
     mission_area_ = MissionArea(Point(50.0, 50.0), 30.0); // Default mission area
 }
 
@@ -20,28 +20,28 @@ bool DataCollectionPlanner::initialize() {
     AD_INFO(DataCollectionPlanner, "Initializing Data Collection Planner");
 
     // Load strategy configuration
-    trigger::StrategyConfig s_config_;
-    if (!strategy_parser_->LoadConfigFromFile("/workspaces/ad_data_closed_loop/config/default_strategy_config.json", config_)) {
-        AD_ERROR(DataCollectionPlanner, "Failed to load strategy configuration, using defaults");
-    }
+    // trigger::StrategyConfig s_config_;
+    // if (!strategy_parser_->LoadConfigFromFile("/workspaces/ad_data_closed_loop/config/default_strategy_config.json", config_)) {
+    //     AD_ERROR(DataCollectionPlanner, "Failed to load strategy configuration, using defaults");
+    // }
 
-    const auto& data_upload_config = common::AppConfig::getInstance().GetConfig().dataUpload;
+    // const auto& data_upload_config = common::AppConfig::getInstance().GetConfig().dataUpload;
     
     if (!nav_planner_->initialize()) {
         AD_ERROR(DataCollectionPlanner, "Failed to initialize navigation planner");
         return false;
     }
     
-    // Initialize data collection components
-    if (!data_storage_->Init(node_, s_config_)) {
-        AD_ERROR(DataCollectionPlanner, "Failed to initialize data storage");
-        return false;
-    }
+    // // Initialize data collection components
+    // if (!data_storage_->Init(node_, s_config_)) {
+    //     AD_ERROR(DataCollectionPlanner, "Failed to initialize data storage");
+    //     return false;
+    // }
     
-    if (!data_uploader_->Init(data_upload_config)) {
-        AD_ERROR(DataCollectionPlanner, "Failed to initialize data uploader");
-        return false;
-    }
+    // if (!data_uploader_->Init(data_upload_config)) {
+    //     AD_ERROR(DataCollectionPlanner, "Failed to initialize data uploader");
+    //     return false;
+    // }
     
     // if (!trigger_manager_->initialize()) {
     //     Logger::instance()->Log(LOG_LEVEL_ERROR, "DATA_COLLECTION", "Failed to initialize trigger manager");
@@ -75,13 +75,13 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
         // For each segment of the path, find optimal data collection points
         for (size_t i = 0; i < collection_path.size(); ++i) {
             // Check if we should collect data at this point based on strategy
-            if (trigger_manager_ && trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
+            // if (trigger_manager_ && trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
                 Point optimal_point = nav_planner_->optimizeNextWaypoint();
                 optimized_waypoints.push_back(optimal_point);
                 
                 // Update current position for next optimization
                 nav_planner_->setCurrentPosition(optimal_point);
-            }
+            // }
         }
         
         // Restore original position
@@ -106,39 +106,39 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
         nav_planner_->setCurrentPosition(waypoint);
         
         // Trigger data collection based on strategy
-        if (trigger_manager_ && trigger_manager_->shouldTrigger(waypoint)) {
-            AD_INFO(DataCollectionPlanner, "Triggering data collection at waypoint %s", std::to_string(i).c_str());
+        // if (trigger_manager_ && trigger_manager_->shouldTrigger(waypoint)) {
+        //     AD_INFO(DataCollectionPlanner, "Triggering data collection at waypoint %s", std::to_string(i).c_str());
             
-            // Create trigger context for data collection
-            auto trigger_context = std::make_shared<dcl::trigger::TriggerContext>();
-            trigger_context->position.x = waypoint.x;
-            trigger_context->position.y = waypoint.y;
-            trigger_context->triggerTimestamp = static_cast<uint64_t>(std::time(nullptr));
+        //     // Create trigger context for data collection
+        //     auto trigger_context = std::make_shared<dcl::trigger::TriggerContext>();
+        //     trigger_context->position.x = waypoint.x;
+        //     trigger_context->position.y = waypoint.y;
+        //     trigger_context->triggerTimestamp = static_cast<uint64_t>(std::time(nullptr));
             
-            // Trigger data collection using data storage module
-            data_storage_->AddTrigger(*trigger_context);
+        //     // Trigger data collection using data storage module
+        //     data_storage_->AddTrigger(*trigger_context);
             
-            // Collect real sensor data using data collection modules
-            std::string sensor_data = "collected_data_at_" + std::to_string(waypoint.x) + "_" + std::to_string(waypoint.y);
+        //     // Collect real sensor data using data collection modules
+        //     std::string sensor_data = "collected_data_at_" + std::to_string(waypoint.x) + "_" + std::to_string(waypoint.y);
             
-            // Create data point with real sensor data
-            DataPoint data_point(waypoint, sensor_data, static_cast<double>(std::time(nullptr)));
-            new_data.push_back(data_point);
+        //     // Create data point with real sensor data
+        //     DataPoint data_point(waypoint, sensor_data, static_cast<double>(std::time(nullptr)));
+        //     new_data.push_back(data_point);
             
-            // Store data locally
-            data_storage_->storeData(data_point);
+        //     // Store data locally
+        //     data_storage_->storeData(data_point);
             
-            // Compute reward for this action
-            StateInfo current_state;
-            current_state.visited_new_sparse = trigger_manager_->isInSparseArea(waypoint);
-            current_state.trigger_success = !sensor_data.empty();
-            current_state.collision = false; // Would be determined by real sensor data
-            current_state.distance_to_sparse = trigger_manager_->getDistanceToNearestSparseArea(waypoint);
+        //     // Compute reward for this action
+        //     StateInfo current_state;
+        //     current_state.visited_new_sparse = trigger_manager_->isInSparseArea(waypoint);
+        //     current_state.trigger_success = !sensor_data.empty();
+        //     current_state.collision = false; // Would be determined by real sensor data
+        //     current_state.distance_to_sparse = trigger_manager_->getDistanceToNearestSparseArea(waypoint);
             
-            // In a real implementation, we would track previous state to compute reward
-            double reward = nav_planner_->computeStateReward(StateInfo(), current_state);
-            AD_INFO(DataCollectionPlanner, "Waypoint %s reward: %s", std::to_string(i).c_str(), std::to_string(reward).c_str());
-        }
+        //     // In a real implementation, we would track previous state to compute reward
+        //     double reward = nav_planner_->computeStateReward(StateInfo(), current_state);
+        //     AD_INFO(DataCollectionPlanner, "Waypoint %s reward: %s", std::to_string(i).c_str(), std::to_string(reward).c_str());
+        // }
     }
     
     // Update with new data
@@ -175,20 +175,20 @@ void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_
 void DataCollectionPlanner::uploadCollectedData() {
     AD_INFO(DataCollectionPlanner, "Uploading collected data to cloud");
     
-    // Upload data using data uploader
-    if (data_uploader_->Start()) {
-        AD_INFO(DataCollectionPlanner, "Data uploaded successfully");
-        // Clear local data after successful upload
-        collected_data_.clear();
-    } else {
-        AD_INFO(DataCollectionPlanner, "Failed to upload data");
-    }
+    // // Upload data using data uploader
+    // if (data_uploader_->Start()) {
+    //     AD_INFO(DataCollectionPlanner, "Data uploaded successfully");
+    //     // Clear local data after successful upload
+    //     collected_data_.clear();
+    // } else {
+    //     AD_INFO(DataCollectionPlanner, "Failed to upload data");
+    // }
 }
 
 void DataCollectionPlanner::reportCoverageMetrics() {
     AD_INFO(DataCollectionPlanner, "Reporting coverage metrics");
     
-    const CoverageMetric& coverage = nav_planner_->getCoverageMetric();
+    const dcl::planner::CoverageMetric& coverage = nav_planner_->getCoverageMetric();
     
     AD_INFO(DataCollectionPlanner, "Total cells: %s", std::to_string(coverage.getTotalCells()).c_str());
     AD_INFO(DataCollectionPlanner, "Visited cells: %s", std::to_string(coverage.getVisitedCells()).c_str());
@@ -311,7 +311,7 @@ void DataCollectionAnalyzer::saveToPlannerConfig(const PlannerWeights& weights,
         out << YAML::Key << "sparse_threshold" << YAML::Value << weights.sparse_threshold;
         out << YAML::Key << "exploration_bonus" << YAML::Value << weights.exploration_bonus;
         out << YAML::Key << "redundancy_penalty" << YAML::Value << weights.redundancy_penalty;
-        out << YAML::Key << "grid_resolution" << YAML::Value << weights.grid_resolution;
+        // out << YAML::Key << "grid_resolution" << YAML::Value << weights.grid_resolution;
         out << YAML::EndMap;
         
         std::ofstream fout(config_path);

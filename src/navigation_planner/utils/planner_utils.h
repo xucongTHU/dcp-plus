@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <map>
+#include <iostream>
 #include "../costmap/costmap.h"
 #include "../semantics/semantic_map.h"
 

@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <fstream>
+#include "common/log/logger.h"
 // #include <strategy/ConfigFileWatcher.hpp>
 
 namespace dcl {

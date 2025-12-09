@@ -6,6 +6,11 @@
 #include <memory>
 #include "../costmap/costmap.h"
 
+// ONNX Runtime headers
+#ifdef HAVE_ONNXRUNTIME
+#include <onnxruntime_cxx_api.h>
+#endif
+
 // Forward declarations for ONNX Runtime
 namespace Ort {
 class Env;
@@ -43,9 +48,11 @@ private:
     PPOConfig config_;
     
     // ONNX Runtime components for inference
+#ifdef HAVE_ONNXRUNTIME
     std::unique_ptr<Ort::Env> env_;
     std::unique_ptr<Ort::Session> session_;
     std::unique_ptr<Ort::Allocator> allocator_;
+#endif
     
     // Network dimensions
     // state_dim_: 输入状态维度，根据 MODEL_SPEC.md 规范:

@@ -1,6 +1,8 @@
 // main.cpp - Main entry point for AD Data Closed Loop System
 #include "data_collection_planner.h"
 
+#include "common/log/logger.h"
+
 int main() {
     try {
         // Initialize logging

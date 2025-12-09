@@ -9,10 +9,10 @@
 #include "navigation_planner/utils/planner_utils.h"
 
 // Include data collection components
-#include "trigger_engine/strategy_parser/strategy_parser.h"
-#include "trigger_engine/trigger_manager.h"
-#include "recorder/data_storage.h"
-#include "uploader/data_uploader.h"
+// #include "trigger_engine/strategy_parser/strategy_parser.h"
+// #include "trigger_engine/trigger_manager.h"
+// #include "recorder/data_storage.h"
+// #include "uploader/data_uploader.h"
 
 // Forward declarations for data collection components
 struct DataPoint {
@@ -35,14 +35,14 @@ namespace dcl {
 
 class DataCollectionPlanner {
 private:
-    std::shared_ptr<rscl::Node> node_;
+    // std::shared_ptr<rscl::Node> node_;
     std::unique_ptr<planner::NavPlannerNode> nav_planner_;
-    std::unique_ptr<recorder::DataStorage> data_storage_;
-    std::unique_ptr<uploader::DataUploader> data_uploader_;
-    std::unique_ptr<trigger::TriggerManager> trigger_manager_;
-    std::unique_ptr<trigger::StrategyParser> strategy_parser_;
-    trigger::StrategyConfig strategy_config_;
-    common::AppConfigData config_;
+    // std::unique_ptr<recorder::DataStorage> data_storage_;
+    // std::unique_ptr<uploader::DataUploader> data_uploader_;
+    // std::unique_ptr<trigger::TriggerManager> trigger_manager_;
+    // std::unique_ptr<trigger::StrategyParser> strategy_parser_;
+    // trigger::StrategyConfig strategy_config_;
+    // common::AppConfigData config_;
     
     std::vector<DataPoint> collected_data_;
     MissionArea mission_area_;
@@ -130,12 +130,11 @@ public:
         double sparse_threshold;
         double exploration_bonus;
         double redundancy_penalty;
-        double grid_resolution;
+        // double grid_resolution;
         
-        PlannerWeights(double threshold = 0.2, double bonus = 0.5, 
-                      double penalty = 0.4, double resolution = 1.0)
+        PlannerWeights(double threshold = 0.2, double bonus = 0.5, double penalty = 0.4)
             : sparse_threshold(threshold), exploration_bonus(bonus),
-              redundancy_penalty(penalty), grid_resolution(resolution) {}
+              redundancy_penalty(penalty) {}
     };
     
     /**

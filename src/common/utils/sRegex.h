@@ -10,14 +10,14 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <iostream>
-#include <boost/regex.hpp>
+// #include <boost/regex.hpp>
 
 #include "nlohmann/json.hpp"
 
 namespace dcl {
 namespace common {
 using json = nlohmann::json;
-using namespace boost;
+// using namespace boost;
 
 bool IsMatch(const std::string &path, const std::string &regexPattern);
 

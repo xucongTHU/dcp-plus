@@ -34,6 +34,8 @@ struct DataStats {
     
     double dataDensity(const Point& position) const {
         // Simplified implementation
+        // Unused parameter warning fixed by adding (void) cast
+        (void)position;
         return 0.0;
     }
 };

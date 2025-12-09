@@ -1,9 +1,19 @@
+# file(GLOB_RECURSE SOURCES 
+#     "*.cc" 
+#     "*.cpp" 
+#     "../3rdparty/microtar/microtar.c"
+# )
+
 file(GLOB_RECURSE SOURCES 
-    "*.cc" 
-    "*.cpp" 
-    "../3rdparty/microtar/microtar.c"
+    "navigation_planner/*.cc" 
+    "navigation_planner/*.cpp"
+    "common/*.cc"
+    "common/*.cpp"
+    "data_collection_planner.cpp"
 )
 list(FILTER SOURCES EXCLUDE REGEX "main.cpp")
+list(FILTER SOURCES EXCLUDE REGEX ".*test.*\\.cpp")
+list(FILTER SOURCES EXCLUDE REGEX ".*_test\\.cpp")
 
 # 打印源文件列表用于调试
 foreach(f IN LISTS SOURCES)
@@ -24,8 +34,8 @@ add_executable(${APP} main.cpp)
 # 链接库文件
 target_link_libraries(${APP} PUBLIC
     ${PROJECT_NAME}
-    yaml-cpp
 )
+
 
 # 如果启用了ONNX Runtime，则链接相关库
 if(HAVE_ONNXRUNTIME)
@@ -60,16 +70,20 @@ target_link_libraries(${APP} PRIVATE ${YAMLCPP_PATH}/lib/libyaml-cpp.so)
 file(GLOB YAMLCPP_LIBS "${YAMLCPP_PATH}/lib/*.so")
 file(COPY ${YAMLCPP_LIBS} DESTINATION ${CMAKE_BINARY_DIR})
 
-# 包含目录
-target_include_directories(${APP} 
-    PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+# # 包含目录
+# target_include_directories(${APP} 
+#     PRIVATE 
+#     ${CMAKE_CURRENT_SOURCE_DIR}
+#     ${CMAKE_CURRENT_SOURCE_DIR}/codec/gpujpeg/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/codec/img_encoder
+# )
 
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+# target_include_directories(${PROJECT_NAME}
+#     PUBLIC
+#     ${CMAKE_CURRENT_SOURCE_DIR}
+#     ${CMAKE_CURRENT_SOURCE_DIR}/codec/gpujpeg/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/codec/img_encoder
+# )
 
 # 安装目标
 install(TARGETS ${APP}

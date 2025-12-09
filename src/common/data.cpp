@@ -330,25 +330,25 @@ void from_json(const json& j, FileUploadProgress& r) {
         j.at("taskId").get_to(r.taskId);
     }
     if (!j.at("batchId").is_null()) {
-        j.at("batchId").get_to(r.batchId)
+        j.at("batchId").get_to(r.batchId);
     }
     if (!j.at("uploadUrl").is_null()) {
-        j.at("uploadUrl").get_to(r.uploadUrl)
+        j.at("uploadUrl").get_to(r.uploadUrl);
     }
     if (!j.at("fileName").is_null()) {
-        j.at("fileName").get_to(r.fileName)
+        j.at("fileName").get_to(r.fileName);
     }
     if (!j.at("fileUuid").is_null()) {
-        j.at("fileUuid").get_to(r.fileUuid)
+        j.at("fileUuid").get_to(r.fileUuid);
     }
     if (!j.at("dataSize").is_null()) {
-        j.at("dataSize").get_to(r.dataSize)
+        j.at("dataSize").get_to(r.dataSize);
     }
     if (!j.at("uploadStatus").is_null()) {
-        j.at("uploadStatus").get_to(r.uploadStatus)
+        j.at("uploadStatus").get_to(r.uploadStatus);
     }
     if (!j.at("progress").is_null()) {
-        j.at("progress").get_to(r.progress)
+        j.at("progress").get_to(r.progress);
     }
 }
 
@@ -374,25 +374,25 @@ void from_json(const json& j, SysInfo& r) {
         j.at("cpuUsage").get_to(r.cpuUsage);
     }
     if (!j.at("memUsage").is_null()) {
-        j.at("memUsage").get_to(r.memUsage)
+        j.at("memUsage").get_to(r.memUsage);
     }
     if (!j.at("harddriveUsage").is_null()) {
-        j.at("harddriveUsage").get_to(r.harddriveUsage)
+        j.at("harddriveUsage").get_to(r.harddriveUsage);
     }
     if (!j.at("ssdUsage").is_null()) {
-        j.at("ssdUsage").get_to(r.ssdUsage)
+        j.at("ssdUsage").get_to(r.ssdUsage);
     }
     if (!j.at("imageFrameRateException").is_null()) {
-        j.at("imageFrameRateException").get_to(r.imageFrameRateException)
+        j.at("imageFrameRateException").get_to(r.imageFrameRateException);
     }
     if (!j.at("pcFrameRateException").is_null()) {
-        j.at("pcFrameRateException").get_to(r.pcFrameRateException)
+        j.at("pcFrameRateException").get_to(r.pcFrameRateException);
     }
     if (!j.at("canbusFrameRateException").is_null()) {
-        j.at("canbusFrameRateException").get_to(r.canbusFrameRateException)
+        j.at("canbusFrameRateException").get_to(r.canbusFrameRateException);
     }
     if (!j.at("insFrameRateException").is_null()) {
-        j.at("insFrameRateException").get_to(r.insFrameRateException)
+        j.at("insFrameRateException").get_to(r.insFrameRateException);
     }
 }
 
@@ -419,25 +419,25 @@ void from_json(const json& j, CollectInfo& r) {
         j.at("taskId").get_to(r.taskId);
     }
     if (!j.at("distanceCollect").is_null()) {
-        j.at("distanceCollect").get_to(r.distanceCollect)
+        j.at("distanceCollect").get_to(r.distanceCollect);
     }
     if (!j.at("durationCollect").is_null()) {
-        j.at("durationCollect").get_to(r.durationCollect)
+        j.at("durationCollect").get_to(r.durationCollect);
     }
     if (!j.at("triggercountCollect").is_null()) {
-        j.at("triggercountCollect").get_to(r.triggercountCollect)
+        j.at("triggercountCollect").get_to(r.triggercountCollect);
     }
     if (!j.at("bagcapacityCollect").is_null()) {
-        j.at("bagcapacityCollect").get_to(r.bagcapacityCollect)
+        j.at("bagcapacityCollect").get_to(r.bagcapacityCollect);
     }
     if (!j.at("distanceUpload").is_null()) {
-        j.at("distanceUpload").get_to(r.distanceUpload)
+        j.at("distanceUpload").get_to(r.distanceUpload);
     }
     if (!j.at("triggercountUpload").is_null()) {
-        j.at("triggercountUpload").get_to(r.triggercountUpload)
+        j.at("triggercountUpload").get_to(r.triggercountUpload);
     }
     if (!j.at("bagcapacityUpload").is_null()) {
-        j.at("bagcapacityUpload").get_to(r.bagcapacityUpload)
+        j.at("bagcapacityUpload").get_to(r.bagcapacityUpload);
     }
 }
 
@@ -454,10 +454,10 @@ void from_json(const json& j, RtspInfo& r) {
         j.at("taskId").get_to(r.taskId);
     }
     if (!j.at("status").is_null()) {
-        j.at("status").get_to(r.status)
+        j.at("status").get_to(r.status);
     }
     if (!j.at("rtspUrl").is_null()) {
-        j.at("rtspUrl").get_to(r.rtspUrl)
+        j.at("rtspUrl").get_to(r.rtspUrl);
     }
 }
 
@@ -497,34 +497,34 @@ void from_json(const json& j, OBUStateInfo& r) {
         j.at("vin").get_to(r.vin);
     }
     if (!j.at("longitude").is_null()) {
-        j.at("longitude").get_to(r.longitude)
+        j.at("longitude").get_to(r.longitude);
     }
     if (!j.at("latitude").is_null()) {
-        j.at("latitude").get_to(r.latitude)
+        j.at("latitude").get_to(r.latitude);
     }
     if (!j.at("speed").is_null()) {
         j.at("speed").get_to(r.speed);
     }
     if (!j.at("gpstime").is_null()) {
-        j.at("gpstime").get_to(r.gpstime)
+        j.at("gpstime").get_to(r.gpsTime);
     }
     if (!j.at("altitude").is_null()) {
-        j.at("altitude").get_to(r.altitude)
+        j.at("altitude").get_to(r.altitude);
     }
     if (!j.at("light").is_null()) {
         j.at("light").get_to(r.light);
     }
     if (!j.at("brakeState").is_null()) {
-        j.at("brakeState").get_to(r.brakeState)
+        j.at("brakeState").get_to(r.brakeState);
     }
     if (!j.at("gearState").is_null()) {
-        j.at("gearState").get_to(r.gearState)
+        j.at("gearState").get_to(r.gearState);
     }
     if (!j.at("wheelAngle").is_null()) {
         j.at("wheelAngle").get_to(r.wheelAngle);
     }
     if (!j.at("collectState").is_null()) {
-        j.at("collectState").get_to(r.collectState)
+        j.at("collectState").get_to(r.collectState);
     }
 }
 

@@ -1,4 +1,4 @@
-#include "Logger.h"
+#include "logger.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -12,7 +12,7 @@ namespace dcl::common {
 /* Logger software version number */
 static const char* log_sw_version = "log version no is r25.0";
 /* String to identify log entries originating from this file */
-static const char* LOG_TAG = "clog";
+// static const char* LOG_TAG = "clog";
 
 #ifdef LOG_COLOR_ENABLE
 /* color output info */
@@ -81,7 +81,7 @@ bool Logger::Init(const uint8_t toConsoleFile, int nLevel, const char* const pLo
   /* package process info */
   char szProcessID[MAX_THREAD_ID_LEN] = {0};
   snprintf(szProcessID, MAX_THREAD_ID_LEN, "%0d", getpid());
-  LOG_INFO("Logger is initialize success, process id: %s, info: %s.",
+  AD_INFO(Logger, "Logger is initialize success, process id: %s, info: %s.",
            szProcessID, log_sw_version);
   return true;
 }
