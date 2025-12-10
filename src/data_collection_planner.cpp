@@ -7,13 +7,16 @@
 #include "common/log/logger.h"
 
 namespace dcl {
-DataCollectionPlanner::DataCollectionPlanner(const std::string& config_file) {
-    nav_planner_ = std::make_unique<planner::NavPlannerNode>(config_file);
+DataCollectionPlanner::DataCollectionPlanner(const std::string& model_file, const std::string& config_file) {
+    AD_INFO(DataCollectionPlanner, "Creating DataCollectionPlanner with model_file: %s, config_file: %s", 
+            model_file.c_str(), config_file.c_str());
+    nav_planner_ = std::make_unique<planner::NavPlannerNode>(model_file, config_file);
     // data_storage_ = std::make_unique<recorder::DataStorage>();
     // data_uploader_ = std::make_unique<uploader::DataUploader>();
     // trigger_manager_ = std::make_unique<trigger::TriggerManager>();
     // strategy_parser_ = std::make_unique<trigger::StrategyParser>();
     mission_area_ = MissionArea(Point(50.0, 50.0), 30.0); // Default mission area
+    AD_INFO(DataCollectionPlanner, "DataCollectionPlanner constructor completed");
 }
 
 bool DataCollectionPlanner::initialize() {
@@ -53,10 +56,17 @@ bool DataCollectionPlanner::initialize() {
 }
 
 void DataCollectionPlanner::setMissionArea(const MissionArea& area) {
+    AD_INFO(DataCollectionPlanner, "Setting mission area");
+    AD_WARN(DataCollectionPlanner, "New mission area - center: (%s, %s), radius: %s", 
+             std::to_string(area.center.x).c_str(), std::to_string(area.center.y).c_str(), 
+             std::to_string(area.radius).c_str());
+    
     mission_area_ = area;
     nav_planner_->setGoalPosition(area.center);
 
-    AD_INFO(DataCollectionPlanner, "Mission area set to center: (%s, ), radius: %s", std::to_string(area.center.x).c_str(), std::to_string(area.radius).c_str());
+    AD_INFO(DataCollectionPlanner, "Mission area set to center: (%s, %s), radius: %s", 
+            std::to_string(area.center.x).c_str(), std::to_string(area.center.y).c_str(), 
+            std::to_string(area.radius).c_str());
 }
 
 std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
@@ -64,6 +74,9 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
     
     // Plan global path using navigation planner
     std::vector<Point> collection_path = nav_planner_->planGlobalPath();
+    
+    AD_WARN(DataCollectionPlanner, "Received collection path with %s points from navigation planner", 
+             std::to_string(collection_path.size()).c_str());
     
     // Apply data collection strategy to optimize waypoints
     std::vector<Point> optimized_waypoints;
@@ -95,6 +108,11 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
 
 void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path) {
     AD_INFO(DataCollectionPlanner, "Executing data collection along path with %s waypoints", std::to_string(path.size()).c_str());
+    
+    if (path.empty()) {
+        AD_WARN(DataCollectionPlanner, "Empty path provided for data collection");
+        return;
+    }
     
     // Execute data collection at each waypoint using real data collection modules
     std::vector<DataPoint> new_data;
@@ -150,6 +168,11 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
 void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_data) {
     AD_INFO(DataCollectionPlanner, "Updating planner with %s new data points", std::to_string(new_data.size()).c_str());
     
+    if (new_data.empty()) {
+        AD_WARN(DataCollectionPlanner, "No new data points to update");
+        return;
+    }
+    
     // Add new data points to planner and local storage
     for (const auto& data_point : new_data) {
         nav_planner_->addDataPoint(data_point.position);
@@ -198,6 +221,12 @@ void DataCollectionPlanner::reportCoverageMetrics() {
 
 void DataCollectionPlanner::analyzeAndExportWeights() {
     AD_INFO(DataCollectionPlanner, "Analyzing collected data and exporting weights");
+    AD_WARN(DataCollectionPlanner, "Collected data size: %s points", std::to_string(collected_data_.size()).c_str());
+    
+    if (collected_data_.empty()) {
+        AD_WARN(DataCollectionPlanner, "No collected data available for analysis");
+        return;
+    }
     
     // Compute density map from collected data
     auto heatmap = DataCollectionAnalyzer::computeDensityMap(collected_data_);

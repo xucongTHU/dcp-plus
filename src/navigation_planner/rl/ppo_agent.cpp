@@ -15,12 +15,14 @@
 namespace dcl::planner {
 
 PPOAgent::PPOAgent(const PPOConfig& config)
-    : config_(config), state_dim_(24), action_dim_(4),  // 默认state_dim设为24，符合规范中的最小值
+    : config_(config), state_dim_(24), action_dim_(4),  // Default state_dim set to 24, matching minimum specification
       total_reward_(0.0), episode_count_(0) {
 #ifdef HAVE_ONNXRUNTIME
     // Initialize ONNX Runtime environment
+    // This creates the ONNX Runtime environment for model inference
     env_ = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "");
-    allocator_ = std::make_unique<Ort::Allocator>();
+    // Session will be created when loading model
+    session_ = nullptr;
 #endif
     
     AD_INFO(PLANNER, "PPO Agent initialized with state_dim=%d, action_dim=%d", state_dim_, action_dim_);
@@ -28,9 +30,9 @@ PPOAgent::PPOAgent(const PPOConfig& config)
 
 int PPOAgent::selectAction(const Point& state, bool deterministic) {
     // Convert Point to State for compatibility
-    // 这是一个简化的状态表示，只包含坐标信息
+    // This is a simplified state representation, containing only coordinate information
     std::vector<double> features = {state.x, state.y};
-    features.resize(state_dim_, 0.0);  // 填充至标准维度
+    features.resize(state_dim_, 0.0);  // Fill to standard dimension
     State state_vec(features);
     return selectAction(state_vec, deterministic);
 }
@@ -53,57 +55,79 @@ int PPOAgent::selectAction(const State& state, bool deterministic) {
 std::vector<double> PPOAgent::getActionProbabilities(const Point& state) {
     // Convert Point to State for compatibility
     std::vector<double> features = {state.x, state.y};
-    features.resize(state_dim_, 0.0);  // 填充至标准维度
+    features.resize(state_dim_, 0.0);  // Fill to standard dimension
     State state_vec(features);
     return getActionProbabilities(state_vec);
 }
+
+#ifdef HAVE_ONNXRUNTIME
+std::pair<Ort::Value, Ort::Value> PPOAgent::runInference(const State& state) {
+    if (!session_) {
+        throw std::runtime_error("ONNX session is not initialized");
+    }
+    
+    // Create input tensor
+    // Ensure input feature dimension matches state_dim_
+    std::vector<float> input_data(state.features.begin(), state.features.end());
+    if (input_data.size() != static_cast<size_t>(state_dim_)) {
+        AD_WARN(PLANNER, "Input state dimension mismatch. Expected: %d, Got: %lu. Padding with zeros.",
+                state_dim_, input_data.size());
+        
+        // Adjust input data dimension to match state_dim_
+        if (input_data.size() < static_cast<size_t>(state_dim_)) {
+            input_data.resize(state_dim_, 0.0f);
+        } else {
+            input_data.resize(state_dim_);
+        }
+    }
+    
+    std::vector<int64_t> input_shape = {1, static_cast<int64_t>(state_dim_)};
+    
+    // Setup input tensor
+    // Using CPU memory info with default allocator
+    auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+    Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+        memory_info, input_data.data(), input_data.size(), input_shape.data(), input_shape.size());
+    
+    // Setup input/output names according to model spec
+    // Input node name: "input"
+    // Output node names: "output_policy" and "output_value"
+    std::vector<const char*> input_names = {"input"};
+    std::vector<const char*> output_names = {"output_policy", "output_value"};
+    
+    // Run inference
+    AD_WARN(PLANNER, "Running inference with input shape [%ld, %ld]", input_shape[0], input_shape[1]);
+    auto output_tensors = session_->Run(
+        Ort::RunOptions{nullptr}, 
+        input_names.data(), 
+        &input_tensor, 
+        1, 
+        output_names.data(), 
+        2);
+        
+    // Move the tensors out of the vector
+    Ort::Value policy_tensor = std::move(output_tensors[0]);
+    Ort::Value value_tensor = std::move(output_tensors[1]);
+    
+    return std::make_pair(std::move(policy_tensor), std::move(value_tensor));
+}
+#endif
 
 std::vector<double> PPOAgent::getActionProbabilities(const State& state) {
     // If we have a trained model, use it for inference
 #ifdef HAVE_ONNXRUNTIME
     if (session_) {
+        AD_WARN(PLANNER, "Session is available, performing inference");
         try {
-            // Create input tensor
-            // 确保输入特征维度与state_dim_一致
-            std::vector<float> input_data(state.features.begin(), state.features.end());
-            if (input_data.size() != static_cast<size_t>(state_dim_)) {
-                AD_WARN(PLANNER, "Input state dimension mismatch. Expected: %d, Got: %lu. Padding with zeros.",
-                        state_dim_, input_data.size());
-                
-                // 调整输入数据维度以匹配state_dim_
-                if (input_data.size() < static_cast<size_t>(state_dim_)) {
-                    input_data.resize(state_dim_, 0.0f);
-                } else {
-                    input_data.resize(state_dim_);
-                }
-            }
-            
-            std::vector<int64_t> input_shape = {1, static_cast<int64_t>(state_dim_)};
-            
-            // Setup input tensor
-            auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-            Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-                memory_info, input_data.data(), input_data.size(), input_shape.data(), input_shape.size());
-            
-            // Setup input/output names
-            Ort::AllocatorWithDefaultOptions allocator;
-            std::vector<const char*> input_names = {"input"};
-            std::vector<const char*> output_names = {"output_policy", "output_value"};
-            
-            // Run inference
-            auto output_tensors = session_->Run(
-                Ort::RunOptions{nullptr}, 
-                input_names.data(), 
-                &input_tensor, 
-                1, 
-                output_names.data(), 
-                2);
+            // Run inference to get policy and value tensors
+            // Model outputs unprocessed logits that need to be converted to probabilities
+            auto tensors = runInference(state);
             
             // Extract logits from output tensor (model outputs logits, not probabilities)
-            float* logits_data = output_tensors[0].GetTensorMutableData<float>();
-            auto logits_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
+            float* logits_data = tensors.first.GetTensorMutableData<float>();
             
             // Apply softmax to convert logits to probabilities
+            // This follows the specification that model outputs logits and vehicle side applies softmax
             std::vector<double> probs(action_dim_, 0.0);
             double max_logit = *std::max_element(logits_data, logits_data + action_dim_);
             double sum_exp = 0.0;
@@ -118,23 +142,27 @@ std::vector<double> PPOAgent::getActionProbabilities(const State& state) {
             for (int i = 0; i < action_dim_; i++) {
                 probs[i] /= sum_exp;
             }
-            
+
             return probs;
         } catch (const Ort::Exception& e) {
             AD_ERROR(PLANNER, "ONNX model inference error: %s", e.what());
         }
+    } else {
+        AD_WARN(PLANNER, "Session is not available, using fallback method");
     }
 #endif
     
     // Fallback to random probabilities if no model or error occurred
+    // This provides a degradation mechanism when model loading fails
     std::vector<double> probs(action_dim_, 1.0 / action_dim_);
+    AD_INFO(PLANNER, "PPO Agent selected action probabilities: %s", probs.data());
     return probs;
 }
 
 double PPOAgent::getValue(const Point& state) {
     // Convert Point to State for compatibility
     std::vector<double> features = {state.x, state.y};
-    features.resize(state_dim_, 0.0);  // 填充至标准维度
+    features.resize(state_dim_, 0.0);  // Fill to standard dimension
     State state_vec(features);
     return getValue(state_vec);
 }
@@ -143,55 +171,30 @@ double PPOAgent::getValue(const State& state) {
     // If we have a trained model, use it for inference
 #ifdef HAVE_ONNXRUNTIME
     if (session_) {
+        AD_WARN(PLANNER, "Session is available, performing value inference");
         try {
-            // Create input tensor
-            // 确保输入特征维度与state_dim_一致
-            std::vector<float> input_data(state.features.begin(), state.features.end());
-            if (input_data.size() != static_cast<size_t>(state_dim_)) {
-                AD_WARN(PLANNER, "Input state dimension mismatch. Expected: %d, Got: %lu. Padding with zeros.",
-                        state_dim_, input_data.size());
-                
-                // 调整输入数据维度以匹配state_dim_
-                if (input_data.size() < static_cast<size_t>(state_dim_)) {
-                    input_data.resize(state_dim_, 0.0f);
-                } else {
-                    input_data.resize(state_dim_);
-                }
-            }
-            
-            std::vector<int64_t> input_shape = {1, static_cast<int64_t>(state_dim_)};
-            
-            // Setup input tensor
-            auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-            Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-                memory_info, input_data.data(), input_data.size(), input_shape.data(), input_shape.size());
-            
-            // Setup input/output names
-            Ort::AllocatorWithDefaultOptions allocator;
-            std::vector<const char*> input_names = {"input"};
-            std::vector<const char*> output_names = {"output_policy", "output_value"};
-            
-            // Run inference
-            auto output_tensors = session_->Run(
-                Ort::RunOptions{nullptr}, 
-                input_names.data(), 
-                &input_tensor, 
-                1, 
-                output_names.data(), 
-                2);
+            // Run inference to get policy and value tensors
+            auto tensors = runInference(state);
             
             // Extract value from output tensor
-            float* value_data = output_tensors[1].GetTensorMutableData<float>();
+            // Value output shape is [batch_size, 1] according to specification
+            float* value_data = tensors.second.GetTensorMutableData<float>();
             
             // Convert tensor to scalar value
-            return static_cast<double>(value_data[0]);
+            double value = static_cast<double>(value_data[0]);
+            AD_WARN(PLANNER, "Value inference completed successfully, value: %f", value);
+            return value;
         } catch (const Ort::Exception& e) {
             AD_ERROR(PLANNER, "ONNX model inference error: %s", e.what());
         }
+    } else {
+        AD_WARN(PLANNER, "Session is not available for value inference, using fallback method");
     }
 #endif
     
     // Fallback to zero value if no model or error occurred
+    // This provides a degradation mechanism when model loading fails
+    AD_WARN(PLANNER, "Using fallback value (0.0)");
     return 0.0;
 }
 
@@ -230,18 +233,14 @@ bool PPOAgent::loadWeights(const std::string& filepath) {
 bool PPOAgent::loadOnnxModel(const std::string& filepath) {
 #ifdef HAVE_ONNXRUNTIME
     try {
-        // Create session options
-        Ort::SessionOptions session_options;
-        session_options.SetIntraOpNumThreads(1);
-        session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+        // Create session with default options
+        // This loads the ONNX model for inference using ONNX Runtime
+        session_ = std::make_unique<Ort::Session>(*env_, filepath.c_str(), Ort::SessionOptions{});
         
-        // Create session
-        session_ = std::make_unique<Ort::Session>(*env_, filepath.c_str(), session_options);
-        
-        AD_INFO(PLANNER, "ONNX model loaded from %s", filepath.c_str());
+        AD_INFO(PLANNER, "ONNX model loaded successfully from %s", filepath.c_str());
         return true;
     } catch (const Ort::Exception& e) {
-        AD_ERROR(PLANNER, "Failed to load ONNX model: %s", e.what());
+        AD_ERROR(PLANNER, "Failed to load ONNX model from %s: %s", filepath.c_str(), e.what());
         return false;
     }
 #else

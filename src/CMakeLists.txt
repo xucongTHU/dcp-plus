@@ -39,8 +39,11 @@ target_link_libraries(${APP} PUBLIC
 
 # 如果启用了ONNX Runtime，则链接相关库
 if(HAVE_ONNXRUNTIME)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_ONNXRUNTIME)
     target_compile_definitions(${APP} PRIVATE HAVE_ONNXRUNTIME)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${ONNXRUNTIME_PATH}/include)
     target_include_directories(${APP} PRIVATE ${ONNXRUNTIME_PATH}/include)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${ONNXRUNTIME_PATH}/lib/libonnxruntime.so)
     target_link_libraries(${APP} PRIVATE ${ONNXRUNTIME_PATH}/lib/libonnxruntime.so)
     
     # 复制ONNX Runtime库文件到构建目录以便运行时链接
@@ -63,7 +66,9 @@ if(ENABLE_ROS2)
 endif()
 
 # 链接yaml-cpp相关库
+target_include_directories(${PROJECT_NAME} PRIVATE ${YAMLCPP_PATH}/include)
 target_include_directories(${APP} PRIVATE ${YAMLCPP_PATH}/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${YAMLCPP_PATH}/lib/libyaml-cpp.so)
 target_link_libraries(${APP} PRIVATE ${YAMLCPP_PATH}/lib/libyaml-cpp.so)
 
 # 复制yaml-cpp库文件到构建目录以便运行时链接
@@ -76,14 +81,14 @@ file(COPY ${YAMLCPP_LIBS} DESTINATION ${CMAKE_BINARY_DIR})
 #     ${CMAKE_CURRENT_SOURCE_DIR}
 #     ${CMAKE_CURRENT_SOURCE_DIR}/codec/gpujpeg/include
 #     ${CMAKE_CURRENT_SOURCE_DIR}/codec/img_encoder
-# )
+#     )
 
 # target_include_directories(${PROJECT_NAME}
 #     PUBLIC
 #     ${CMAKE_CURRENT_SOURCE_DIR}
 #     ${CMAKE_CURRENT_SOURCE_DIR}/codec/gpujpeg/include
 #     ${CMAKE_CURRENT_SOURCE_DIR}/codec/img_encoder
-# )
+#     )
 
 # 安装目标
 install(TARGETS ${APP}

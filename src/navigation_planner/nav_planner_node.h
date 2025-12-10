@@ -34,6 +34,7 @@ private:
     
     // Configuration
     std::string config_file_path_;
+    std::string model_file_;
     std::map<std::string, double> planner_parameters_;
     
     // State variables
@@ -49,8 +50,7 @@ private:
     bool use_ppo_;  // Flag to enable PPO-based planning
     
 public:
-    NavPlannerNode(const std::string& config_file = 
-                   "/workspaces/ad_data_closed_loop/src/navigation_planner/config/planner_weights.yaml");
+    NavPlannerNode(const std::string& model_file, const std::string& config_file);
     
     ~NavPlannerNode() = default;
     

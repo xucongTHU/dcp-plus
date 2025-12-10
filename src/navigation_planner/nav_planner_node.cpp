@@ -5,11 +5,13 @@
 
 namespace dcl::planner {
 
-NavPlannerNode::NavPlannerNode(const std::string& config_file)
+NavPlannerNode::NavPlannerNode(const std::string& model_file, const std::string& config_file)
     : config_file_path_(config_file)
+    , model_file_(model_file)
     , current_position_(0.0, 0.0)
     , goal_position_(0.0, 0.0)
-    , use_ppo_(false) {
+    , use_ppo_(true) {
+    LogUtils::log(LogUtils::INFO, "Creating NavPlannerNode with model_file: " + model_file + ", config_file: " + config_file);
     // Initialize with default values
     costmap_ = std::make_unique<CostMap>(100, 100, 1.0);
     route_planner_ = std::make_unique<RoutePlanner>();
@@ -18,6 +20,7 @@ NavPlannerNode::NavPlannerNode(const std::string& config_file)
     constraint_checker_ = std::make_unique<SemanticConstraintChecker>(*semantic_map_);
     semantic_filter_ = std::make_unique<SemanticFilter>();
     coverage_metric_ = std::make_unique<CoverageMetric>();
+
 }
 
 bool NavPlannerNode::initialize() {
@@ -28,6 +31,10 @@ bool NavPlannerNode::initialize() {
         LogUtils::log(LogUtils::ERROR, "Failed to load configuration");
         return false;
     }
+
+    // Load PPO weights if using PPO-based planning
+    LogUtils::log(LogUtils::INFO, "Attempting to load PPO weights from " + model_file_);
+    loadPPOWeights(model_file_);
     
     // Initialize components with loaded parameters
     double sparse_threshold = planner_parameters_["sparse_threshold"];
@@ -212,10 +219,11 @@ void NavPlannerNode::addDataPoint(const Point& point) {
 }
 
 bool NavPlannerNode::loadPPOWeights(const std::string& filepath) {
+    LogUtils::log(LogUtils::INFO, "Attempting to load PPO weights from " + filepath);
     if (route_planner_->getPPOAgent()) {
         bool success = route_planner_->getPPOAgent()->loadWeights(filepath);
         if (success) {
-            LogUtils::log(LogUtils::INFO, "PPO weights loaded from " + filepath);
+            LogUtils::log(LogUtils::INFO, "PPO weights loaded successfully from " + filepath);
             return true;
         } else {
             LogUtils::log(LogUtils::ERROR, "Failed to load PPO weights from " + filepath);

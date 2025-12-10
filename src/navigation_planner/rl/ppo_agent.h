@@ -15,7 +15,6 @@
 namespace Ort {
 class Env;
 class Session;
-class Allocator;
 struct SessionOptions;
 }
 
@@ -51,7 +50,6 @@ private:
 #ifdef HAVE_ONNXRUNTIME
     std::unique_ptr<Ort::Env> env_;
     std::unique_ptr<Ort::Session> session_;
-    std::unique_ptr<Ort::Allocator> allocator_;
 #endif
     
     // Network dimensions
@@ -71,6 +69,11 @@ private:
     // Training statistics
     double total_reward_;
     int episode_count_;
+    
+#ifdef HAVE_ONNXRUNTIME
+    // Private helper function to run ONNX inference
+    std::pair<Ort::Value, Ort::Value> runInference(const State& state);
+#endif
 
 public:
     PPOAgent(const PPOConfig& config = PPOConfig());

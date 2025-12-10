@@ -48,8 +48,8 @@ private:
     MissionArea mission_area_;
     
 public:
-    DataCollectionPlanner(const std::string& config_file = 
-                         "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
+    DataCollectionPlanner(const std::string& model_file = "/workspaces/ad_data_closed_loop/training/models/planner_model.onnx",
+                          const std::string& config_file = "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
     
     ~DataCollectionPlanner() = default;
     
