@@ -1,8 +1,8 @@
 # 最低版本要求
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22)
 
 # 项目名称和版本
-project(ad_data_closed_loop VERSION 1.0.0 LANGUAGES CXX)
+project(ad_dcl VERSION 1.0.0 LANGUAGES CXX)
 
 # 设置C++标准
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -17,8 +17,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 编译器标志
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3")
 
+# 检查是否启用senseauto-rscl支持
+option(ENABLE_RSCL "Enable RSCL support" OFF)
+
 # 检查是否启用ROS2支持
-option(ENABLE_ROS2 "Enable ROS2 support" OFF)
+option(ENABLE_ROS2 "Enable ROS2 support" ON)
 option(DOWNLOAD_ONNXRUNTIME "Download ONNX Runtime if not found" ON)
 option(DOWNLOAD_YAMLCPP "Download yaml-cpp if not found" ON)
 
@@ -45,7 +48,7 @@ include_directories(
 # 检查ONNX Runtime是否可用或需要下载
 if(NOT EXISTS "${ONNXRUNTIME_PATH}" AND DOWNLOAD_ONNXRUNTIME)
     message(STATUS "ONNX Runtime not found. Downloading...")
-    
+
     # 确定平台
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
@@ -56,7 +59,7 @@ if(NOT EXISTS "${ONNXRUNTIME_PATH}" AND DOWNLOAD_ONNXRUNTIME)
             set(ONNXRUNTIME_DIR "onnxruntime-linux-aarch64-1.10.0")
         endif()
     endif()
-    
+
     # 下载并解压ONNX Runtime
     if(ONNXRUNTIME_URL)
         include(FetchContent)
@@ -78,7 +81,7 @@ endif()
 # 检查yaml-cpp是否可用或需要下载
 if(NOT EXISTS "${YAMLCPP_PATH}" AND DOWNLOAD_YAMLCPP)
     message(STATUS "yaml-cpp not found. Downloading...")
-    
+
     # 下载并解压yaml-cpp
     include(FetchContent)
     FetchContent_Populate(
@@ -90,17 +93,40 @@ if(NOT EXISTS "${YAMLCPP_PATH}" AND DOWNLOAD_YAMLCPP)
 endif()
 
 # 尝试查找yaml-cpp
+find_package(yaml-cpp REQUIRED)
 if(EXISTS "${YAMLCPP_PATH}")
     set(HAVE_YAMLCPP TRUE)
     message(STATUS "yaml-cpp found: ${YAMLCPP_PATH}")
 endif()
 
+
 # 条件性包含ROS2
 if(ENABLE_ROS2)
-    find_package(rclcpp REQUIRED)
-    find_package(sensor_msgs REQUIRED)
-    find_package(nav_msgs REQUIRED)
-    find_package(geometry_msgs REQUIRED)
+#    find_package(ament_cmake REQUIRED)
+#    find_package(rclcpp REQUIRED)
+#    find_package(std_msgs REQUIRED)
+#    find_package(sensor_msgs REQUIRED)
+#    find_package(nav_msgs REQUIRED)
+#    find_package(geometry_msgs REQUIRED)
+
+    include_directories(/opt/ros/humble/include)
+    include_directories(/opt/ros/humble/include/rclcpp/)
+    include_directories(/opt/ros/humble/include/rcl/)
+    include_directories(/opt/ros/humble/include/rcutils/)
+    include_directories(/opt/ros/humble/include/rcl_yaml_param_parser/)
+    include_directories(/opt/ros/humble/include/rosidl_runtime_c/)
+    include_directories(/opt/ros/humble/include/rosidl_typesupport_interface/)
+    include_directories(/opt/ros/humble/include/rcpputils/)
+    include_directories(/opt/ros/humble/include/builtin_interfaces/)
+    include_directories(/opt/ros/humble/include/rmw/)
+    include_directories(/opt/ros/humble/include/rosidl_runtime_cpp/)
+    include_directories(/opt/ros/humble/include/tracetools/)
+    include_directories(/opt/ros/humble/include/rcl_interfaces/)
+    include_directories(/opt/ros/humble/include/libstatistics_collector/)
+    include_directories(/opt/ros/humble/include/statistics_msgs/)
+
+    link_directories(/opt/ros/humble/lib/)
+
 endif()
 
 # 获取所有链接目录
@@ -118,9 +144,7 @@ add_subdirectory(src)
 ##  CPack  ##
 #############
 
-# 设置CPack变量
 set(CPACK_GENERATOR "TGZ")
-set(MODULE_VERSION "1.0.0")
 
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VERSION ${MODULE_VERSION})
@@ -129,6 +153,7 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
 set(CPACK_SET_DESTDIR ON)
 set(CPACK_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_PACKAGE_FILE_NAME "${MODULE_VERSION}")
+
 
 install(
         FILES
