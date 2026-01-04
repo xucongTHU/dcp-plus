@@ -24,6 +24,7 @@
 | ROI | Region of Interest (感兴趣区域) |
 | RL | Reinforcement Learning (强化学习) |
 | PPO | Proximal Policy Optimization (近端策略优化) |
+| DCP | Data Collection Planner (数据采集规划器) |
 
 ## 2. 系统架构设计
 
