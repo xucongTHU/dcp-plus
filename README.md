@@ -4,11 +4,6 @@
 
 DCP-Plus is a research and system framework that formulates **data collection as a first-class planning problem** for embodied intelligence systems. Instead of passively recording data or relying on hand-crafted triggers, DCP-Plus learns *how data should be collected* to maximize downstream learning progress under system resource constraints.
 
-This repository provides a reference implementation of **DCP-Plus**, accompanying the RSS paper:
-
-> **DCP-Plus: Learning Data Collection Policies for Self-Evolving Embodied Agents**  
-> *Robotics: Science and Systems (RSS), under review*
-
 ---
 
 ## What is DCP?
