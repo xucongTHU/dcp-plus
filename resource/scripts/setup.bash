@@ -2,7 +2,6 @@
 
 SCRIPT_PATH=$(builtin cd "`dirname "${BASH_SOURCE[0]}"`" > /dev/null && pwd)
 ROOT_DIR=$(cd "${SCRIPT_PATH}/../.."; pwd)
-#source /opt/caicauto/caicauto-cm/active/resource/scripts/setup.bash
 
 COLOR_WHITE="\033[37m"
 COLOR_GREEN="\033[32m"
@@ -30,11 +29,11 @@ print_banner_box() {
 }
 
 # ================= 环境变量设置 ================= #
-export PROJECT="caicauto-shadowmode"
-export VIN="LFBGEV070LJD45885"
+export PROJECT="dcp plus"
+export VIN="VIN123456789"
 export INSTALL_ROOT_PATH=$ROOT_DIR
-export CAR_ID=epai007
-export LD_LIBRARY_PATH=$ROOT_DIR/lib:/opt/senseauto/senseauto-3rdparty/active/3rdparty/lib:/opt/senseauto/senseauto-rscl/active/lib:/opt/senseauto/senseauto-msgs/active/lib:$LD_LIBRARY_PATH
+export CAR_ID=NIO-ES6
+export LD_LIBRARY_PATH=$ROOT_DIR/lib:$LD_LIBRARY_PATH
 
 print_banner_box "$PROJECT"
 print_delim

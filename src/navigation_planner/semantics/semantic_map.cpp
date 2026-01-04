@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace dcl::planner {
+namespace dcp::planner {
 void SemanticMap::addObject(const SemanticObject& obj) {
     objects.push_back(obj);
 }
@@ -118,4 +118,4 @@ void SemanticMap::clear() {
     objects.clear();
 }
 
-} // namespace dcl::planner
+} // namespace dcp::planner

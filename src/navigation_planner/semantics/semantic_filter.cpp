@@ -2,7 +2,7 @@
 #include "semantic_filter.h"
 #include <algorithm>
 
-namespace dcl::planner {
+namespace dcp::planner {
 SemanticFilter::SemanticFilter(double conf_threshold)
     : confidence_threshold(conf_threshold) {
     // By default, don't filter any specific types

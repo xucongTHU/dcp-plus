@@ -15,7 +15,7 @@ void Path::addPoint(const Point& point) {
     waypoints.push_back(point);
     if (waypoints.size() > 1) {
         Point prev = waypoints[waypoints.size()-2];
-        length += dcl::planner::PlannerUtils::euclideanDistance(prev, point);
+        length += dcp::planner::PlannerUtils::euclideanDistance(prev, point);
     }
 }
 
@@ -24,7 +24,7 @@ void Path::clear() {
     length = 0.0;
 }
 
-namespace dcl::planner {
+namespace dcp::planner {
 // PlannerUtils implementation
 double PlannerUtils::euclideanDistance(const Point& p1, const Point& p2) {
     double dx = p1.x - p2.x;
@@ -184,10 +184,84 @@ bool PlannerUtils::loadParametersFromYaml(const std::string& filepath,
     try {
         YAML::Node config = YAML::LoadFile(filepath);
         
+        // Load top-level parameters
         for (const auto& item : config) {
-            std::string key = item.first.as<std::string>();
-            double value = item.second.as<double>();
-            parameters[key] = value;
+            if (item.second.IsScalar()) {
+                std::string key = item.first.as<std::string>();
+                double value = item.second.as<double>();
+                parameters[key] = value;
+            }
+        }
+        
+        // Load nested parameters with flattened keys
+        if (config["path_planning"]) {
+            const YAML::Node& path_planning = config["path_planning"];
+            for (const auto& item : path_planning) {
+                if (item.second.IsScalar()) {
+                    std::string key = "path_planning_" + item.first.as<std::string>();
+                    double value = item.second.as<double>();
+                    parameters[key] = value;
+                }
+            }
+        }
+        
+        if (config["ppo_config"]) {
+            const YAML::Node& ppo_config = config["ppo_config"];
+            for (const auto& item : ppo_config) {
+                if (item.second.IsScalar()) {
+                    std::string key = "ppo_config_" + item.first.as<std::string>();
+                    double value = item.second.as<double>();
+                    parameters[key] = value;
+                }
+            }
+        }
+        
+        if (config["sampling_params"]) {
+            const YAML::Node& sampling_params = config["sampling_params"];
+            for (const auto& item : sampling_params) {
+                if (item.second.IsScalar()) {
+                    std::string key = "sampling_params_" + item.first.as<std::string>();
+                    double value = item.second.as<double>();
+                    parameters[key] = value;
+                }
+            }
+        }
+        
+        if (config["coverage_params"]) {
+            const YAML::Node& coverage_params = config["coverage_params"];
+            for (const auto& item : coverage_params) {
+                if (item.second.IsScalar()) {
+                    std::string key = "coverage_params_" + item.first.as<std::string>();
+                    double value = item.second.as<double>();
+                    parameters[key] = value;
+                }
+            }
+        }
+        
+        if (config["semantic_constraints"]) {
+            const YAML::Node& semantic_constraints = config["semantic_constraints"];
+            for (const auto& item : semantic_constraints) {
+                if (item.second.IsScalar()) {
+                    std::string key = "semantic_constraints_" + item.first.as<std::string>();
+                    double value = item.second.as<double>();
+                    parameters[key] = value;
+                }
+            }
+        }
+        
+        if (config["nav_planner"]) {
+            const YAML::Node& nav_planner = config["nav_planner"];
+            for (const auto& item : nav_planner) {
+                if (item.second.IsScalar()) {
+                    std::string key = "nav_planner_" + item.first.as<std::string>();
+                    // For boolean values, convert to 0 or 1
+                    if (item.second.IsScalar() && item.second.Type() == YAML::NodeType::Scalar) {
+                        parameters[key] = item.second.as<bool>() ? 1.0 : 0.0;
+                    } else if (item.second.IsScalar()) {
+                        parameters[key] = item.second.as<double>();
+                    }
+                }
+            }
         }
         
         return true;
@@ -294,4 +368,4 @@ std::string LogUtils::formatPoint(const Point& point) {
     return ss.str();
 }
 
-} // namespace dcl::planner
+} // namespace dcp::planner

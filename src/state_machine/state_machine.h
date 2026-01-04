@@ -38,7 +38,7 @@ enum class StateEvent {
     SHUTDOWN_REQUEST        // 关闭请求
 };
 
-namespace dcl::state_machine {
+namespace dcp::state_machine {
 
 class StateMachine {
 public:
@@ -94,6 +94,6 @@ private:
     size_t current_waypoint_index_;
 };
 
-} // namespace dcl::state_machine
+} // namespace dcp::state_machine
 
 #endif // STATE_MACHINE_H

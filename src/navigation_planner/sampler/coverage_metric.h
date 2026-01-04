@@ -5,7 +5,7 @@
 #include <vector>
 #include "../costmap/costmap.h"
 
-namespace dcl::planner {
+namespace dcp::planner {
 
 class CoverageMetric {
 private:
@@ -64,5 +64,5 @@ public:
     void reset();
 };
 
-} // namespace dcl::planner
+} // namespace dcp::planner
 #endif // COVERAGE_METRIC_H

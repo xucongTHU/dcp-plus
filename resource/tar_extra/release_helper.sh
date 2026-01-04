@@ -6,12 +6,9 @@ PROJECT_ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$PROJECT_ROOT"
 
 RELEASE_CONF="release.conf.json"
-PROJECT_NAME=${PROJECT_NAME:-"caicauto_shadowmode"}
-PROJECT_ID="l29-base-thor"
-TARGET_PALTFORM="thor"
-# TARGET_PALTFORM=${TARGET_PALTFORM:-"thor-dev"}
-TGZ_VER="1.$(date '+%Y%m%d-%H%M%S').${PROJECT_NAME}-${PROJECT_ID}"
-# TGZ_VER="1.$(date '+%Y%m%d-%H%M%S')-$(git rev-parse --short=5 HEAD).${PROJECT_NAME}-${TARGET_PALTFORM}"
+PROJECT_NAME=${PROJECT_NAME:-"aurora-robot_edge"}
+TARGET_PALTFORM=${TARGET_PALTFORM:-"thor"}
+TGZ_VER="1.$(date '+%Y%m%d-%H%M%S')-$(git rev-parse --short=5 HEAD).${PROJECT_NAME}-${TARGET_PALTFORM}-dev"
 CLEAN_VER=$([[ -n $(git status -s) ]] && echo '-dirty' || echo '-new')
 
 cat > ${RELEASE_CONF} << EOF

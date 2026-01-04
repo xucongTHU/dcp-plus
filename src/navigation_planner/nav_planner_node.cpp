@@ -3,20 +3,24 @@
 #include <iostream>
 #include <algorithm>
 
-namespace dcl::planner {
+namespace dcp::planner {
 
 NavPlannerNode::NavPlannerNode(const std::string& model_file, const std::string& config_file)
     : config_file_path_(config_file)
     , model_file_(model_file)
-    , current_position_(0.0, 0.0)
-    , goal_position_(0.0, 0.0)
+    , current_position_(Point(0.0, 0.0))
+    , goal_position_(Point(0.0, 0.0))
     , use_ppo_(true) {
     LogUtils::log(LogUtils::INFO, "Creating NavPlannerNode with model_file: " + model_file + ", config_file: " + config_file);
-    // Initialize with default values
-    costmap_ = std::make_unique<CostMap>(100, 100, 1.0);
+    // Initialize with default values based on PRD: configurable 2D grid (default 20x20)
+    int default_map_width = 20;
+    int default_map_height = 20;
+    double default_resolution = 1.0;
+    
+    costmap_ = std::make_unique<CostMap>(default_map_width, default_map_height, default_resolution);
     route_planner_ = std::make_unique<RoutePlanner>();
     sampling_optimizer_ = std::make_unique<SamplingOptimizer>();
-    semantic_map_ = std::make_unique<SemanticMap>(100, 100, 1.0);
+    semantic_map_ = std::make_unique<SemanticMap>(default_map_width, default_map_height, default_resolution);
     constraint_checker_ = std::make_unique<SemanticConstraintChecker>(*semantic_map_);
     semantic_filter_ = std::make_unique<SemanticFilter>();
     coverage_metric_ = std::make_unique<CoverageMetric>();
@@ -33,34 +37,52 @@ bool NavPlannerNode::initialize() {
     }
 
     // Load PPO weights if using PPO-based planning
-    LogUtils::log(LogUtils::INFO, "Attempting to load PPO weights from " + model_file_);
     loadPPOWeights(model_file_);
     
-    // Initialize components with loaded parameters
-    double sparse_threshold = planner_parameters_["sparse_threshold"];
-    double exploration_bonus = planner_parameters_["exploration_bonus"];
-    double redundancy_penalty = planner_parameters_["redundancy_penalty"];
-    // double grid_resolution = planner_parameters_["grid_resolution"]; // 未使用的变量
-    
     // Update costmap resolution
-    // Note: In a real implementation, we would recreate the costmap with new dimensions
-    // For simplicity, we'll just update the parameters
-    costmap_->setParameters(sparse_threshold, exploration_bonus, redundancy_penalty);
+    auto sparse_it = planner_parameters_.find("sparse_threshold");
+    auto exploration_it = planner_parameters_.find("exploration_bonus");
+    auto redundancy_it = planner_parameters_.find("redundancy_penalty");
+
+    if (sparse_it != planner_parameters_.end() && exploration_it != planner_parameters_.end() && redundancy_it != planner_parameters_.end()) {
+        costmap_->setParameters(sparse_it->second, exploration_it->second, redundancy_it->second);
+    }
     
     // Update route planner parameters
-    route_planner_->setSparseThreshold(sparse_threshold);
-    route_planner_->setExplorationBonus(exploration_bonus);
-    route_planner_->setRedundancyPenalty(redundancy_penalty);
+    if (sparse_it != planner_parameters_.end()) {
+        route_planner_->setSparseThreshold(sparse_it->second);
+    }
+    if (exploration_it != planner_parameters_.end()) {
+        route_planner_->setExplorationBonus(exploration_it->second);
+    }
+    if (redundancy_it != planner_parameters_.end()) {
+        route_planner_->setRedundancyPenalty(redundancy_it->second);
+    }
     
     // Update sampling optimizer parameters
     SamplingParams sampling_params;
-    sampling_params.sparse_threshold = sparse_threshold;
-    sampling_params.exploration_weight = exploration_bonus;
-    sampling_params.redundancy_penalty = redundancy_penalty;
+    sampling_params.sparse_threshold = (sparse_it != planner_parameters_.end()) ? sparse_it->second : 0.2;
+    sampling_params.exploration_weight = (exploration_it != planner_parameters_.end()) ? exploration_it->second : 1.0;
+    sampling_params.redundancy_penalty = (redundancy_it != planner_parameters_.end()) ? redundancy_it->second : 5.0;
+
+    auto efficiency_it = planner_parameters_.find("sampling_params_efficiency_weight");
+    sampling_params.efficiency_weight = (efficiency_it != planner_parameters_.end()) ? efficiency_it->second : 0.5;
+
     sampling_optimizer_->updateParameters(sampling_params);
     
     // Update coverage metric
-    coverage_metric_ = std::make_unique<CoverageMetric>(sparse_threshold);
+    coverage_metric_ = std::make_unique<CoverageMetric>(sampling_params.sparse_threshold);
+    
+    // Update PPO agent configuration from parameters
+    if (route_planner_->getPPOAgent()) {
+        route_planner_->getPPOAgent()->updateConfigFromParameters(planner_parameters_);
+    }
+    
+    // Set use_ppo flag from configuration
+    auto ppo_it = planner_parameters_.find("nav_planner_use_ppo");
+    if (ppo_it != planner_parameters_.end()) {
+        use_ppo_ = (ppo_it->second > 0.5); // Convert double to bool (1.0 = true, 0.0 = false)
+    }
     
     LogUtils::log(LogUtils::INFO, "Navigation Planner Node initialized successfully");
     return true;
@@ -86,7 +108,7 @@ bool NavPlannerNode::loadConfiguration() {
 void NavPlannerNode::updateCostmapWithStatistics() {
     LogUtils::log(LogUtils::INFO, "Updating costmap with data statistics");
     
-    // Update costmap with collected data points
+    // Update costmap with collected data points from trajectory
     costmap_->updateWithDataStatistics(collected_data_points_);
     
     // Adjust costs based on density
@@ -96,49 +118,6 @@ void NavPlannerNode::updateCostmapWithStatistics() {
     constraint_checker_->applyConstraintsToCostmap(*costmap_);
     
     LogUtils::log(LogUtils::INFO, "Costmap updated with statistics");
-}
-
-std::vector<Point> NavPlannerNode::planGlobalPath() {
-    LogUtils::log(LogUtils::INFO, "Planning global path from " + 
-                 LogUtils::formatPoint(current_position_) + " to " + 
-                 LogUtils::formatPoint(goal_position_));
-    
-    // Choose planning algorithm based on configuration
-    if (use_ppo_) {
-        LogUtils::log(LogUtils::INFO, "Using PPO-based path planning");
-        global_path_ = route_planner_->computePPOPath(*costmap_, current_position_, goal_position_);
-    } else {
-        LogUtils::log(LogUtils::INFO, "Using A*-based path planning");
-        global_path_ = route_planner_->computeAStarPath(*costmap_, current_position_, goal_position_);
-    }
-    
-    // Validate path
-    if (!validatePath(global_path_)) {
-        LogUtils::log(LogUtils::WARN, "Planned global path has constraint violations");
-    }
-    
-    LogUtils::log(LogUtils::INFO, "Global path planned with " + 
-                 std::to_string(global_path_.size()) + " waypoints");
-    
-    return global_path_;
-}
-
-std::vector<Point> NavPlannerNode::planLocalPath() {
-    LogUtils::log(LogUtils::INFO, "Planning local path");
-    
-    // For demonstration, we'll just take a segment of the global path
-    // In a real implementation, this would use local costmap and more sophisticated planning
-    size_t segment_size = std::min(static_cast<size_t>(10), global_path_.size());
-    local_path_.clear();
-    
-    for (size_t i = 0; i < segment_size; ++i) {
-        local_path_.push_back(global_path_[i]);
-    }
-    
-    LogUtils::log(LogUtils::INFO, "Local path planned with " + 
-                 std::to_string(local_path_.size()) + " waypoints");
-    
-    return local_path_;
 }
 
 Point NavPlannerNode::optimizeNextWaypoint() {
@@ -203,7 +182,7 @@ double NavPlannerNode::computeStateReward(const StateInfo& prev_state_info,
 
 void NavPlannerNode::reloadConfiguration() {
     LogUtils::log(LogUtils::INFO, "Reloading configuration");
-    
+
     if (loadConfiguration()) {
         // Reinitialize with new parameters
         initialize();
@@ -219,7 +198,7 @@ void NavPlannerNode::addDataPoint(const Point& point) {
 }
 
 bool NavPlannerNode::loadPPOWeights(const std::string& filepath) {
-    LogUtils::log(LogUtils::INFO, "Attempting to load PPO weights from " + filepath);
+    LogUtils::log(LogUtils::INFO, "Loading PPO weights file from " + filepath);
     if (route_planner_->getPPOAgent()) {
         bool success = route_planner_->getPPOAgent()->loadWeights(filepath);
         if (success) {
@@ -249,4 +228,46 @@ bool NavPlannerNode::savePPOWeights(const std::string& filepath) {
     return false;
 }
 
-} // namespace dcl::planner
+void NavPlannerNode::reset() {
+    // Reset planner state
+    current_position_ = Point(0.0, 0.0);
+    goal_position_ = Point(0.0, 0.0);
+    planner_path_.clear();
+    collected_data_points_.clear();
+    
+    LogUtils::log(LogUtils::INFO, "Navigation Planner Node reset");
+}
+
+Trajectory NavPlannerNode::plan(const PlannerInput& input) {
+    // Set the current and goal positions from the input
+    current_position_ = input.start;
+    goal_position_ = input.goal;
+    
+    // Plan path using the navigation planner
+    if (use_ppo_) {
+        planner_path_ = route_planner_->computePPOPath(*costmap_, input.start, input.goal);
+    } else {
+        planner_path_ = route_planner_->computeAStarPath(*costmap_, input.start, input.goal);
+    }
+    
+    // Create trajectory from the path
+    Trajectory trajectory;
+    trajectory.states = planner_path_;
+
+    // Validate path
+    if (!validatePath(planner_path_)) {
+        LogUtils::log(LogUtils::WARN, "Planned path has constraint violations");
+    }
+    
+    // // Calculate total cost
+    // if (!path.empty()) {
+    //     for (size_t i = 1; i < path.size(); ++i) {
+    //         double segment_cost = PlannerUtils::euclideanDistance(path[i-1], path[i]);
+    //         // trajectory.total_cost += segment_cost;//TODO
+    //     }
+    // }
+    
+    return trajectory;
+}
+
+} // namespace dcp::planner

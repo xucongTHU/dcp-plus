@@ -2,7 +2,7 @@
 #include "coverage_metric.h"
 #include <algorithm>
 
-namespace dcl::planner {
+namespace dcp::planner {
 CoverageMetric::CoverageMetric(double sparse_threshold)
     : total_cells(0), visited_cells(0), total_sparse_cells(0), 
       visited_sparse_cells(0), sparse_threshold(sparse_threshold) {

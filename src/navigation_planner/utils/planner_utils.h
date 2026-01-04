@@ -30,7 +30,7 @@ struct Path {
     size_t size() const { return waypoints.size(); }
 };
 
-namespace dcl::planner {
+namespace dcp::planner {
 class PlannerUtils {
 public:
     /**
@@ -168,5 +168,5 @@ namespace LogUtils {
     std::string formatPoint(const Point& point);
 }
 
-} // namespace dcl::planner
+} // namespace dcp::planner
 #endif // PLANNER_UTILS_H

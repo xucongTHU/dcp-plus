@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 配置参数
-PROCESS_NAMES=("pilotshadow")           # 监控的进程名列表
+PROCESS_NAMES=("dcp_app")           # 监控的进程名列表
 DURATION=60                             # 监控时长（秒）
 REPORT_FILE="perf_report.txt"           # 报告文件
 LOG_FILE="perf_monitor.log"             # 详细日志文件

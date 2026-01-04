@@ -32,7 +32,7 @@ struct SemanticObject {
         : type(t), position(p), radius(r), label(l), confidence(conf) {}
 };
 
-namespace dcl::planner {
+namespace dcp::planner {
 
 class SemanticMap {
 private:
@@ -91,6 +91,6 @@ public:
     size_t getObjectCount() const { return objects.size(); }
 };
 
-} // namespace dcl::planner
+} // namespace dcp::planner
 
 #endif // SEMANTIC_MAP_H

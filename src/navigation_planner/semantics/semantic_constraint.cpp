@@ -2,7 +2,7 @@
 #include "semantic_constraint.h"
 #include <cmath>
 
-namespace dcl::planner {
+namespace dcp::planner {
 std::vector<ConstraintViolation> SemanticConstraintChecker::checkPathConstraints(
     const std::vector<Point>& path) const {
     std::vector<ConstraintViolation> violations;
@@ -146,4 +146,4 @@ double SemanticConstraintChecker::getConstraintPenalty(const Point& point) const
     return penalty;
 }
 
-} // namespace dcl::planner
+} // namespace dcp::planner

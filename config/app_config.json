@@ -5,9 +5,9 @@
     "rollInterval": 10,
     "bagInterval": 10,
     "storagePaths": {
-      "bagPath": "/data/dcl/data/bag/shadow/",
-      "encPath": "/data/dcl/data/enc",
-      "MaskedPath": "/data/dcl/data/masked"
+      "bagPath": "/data/dcp/data/bag/shadow/",
+      "encPath": "/data/dcp/data/enc",
+      "MaskedPath": "/data/dcp/data/masked"
     },
     "capacityMb": 102400,
     "requiredSpaceMb": 256
@@ -33,17 +33,17 @@
     "uploadFileIntervalMs": 100,
     "uploadFileSliceIntervalMs": 100,
     "uploadFileSliceSizeMb": 50,
-    "clientCertPath": "/data/dcl/caic/resource/pki/client_cc.pem",
-    "clientKeyPath": "/data/dcl/caic/resource/pki/client_ck.pem",
-    "caCertPath": "/data/dcl/caic/resource/pki/server_ca.pem",
-    "publicKeyPath": "/data/dcl/caic/resource/pki/public_key.pem",
+    "clientCertPath": "/data/dcp/caic/resource/pki/client_cc.pem",
+    "clientKeyPath": "/data/dcp/caic/resource/pki/client_ck.pem",
+    "caCertPath": "/data/dcp/caic/resource/pki/server_ca.pem",
+    "publicKeyPath": "/data/dcp/caic/resource/pki/public_key.pem",
     "gateway": "dnaivigw-perfs.dfiov.com.cn",
-    "fileRecordPath": "/data/dcl/data/bag/shadow/file_record.json",
+    "fileRecordPath": "/data/dcp/data/bag/shadow/file_record.json",
     "filenameRegex": "(\\.(record|lz4|zip)$)",
     "uploadPaths": {
-      "bagPath": "/data/dcl/data/bag/shadow",
-      "encPath": "/data/dcl/data/enc",
-      "MaskedPath": "/data/dcl/data/masked"
+      "bagPath": "/data/dcp/data/bag/shadow",
+      "encPath": "/data/dcp/data/enc",
+      "MaskedPath": "/data/dcp/data/masked"
     }
   },
   "log":{

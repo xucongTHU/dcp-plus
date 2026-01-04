@@ -6,7 +6,7 @@
 #include "../costmap/costmap.h"
 #include "coverage_metric.h"
 
-namespace dcl::planner {
+namespace dcp::planner {
 
 struct SamplingParams {
     double exploration_weight;
@@ -66,6 +66,6 @@ public:
     const CoverageMetric& getCoverageMetric() const { return coverage_metric; }
 };
 
-} // namespace dcl::planner
+} // namespace dcp::planner
 
 #endif // SAMPLING_OPTIMIZER_H

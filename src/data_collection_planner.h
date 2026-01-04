@@ -5,12 +5,11 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "navigation_planner/nav_planner_node.h"
-#include "navigation_planner/utils/planner_utils.h"
+#include "navigation_planner/nav_planner_node.h"  // Include the base class
 
 // Include data collection components
-// #include "trigger_engine/strategy_parser/strategy_parser.h"
-// #include "trigger_engine/trigger_manager.h"
+// #include "trigger/strategy_parser/strategy_parser.h"
+// #include "trigger/trigger_manager.h"
 // #include "recorder/data_storage.h"
 // #include "uploader/data_uploader.h"
 
@@ -31,12 +30,12 @@ struct MissionArea {
     MissionArea(const Point& c = Point(), double r = 0.0) : center(c), radius(r) {}
 };
 
-namespace dcl {
+namespace dcp {
 
 class DataCollectionPlanner {
 private:
     // std::shared_ptr<rscl::Node> node_;
-    std::unique_ptr<planner::NavPlannerNode> nav_planner_;
+    std::unique_ptr<planner::NavPlannerNode> rl_planner_;  // Changed from NavPlannerNode to PlannerBase
     // std::unique_ptr<recorder::DataStorage> data_storage_;
     // std::unique_ptr<uploader::DataUploader> data_uploader_;
     // std::unique_ptr<trigger::TriggerManager> trigger_manager_;
@@ -48,7 +47,7 @@ private:
     MissionArea mission_area_;
     
 public:
-    DataCollectionPlanner(const std::string& model_file = "/workspaces/ad_data_closed_loop/training/models/planner_model.onnx",
+    DataCollectionPlanner(const std::string& model_file = "/workspaces/ad_agent/models/planner_model.onnx",
                           const std::string& config_file = "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
     
     ~DataCollectionPlanner() = default;
@@ -163,6 +162,6 @@ public:
                                    const std::string& config_path);
 };
 
-} // namespace dcl
+} // namespace dcp
 
 #endif // DATA_COLLECTION_PLANNER_H

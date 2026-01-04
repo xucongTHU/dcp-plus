@@ -1,3 +1,53 @@
-sparse_threshold: 0.20000000000000001
-exploration_bonus: 0.59999999999999998
-redundancy_penalty: 0.59999999999999998
+# Planner Weights Configuration
+# Weight values for different cost components in path planning
+
+# Data closed loop parameters
+# Automatically updated after each data collection mission
+# Based on spatial distribution statistics of collected data
+sparse_threshold: 0.15     # Areas with density below this value are considered sparse
+exploration_bonus: 10.0    # Cost reduction for visiting sparse areas (encourages exploration)
+redundancy_penalty: 5.0    # Additional cost for high-density areas (discourages redundancy)
+grid_resolution: 1.0       # Grid resolution for density calculations (meters)
+
+# Path planning parameters
+path_planning:
+  max_search_iterations: 1000   # Maximum iterations for path search algorithms
+  min_path_length: 2.0          # Minimum acceptable path length (meters)
+  path_smoothness_factor: 0.7   # Factor controlling path smoothing (0.0-1.0)
+  heuristic_weight: 1.0         # Weight for A* heuristic function
+
+# PPO (Proximal Policy Optimization) agent parameters
+ppo_config:
+  learning_rate: 0.0003         # Learning rate for PPO training
+  gamma: 0.999                  # Discount factor for future rewards
+  gae_lambda: 0.95              # Generalized Advantage Estimation lambda
+  clip_epsilon: 0.2             # PPO clipping parameter
+  entropy_coef: 0.01            # Entropy regularization coefficient
+  value_loss_coef: 0.5          # Value function loss coefficient
+  batch_size: 64                # Batch size for training updates
+  epochs: 10                    # Number of training epochs per update
+  max_training_steps: 15000     # Maximum training steps
+  max_episode_steps: 200        # Maximum steps per episode
+
+# Sampling optimizer parameters
+sampling_params:
+  exploration_weight: 1.0       # Weight for exploration component
+  efficiency_weight: 0.5        # Weight for efficiency component
+  redundancy_penalty: 5.0       # Penalty for redundancy
+
+# Coverage metric parameters
+coverage_params:
+  sparse_threshold: 0.15        # Threshold for sparse area classification
+
+# Semantic constraint parameters
+semantic_constraints:
+  traffic_light_penalty: 50.0   # Cost penalty for traffic light violations
+  building_penalty: 30.0        # Cost penalty for building proximity
+  pedestrian_crossing_penalty: 20.0 # Cost penalty for pedestrian crossing areas
+  road_preference: -10.0        # Negative cost (preference) for road areas
+
+# Navigation planner parameters
+nav_planner:
+  use_ppo: true                 # Whether to use PPO-based planning
+  local_path_lookahead: 10      # Number of waypoints to include in local path
+  waypoint_spacing: 1.0         # Desired spacing between waypoints (meters)

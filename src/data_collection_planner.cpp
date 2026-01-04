@@ -4,18 +4,19 @@
 #include <fstream>
 #include <random>
 #include <yaml-cpp/yaml.h>
-#include "common/log/logger.h"
+#include "data_collection/common/log/logger.h"
 
-namespace dcl {
+namespace dcp {
 DataCollectionPlanner::DataCollectionPlanner(const std::string& model_file, const std::string& config_file) {
     AD_INFO(DataCollectionPlanner, "Creating DataCollectionPlanner with model_file: %s, config_file: %s", 
             model_file.c_str(), config_file.c_str());
-    nav_planner_ = std::make_unique<planner::NavPlannerNode>(model_file, config_file);
+    // Create specific planner instance but store as base class pointer
+    rl_planner_ = std::make_unique<planner::NavPlannerNode>(model_file, config_file);
     // data_storage_ = std::make_unique<recorder::DataStorage>();
     // data_uploader_ = std::make_unique<uploader::DataUploader>();
     // trigger_manager_ = std::make_unique<trigger::TriggerManager>();
     // strategy_parser_ = std::make_unique<trigger::StrategyParser>();
-    mission_area_ = MissionArea(Point(50.0, 50.0), 30.0); // Default mission area
+    mission_area_ = MissionArea(Point(50.0, 50.0), 10.0); // Default mission area - based on PRD 20x20 grid
     AD_INFO(DataCollectionPlanner, "DataCollectionPlanner constructor completed");
 }
 
@@ -30,7 +31,9 @@ bool DataCollectionPlanner::initialize() {
 
     // const auto& data_upload_config = common::AppConfig::getInstance().GetConfig().dataUpload;
     
-    if (!nav_planner_->initialize()) {
+    // Cast to concrete type for initialization
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(baseline_planner_.get());
+    if (!rl_planner_ || !rl_planner_->initialize()) {
         AD_ERROR(DataCollectionPlanner, "Failed to initialize navigation planner");
         return false;
     }
@@ -57,25 +60,41 @@ bool DataCollectionPlanner::initialize() {
 
 void DataCollectionPlanner::setMissionArea(const MissionArea& area) {
     AD_INFO(DataCollectionPlanner, "Setting mission area");
-    AD_WARN(DataCollectionPlanner, "New mission area - center: (%s, %s), radius: %s", 
-             std::to_string(area.center.x).c_str(), std::to_string(area.center.y).c_str(), 
-             std::to_string(area.radius).c_str());
     
     mission_area_ = area;
-    nav_planner_->setGoalPosition(area.center);
+    
+    // Cast to concrete type to access specific methods
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(baseline_planner_.get());
+    if (rl_planner_) {
+        rl_planner_->setGoalPosition(area.center);
+    }
 
     AD_INFO(DataCollectionPlanner, "Mission area set to center: (%s, %s), radius: %s", 
             std::to_string(area.center.x).c_str(), std::to_string(area.center.y).c_str(), 
             std::to_string(area.radius).c_str());
 }
 
+// 使用导航规划器(rl_planner_)规划从当前位置到目标位置的路径
+// 返回一个路径点集合(optimized_waypoints)
 std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
     AD_INFO(DataCollectionPlanner, "Planning data collection mission");
     
-    // Plan global path using navigation planner
-    std::vector<Point> collection_path = nav_planner_->planGlobalPath();
+    // Cast to concrete type to access specific methods
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(baseline_planner_.get());
+    if (!rl_planner_) {
+        AD_ERROR(DataCollectionPlanner, "Failed to cast planner to concrete type");
+        return {};
+    }
     
-    AD_WARN(DataCollectionPlanner, "Received collection path with %s points from navigation planner", 
+    // Plan global path using navigation planner
+    // Plan using the PlannerBase interface
+    // Use current and goal positions, and get costmap from the concrete planner
+    planner::CostMap* costmap_ptr = nullptr; // We'll pass nullptr since costmap is managed internally by the planner
+    planner::PlannerInput input(rl_planner_->getCurrentPosition(), rl_planner_->getGoalPosition(), costmap_ptr);
+    auto trajectory = rl_planner_->plan(input);
+    std::vector<Point> collection_path = trajectory.states;
+    
+    AD_WARN(DataCollectionPlanner, "Received collection path with %s points from navigation planner",
              std::to_string(collection_path.size()).c_str());
     
     // Apply data collection strategy to optimize waypoints
@@ -83,22 +102,22 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
     
     if (!collection_path.empty()) {
         // Use the navigation planner's sampling optimizer to find optimal waypoints
-        Point current_pos = nav_planner_->getCurrentPosition();
+        Point current_pos = rl_planner_->getCurrentPosition();
         
         // For each segment of the path, find optimal data collection points
         for (size_t i = 0; i < collection_path.size(); ++i) {
             // Check if we should collect data at this point based on strategy
             // if (trigger_manager_ && trigger_manager_->shouldTrigger(collection_path[i])) {   //TODO
-                Point optimal_point = nav_planner_->optimizeNextWaypoint();
+                Point optimal_point = rl_planner_->optimizeNextWaypoint();
                 optimized_waypoints.push_back(optimal_point);
                 
                 // Update current position for next optimization
-                nav_planner_->setCurrentPosition(optimal_point);
+                rl_planner_->setCurrentPosition(optimal_point);
             // }
         }
         
         // Restore original position
-        nav_planner_->setCurrentPosition(current_pos);
+        rl_planner_->setCurrentPosition(current_pos);
     }
     
     AD_INFO(DataCollectionPlanner, "Data collection mission planned with %s waypoints", std::to_string(optimized_waypoints.size()).c_str());
@@ -106,11 +125,20 @@ std::vector<Point> DataCollectionPlanner::planDataCollectionMission() {
     return optimized_waypoints;
 }
 
+// 遍历路径上的每个航路点, 在每个航路点执行数据采集，创建DataPoint对象
+// 将采集的数据点添加到collected_data_集合中
 void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path) {
     AD_INFO(DataCollectionPlanner, "Executing data collection along path with %s waypoints", std::to_string(path.size()).c_str());
     
     if (path.empty()) {
         AD_WARN(DataCollectionPlanner, "Empty path provided for data collection");
+        return;
+    }
+    
+    // Cast to concrete type to access specific methods
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(baseline_planner_.get());
+    if (!rl_planner_) {
+        AD_ERROR(DataCollectionPlanner, "Failed to cast planner to concrete type");
         return;
     }
     
@@ -121,14 +149,14 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
         const Point& waypoint = path[i];
         
         // Update planner's current position
-        nav_planner_->setCurrentPosition(waypoint);
+        rl_planner_->setCurrentPosition(waypoint);
         
         // Trigger data collection based on strategy
         // if (trigger_manager_ && trigger_manager_->shouldTrigger(waypoint)) {
         //     AD_INFO(DataCollectionPlanner, "Triggering data collection at waypoint %s", std::to_string(i).c_str());
             
         //     // Create trigger context for data collection
-        //     auto trigger_context = std::make_shared<dcl::trigger::TriggerContext>();
+        //     auto trigger_context = std::make_shared<dcp::trigger::TriggerContext>();
         //     trigger_context->position.x = waypoint.x;
         //     trigger_context->position.y = waypoint.y;
         //     trigger_context->triggerTimestamp = static_cast<uint64_t>(std::time(nullptr));
@@ -151,10 +179,18 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
         //     current_state.visited_new_sparse = trigger_manager_->isInSparseArea(waypoint);
         //     current_state.trigger_success = !sensor_data.empty();
         //     current_state.collision = false; // Would be determined by real sensor data
+        //     current_state.reached_goal = false; // Check if waypoint is near goal
+        //     current_state.on_efficient_path = true; // Determine based on path efficiency
+        //     current_state.visited_before = false; // Track if location was previously visited
         //     current_state.distance_to_sparse = trigger_manager_->getDistanceToNearestSparseArea(waypoint);
-            
+        //     current_state.distance_to_target = dcp::planner::PlannerUtils::euclideanDistance(waypoint, nav_planner_->getGoalPosition());
+        //     current_state.path_efficiency = 1.0; // Calculate based on actual path taken
+        //     current_state.steps_taken = i + 1; // Track number of steps taken
+        //     current_state.total_visited_count = 1; // Track total visits to this location
+        //     
         //     // In a real implementation, we would track previous state to compute reward
-        //     double reward = nav_planner_->computeStateReward(StateInfo(), current_state);
+        //     StateInfo prev_state;
+        //     double reward = nav_planner_->computeStateReward(prev_state, current_state);
         //     AD_INFO(DataCollectionPlanner, "Waypoint %s reward: %s", std::to_string(i).c_str(), std::to_string(reward).c_str());
         // }
     }
@@ -165,6 +201,7 @@ void DataCollectionPlanner::executeDataCollection(const std::vector<Point>& path
     AD_INFO(DataCollectionPlanner, "Data collection completed with %s data points collected", std::to_string(new_data.size()).c_str());
 }
 
+// 将数据点添加到导航规划器的内部数据点集合中, 更新成本图和覆盖率指标
 void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_data) {
     AD_INFO(DataCollectionPlanner, "Updating planner with %s new data points", std::to_string(new_data.size()).c_str());
     
@@ -173,24 +210,34 @@ void DataCollectionPlanner::updateWithNewData(const std::vector<DataPoint>& new_
         return;
     }
     
+    // Cast to concrete type to access specific methods
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(baseline_planner_.get());
+    if (!rl_planner_) {
+        AD_ERROR(DataCollectionPlanner, "Failed to cast planner to concrete type");
+        return;
+    }
+    
     // Add new data points to planner and local storage
     for (const auto& data_point : new_data) {
-        nav_planner_->addDataPoint(data_point.position);
+        // Use PlannerInput to add waypoint
+        // planner::PlannerInput input(data_point.position, data_point.position, nullptr);
+        // 数据采集点集不是添加到规划路径上，而是通过在已规划路径的每个点执行数据采集来构建的
+        rl_planner_->addDataPoint(data_point.position);
         collected_data_.push_back(data_point);
     }
     
     // Update costmap with new statistics
-    nav_planner_->updateCostmapWithStatistics();
+    rl_planner_->updateCostmapWithStatistics();
     
     // Update coverage metrics based on actual visited cells
     std::vector<std::pair<int, int>> visited_cells;
     double resolution = 1.0; // Default resolution
     
     for (const auto& data_point : new_data) {
-        auto grid_coords = dcl::planner::PlannerUtils::worldToGrid(data_point.position, resolution);
+        auto grid_coords = dcp::planner::PlannerUtils::worldToGrid(data_point.position, resolution);
         visited_cells.push_back(grid_coords);
     }
-    nav_planner_->updateCoverageMetrics(visited_cells);
+    rl_planner_->updateCoverageMetrics(visited_cells);
     
     AD_INFO(DataCollectionPlanner, "Planner updated with new data");
 }
@@ -211,7 +258,14 @@ void DataCollectionPlanner::uploadCollectedData() {
 void DataCollectionPlanner::reportCoverageMetrics() {
     AD_INFO(DataCollectionPlanner, "Reporting coverage metrics");
     
-    const dcl::planner::CoverageMetric& coverage = nav_planner_->getCoverageMetric();
+    // Cast to concrete type to access specific methods
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(baseline_planner_.get());
+    if (!rl_planner_) {
+        AD_ERROR(DataCollectionPlanner, "Failed to cast planner to concrete type");
+        return;
+    }
+    
+    const dcp::planner::CoverageMetric& coverage = rl_planner_->getCoverageMetric();
     
     AD_INFO(DataCollectionPlanner, "Total cells: %s", std::to_string(coverage.getTotalCells()).c_str());
     AD_INFO(DataCollectionPlanner, "Visited cells: %s", std::to_string(coverage.getVisitedCells()).c_str());
@@ -242,10 +296,17 @@ void DataCollectionPlanner::analyzeAndExportWeights() {
     
     // Save to planner configuration
     DataCollectionAnalyzer::saveToPlannerConfig(adjusted_weights, 
-        "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
+        "config/planner_weights.yaml");
     
-    // Reload configuration in navigation planner
-    nav_planner_->reloadConfiguration();
+    // Cast to concrete type to access specific methods
+    // auto* rl_planner = dynamic_cast<planner::NavPlannerNode*>(nav_planner_.get());
+    // if (rl_planner) {
+    //     // Reload configuration from file and update planner
+    //     std::map<std::string, double> config;
+    //     if (dcp::planner::PlannerUtils::loadParametersFromYaml("config/planner_weights.yaml", config)) {
+    //         rl_planner->initialize();
+    //     }
+    // }
     
     AD_INFO(DataCollectionPlanner, "Weights analysis and export completed");
 }
@@ -353,4 +414,4 @@ void DataCollectionAnalyzer::saveToPlannerConfig(const PlannerWeights& weights,
     }
 }
 
-} //namespace dcl
+} //namespace dcp

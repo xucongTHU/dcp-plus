@@ -17,9 +17,9 @@
       "desc":"otherLog",
       "apps":[
         {
-          "appId":"dcl",
+          "appId":"dcp",
           "logRootPath":"/tmp",
-          "baseName":"dcl"
+          "baseName":"dcp"
         },
         {
           "appId":"em",
@@ -61,9 +61,9 @@
     "period":100
   },
   "savePaths":{
-    "sysLogPath":"/opt/data/dcl/log/syslog",
-    "otherLogPath":"/opt/data/dcl/log/otherlog",
-    "edrLogPath":"/opt/data/dcl/log/edrlog",
-    "dssadLogPath":"/opt/data/dcl/log/dssadlog"
+    "sysLogPath":"/opt/data/dcp/log/syslog",
+    "otherLogPath":"/opt/data/dcp/log/otherlog",
+    "edrLogPath":"/opt/data/dcp/log/edrlog",
+    "dssadLogPath":"/opt/data/dcp/log/dssadlog"
   }
 }

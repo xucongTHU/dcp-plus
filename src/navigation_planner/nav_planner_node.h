@@ -9,19 +9,20 @@
 
 // Include all component headers
 #include "costmap/costmap.h"
-#include "rl/planner_route_optimize.h"
-#include "rl/planner_reward.h"
-#include "rl/ppo_agent.h"
+#include "rl_planner/planner_route_optimize.h"
+#include "rl_planner/planner_reward.h"
+#include "rl_planner/ppo_agent.h"
 #include "sampler/coverage_metric.h"
 #include "sampler/sampling_optimizer.h"
 #include "semantics/semantic_map.h"
 #include "semantics/semantic_constraint.h"
 #include "semantics/semantic_filter.h"
 #include "utils/planner_utils.h"
+#include "planner_base.hpp"
 
-namespace dcl::planner {
+namespace dcp::planner {
 
-class NavPlannerNode {
+class NavPlannerNode : public PlannerBase {
 private:
     // Core components
     std::unique_ptr<CostMap> costmap_;
@@ -40,8 +41,7 @@ private:
     // State variables
     Point current_position_;
     Point goal_position_;
-    std::vector<Point> global_path_;
-    std::vector<Point> local_path_;
+    std::vector<Point> planner_path_;
     
     // Data collection statistics
     std::vector<Point> collected_data_points_;
@@ -52,7 +52,11 @@ private:
 public:
     NavPlannerNode(const std::string& model_file, const std::string& config_file);
     
-    ~NavPlannerNode() = default;
+    ~NavPlannerNode() override = default;
+
+    // Implementation of PlannerBase interface
+    void reset() override;
+    Trajectory plan(const PlannerInput& input) override;
     
     /**
      * @brief Initialize the navigation planner node
@@ -70,18 +74,6 @@ public:
      * @brief Update the costmap with new data statistics
      */
     void updateCostmapWithStatistics();
-    
-    /**
-     * @brief Plan global path from current position to goal
-     * @return Planned path
-     */
-    std::vector<Point> planGlobalPath();
-    
-    /**
-     * @brief Plan local path/replan as needed
-     * @return Local path
-     */
-    std::vector<Point> planLocalPath();
     
     /**
      * @brief Optimize next waypoint for data collection
@@ -109,22 +101,17 @@ public:
      * @return Computed reward
      */
     double computeStateReward(const StateInfo& prev_state_info, 
-                             const StateInfo& new_state_info);
-    
+                              const StateInfo& new_state_info);
+
     /**
      * @brief Reload planner configuration (e.g., when weights file is updated)
      */
     void reloadConfiguration();
-    
+
     /**
      * @brief Add a new data point to collected data
      */
     void addDataPoint(const Point& point);
-    
-    /**
-     * @brief Enable or disable PPO-based planning
-     */
-    void setUsePPO(bool use_ppo) { use_ppo_ = use_ppo; }
     
     /**
      * @brief Load PPO weights from file
@@ -160,17 +147,8 @@ public:
      * @brief Set goal position
      */
     void setGoalPosition(const Point& position) { goal_position_ = position; }
-    
-    /**
-     * @brief Get global path
-     */
-    const std::vector<Point>& getGlobalPath() const { return global_path_; }
-    
-    /**
-     * @brief Get local path
-     */
-    const std::vector<Point>& getLocalPath() const { return local_path_; }
+
 };
 
-} // namespace dcl::planner
+} // namespace dcp::planner
 #endif // NAV_PLANNER_NODE_H

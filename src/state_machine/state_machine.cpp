@@ -2,7 +2,7 @@
 #include "common/log/Logger.h"
 #include <iostream>
 
-namespace dcl::state_machine {
+namespace dcp::state_machine {
 StateMachine::StateMachine() 
     : current_state_(SystemState::INITIALIZING)
     , current_waypoint_index_(0) {
@@ -305,4 +305,4 @@ void StateMachine::setDataStorage(std::shared_ptr<DataStorage> data_storage) {
     data_storage_ = data_storage;
 }
 
-} // namespace dcl::state_machine
+} // namespace dcp::state_machine

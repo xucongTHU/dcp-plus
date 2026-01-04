@@ -15,6 +15,44 @@ struct State {
     // 构造函数，接受特征向量
     explicit State(const std::vector<double>& feats) : features(feats) {}
     
+    // 构造函数，使用PRD文档中的规范创建24维状态向量
+    State(double norm_lat, double norm_lon, 
+          const std::vector<double>& heatmap_summary, 
+          const std::vector<double>& last_n_actions,
+          double remaining_budget_norm, 
+          double local_traffic_density) : features() {
+        // 添加归一化坐标 (2维)
+        features.push_back(norm_lat);
+        features.push_back(norm_lon);
+        
+        // 添加热力图摘要 (16维) - 需要确保有16个值
+        for (size_t i = 0; i < 16; ++i) {
+            if (i < heatmap_summary.size()) {
+                features.push_back(heatmap_summary[i]);
+            } else {
+                features.push_back(0.0);  // 填充缺失值
+            }
+        }
+        
+        // 添加历史动作 (4维)
+        for (size_t i = 0; i < 4; ++i) {
+            if (i < last_n_actions.size()) {
+                features.push_back(last_n_actions[i]);
+            } else {
+                features.push_back(0.0);  // 填充缺失值
+            }
+        }
+        
+        // 添加剩余预算归一化值 (1维)
+        features.push_back(remaining_budget_norm);
+        
+        // 添加局部交通密度 (1维)
+        features.push_back(local_traffic_density);
+        
+        // 确保总维度为24
+        features.resize(24, 0.0);
+    }
+    
     // 获取特征维度
     size_t getFeatureDim() const { return features.size(); }
     
@@ -78,7 +116,7 @@ struct Cell {
         : x(x), y(y), cost(cost), data_density(density) {}
 };
 
-namespace dcl::planner {
+namespace dcp::planner {
 
 class CostMap {
 private:
@@ -116,5 +154,5 @@ public:
     double getRedundancyPenalty() const { return redundancy_penalty; }
 };
 
-} // namespace dcl::planner
+} // namespace dcp::planner
 #endif // COSTMAP_H
