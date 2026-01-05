@@ -9,20 +9,20 @@
 
 // Include all component headers
 #include "costmap/costmap.h"
-#include "rl_planner/planner_route_optimize.h"
-#include "rl_planner/planner_reward.h"
-#include "rl_planner/ppo_agent.h"
-#include "sampler/coverage_metric.h"
-#include "sampler/sampling_optimizer.h"
+#include "learning/route_planner.h"
+#include "learning/ppo_policy.h"
+#include "metrics/reward_calculator.h"
+#include "metrics/coverage_metric.h"
+#include "metrics/sampling_optimizer.h"
 #include "semantics/semantic_map.h"
 #include "semantics/semantic_constraint.h"
 #include "semantics/semantic_filter.h"
 #include "utils/planner_utils.h"
-#include "planner_base.hpp"
+#include "planner/planner_base.hpp"
 
 namespace dcp::planner {
 
-class NavPlannerNode : public PlannerBase {
+class RLPlanner : public PlannerBase {
 private:
     // Core components
     std::unique_ptr<CostMap> costmap_;
@@ -50,9 +50,9 @@ private:
     bool use_ppo_;  // Flag to enable PPO-based planning
     
 public:
-    NavPlannerNode(const std::string& model_file, const std::string& config_file);
+    RLPlanner(const std::string& model_file, const std::string& config_file);
     
-    ~NavPlannerNode() override = default;
+    ~RLPlanner() override = default;
 
     // Implementation of PlannerBase interface
     void reset() override;

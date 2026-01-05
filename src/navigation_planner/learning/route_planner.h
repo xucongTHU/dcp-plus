@@ -5,13 +5,13 @@
 #include <vector>
 #include <memory>
 #include "../costmap/costmap.h"
-#include "ppo_agent.h"
+#include "ppo_policy.h"
 
 namespace dcp {
 namespace planner {
 
 // Forward declarations
-class PPOAgent;
+class PPOPolicy;
 struct MapData {
     int width, height;
     double resolution;
@@ -46,7 +46,7 @@ private:
     double exploration_bonus;
     double redundancy_penalty;
     
-    std::unique_ptr<PPOAgent> ppo_agent_;
+    std::unique_ptr<PPOPolicy> ppo_policy_;
 
 public:
     RoutePlanner(double sparse_threshold = 0.2, 
@@ -88,19 +88,19 @@ public:
     void setRedundancyPenalty(double penalty) { redundancy_penalty = penalty; }
     
     /**
-     * @brief Set PPO agent for RL-based planning
-     * @param agent PPO agent
+     * @brief Set PPO policy for RL-based planning
+     * @param policy PPO policy
      */
-    void setPPOAgent(std::unique_ptr<PPOAgent> agent) { 
-        ppo_agent_ = std::move(agent); 
+    void setPPOPolicy(std::unique_ptr<PPOPolicy> policy) { 
+        ppo_policy_ = std::move(policy); 
     }
     
     /**
-     * @brief Get PPO agent
-     * @return Pointer to PPO agent
+     * @brief Get PPO policy
+     * @return Pointer to PPO policy
      */
-    PPOAgent* getPPOAgent() { 
-        return ppo_agent_.get(); 
+    PPOPolicy* getPPOPolicy() { 
+        return ppo_policy_.get(); 
     }
 };
 

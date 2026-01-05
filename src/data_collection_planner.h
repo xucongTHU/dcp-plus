@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "navigation_planner/nav_planner_node.h"  // Include the base class
+#include "planner/plus/rl_planner.h"
 
 // Include data collection components
 // #include "trigger/strategy_parser/strategy_parser.h"
@@ -35,7 +35,7 @@ namespace dcp {
 class DataCollectionPlanner {
 private:
     // std::shared_ptr<rscl::Node> node_;
-    std::unique_ptr<planner::NavPlannerNode> rl_planner_;  // Changed from NavPlannerNode to PlannerBase
+    std::unique_ptr<planner::RLPlanner> rl_planner_;  // Changed from NavPlannerNode to PlannerBase
     // std::unique_ptr<recorder::DataStorage> data_storage_;
     // std::unique_ptr<uploader::DataUploader> data_uploader_;
     // std::unique_ptr<trigger::TriggerManager> trigger_manager_;

@@ -1,5 +1,5 @@
-// planner_route_optimize.cpp
-#include "planner_route_optimize.h"
+// route_planner.cpp
+#include "route_planner.h"
 #include <iostream>
 #include <queue>
 #include <cmath>
@@ -17,11 +17,11 @@ RoutePlanner::RoutePlanner(double sparse_threshold,
     , redundancy_penalty(redundancy_penalty) {
     // Initialize PPO agent with default configuration
     PPOConfig config;
-    ppo_agent_ = std::make_unique<PPOAgent>(config);
+    ppo_policy_ = std::make_unique<PPOPolicy>(config);
     
     // 设置默认state_dim为24，符合规范中的最小值
-    if (ppo_agent_) {
-        ppo_agent_->setStateDim(24);
+    if (ppo_policy_) {
+        ppo_policy_->setStateDim(24);
     }
 }
 
@@ -75,7 +75,7 @@ std::vector<Point> RoutePlanner::computePPOPath(const CostMap& costmap,
                                                const Point& goal) {
     std::vector<Point> path;
     
-    if (!ppo_agent_) {
+    if (!ppo_policy_) {
         std::cerr << "PPO agent not initialized!" << std::endl;
         return path;
     }
@@ -84,7 +84,7 @@ std::vector<Point> RoutePlanner::computePPOPath(const CostMap& costmap,
     path.push_back(current_pos);
     
     // Maximum steps as per PRD: 200 steps per episode
-    const int max_steps = ppo_agent_->getMaxEpisodeSteps(); // Use config value which defaults to 200 per PRD
+    const int max_steps = ppo_policy_->getMaxEpisodeSteps(); // Use config value which defaults to 200 per PRD
     int steps = 0;
     
     // Define action space as per PRD: forward, turn left, turn right, turn around
@@ -177,7 +177,7 @@ std::vector<Point> RoutePlanner::computePPOPath(const CostMap& costmap,
         state.addFeature(local_density);
         
         // Select action using PPO agent (deterministic for path planning)
-        int action_idx = ppo_agent_->selectAction(state, true);
+        int action_idx = ppo_policy_->selectAction(state, true);
         
         // 更新历史动作队列
         last_actions.erase(last_actions.begin());

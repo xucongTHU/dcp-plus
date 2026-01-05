@@ -1,5 +1,5 @@
-// ppo_agent.cpp
-#include "ppo_agent.h"
+// ppo_policy.cpp
+#include "ppo_policy.h"
 #include <random>
 #include <algorithm>
 #include <cmath>
@@ -14,7 +14,7 @@
 
 namespace dcp::planner {
 
-PPOAgent::PPOAgent(const PPOConfig& config)
+PPOPolicy::PPOPolicy(const PPOConfig& config)
     : config_(config), state_dim_(24), action_dim_(4),  // Default state_dim set to 24, matching minimum specification
       total_reward_(0.0), episode_count_(0) {
 #ifdef HAVE_ONNXRUNTIME
@@ -28,7 +28,7 @@ PPOAgent::PPOAgent(const PPOConfig& config)
     AD_INFO(PLANNER, "PPO Agent initialized with state_dim=%d, action_dim=%d", state_dim_, action_dim_);
 }
 
-int PPOAgent::selectAction(const Point& state, bool deterministic) {
+int PPOPolicy::selectAction(const Point& state, bool deterministic) {
     // Convert Point to State for compatibility
     // This is a simplified state representation, containing only coordinate information
     std::vector<double> features = {state.x, state.y};
@@ -37,7 +37,7 @@ int PPOAgent::selectAction(const Point& state, bool deterministic) {
     return selectAction(state_vec, deterministic);
 }
 
-int PPOAgent::selectAction(const State& state, bool deterministic) {
+int PPOPolicy::selectAction(const State& state, bool deterministic) {
     auto probs = getActionProbabilities(state);
     
     if (deterministic) {
@@ -52,7 +52,7 @@ int PPOAgent::selectAction(const State& state, bool deterministic) {
     }
 }
 
-std::vector<double> PPOAgent::getActionProbabilities(const Point& state) {
+std::vector<double> PPOPolicy::getActionProbabilities(const Point& state) {
     // Convert Point to State for compatibility
     std::vector<double> features = {state.x, state.y};
     features.resize(state_dim_, 0.0);  // Fill to standard dimension
@@ -61,7 +61,7 @@ std::vector<double> PPOAgent::getActionProbabilities(const Point& state) {
 }
 
 #ifdef HAVE_ONNXRUNTIME
-std::pair<Ort::Value, Ort::Value> PPOAgent::runInference(const State& state) {
+std::pair<Ort::Value, Ort::Value> PPOPolicy::runInference(const State& state) {
     if (!session_) {
         throw std::runtime_error("ONNX session is not initialized");
     }
@@ -113,7 +113,7 @@ std::pair<Ort::Value, Ort::Value> PPOAgent::runInference(const State& state) {
 }
 #endif
 
-std::vector<double> PPOAgent::getActionProbabilities(const State& state) {
+std::vector<double> PPOPolicy::getActionProbabilities(const State& state) {
     // If we have a trained model, use it for inference
 #ifdef HAVE_ONNXRUNTIME
     if (session_) {
@@ -158,7 +158,7 @@ std::vector<double> PPOAgent::getActionProbabilities(const State& state) {
     return probs;
 }
 
-double PPOAgent::getValue(const Point& state) {
+double PPOPolicy::getValue(const Point& state) {
     // Convert Point to State for compatibility
     std::vector<double> features = {state.x, state.y};
     features.resize(state_dim_, 0.0);  // Fill to standard dimension
@@ -166,7 +166,7 @@ double PPOAgent::getValue(const Point& state) {
     return getValue(state_vec);
 }
 
-double PPOAgent::getValue(const State& state) {
+double PPOPolicy::getValue(const State& state) {
     // If we have a trained model, use it for inference
 #ifdef HAVE_ONNXRUNTIME
     if (session_) {
@@ -197,7 +197,7 @@ double PPOAgent::getValue(const State& state) {
     return 0.0;
 }
 
-void PPOAgent::update(const std::vector<Trajectory>& trajectories) {
+void PPOPolicy::update(const std::vector<Trajectory>& trajectories) {
     AD_INFO(PLANNER, "Updating PPO agent with %lu trajectories", trajectories.size());
     
     // This is a simplified version of PPO update
@@ -217,19 +217,19 @@ void PPOAgent::update(const std::vector<Trajectory>& trajectories) {
     AD_INFO(PLANNER, "PPO agent updated. Total episodes: %d, Total reward: %.2f", episode_count_, total_reward_);
 }
 
-bool PPOAgent::saveWeights(const std::string& filepath) {
+bool PPOPolicy::saveWeights(const std::string& filepath) {
     // Not implemented for ONNX Runtime - models are loaded, not saved
     AD_WARN(PLANNER, "Saving weights not implemented for ONNX Runtime");
 
     return false;
 }
 
-bool PPOAgent::loadWeights(const std::string& filepath) {
+bool PPOPolicy::loadWeights(const std::string& filepath) {
     // Try to load as ONNX model first
     return loadOnnxModel(filepath);
 }
 
-bool PPOAgent::loadOnnxModel(const std::string& filepath) {
+bool PPOPolicy::loadOnnxModel(const std::string& filepath) {
 #ifdef HAVE_ONNXRUNTIME
     try {
         // Create session with default options
@@ -248,12 +248,12 @@ bool PPOAgent::loadOnnxModel(const std::string& filepath) {
 #endif
 }
 
-void PPOAgent::resetStatistics() {
+void PPOPolicy::resetStatistics() {
     total_reward_ = 0.0;
     episode_count_ = 0;
 }
 
-void PPOAgent::updateConfigFromParameters(const std::map<std::string, double>& parameters) {
+void PPOPolicy::updateConfigFromParameters(const std::map<std::string, double>& parameters) {
     // Update PPO configuration from parameter map
     auto it = parameters.find("ppo_config_learning_rate");
     if (it != parameters.end()) {

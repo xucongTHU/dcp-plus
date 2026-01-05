@@ -45,7 +45,7 @@ struct Trajectory {
     std::vector<bool> dones;
 };
 
-class PPOAgent {
+class PPOPolicy {
 private:
     PPOConfig config_;
     
@@ -79,7 +79,7 @@ private:
 #endif
 
 public:
-    PPOAgent(const PPOConfig& config = PPOConfig());
+    PPOPolicy(const PPOConfig& config = PPOConfig());
     
     /**
      * @brief Select action based on current state

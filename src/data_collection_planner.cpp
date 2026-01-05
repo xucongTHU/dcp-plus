@@ -11,7 +11,7 @@ DataCollectionPlanner::DataCollectionPlanner(const std::string& model_file, cons
     AD_INFO(DataCollectionPlanner, "Creating DataCollectionPlanner with model_file: %s, config_file: %s", 
             model_file.c_str(), config_file.c_str());
     // Create specific planner instance but store as base class pointer
-    rl_planner_ = std::make_unique<planner::NavPlannerNode>(model_file, config_file);
+    rl_planner_ = std::make_unique<planner::RLPlanner>(model_file, config_file);
     // data_storage_ = std::make_unique<recorder::DataStorage>();
     // data_uploader_ = std::make_unique<uploader::DataUploader>();
     // trigger_manager_ = std::make_unique<trigger::TriggerManager>();

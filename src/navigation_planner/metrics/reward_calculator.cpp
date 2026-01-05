@@ -1,5 +1,5 @@
-// planner_reward.cpp
-#include "planner_reward.h"
+// reward_calculator.cpp
+#include "reward_calculator.h"
 #include <cmath>
 
 namespace dcp::planner {

@@ -1,17 +1,17 @@
-// nav_planner_node.cpp
-#include "nav_planner_node.h"
+// rl_planner.cpp
+#include "rl_planner.h"
 #include <iostream>
 #include <algorithm>
 
 namespace dcp::planner {
 
-NavPlannerNode::NavPlannerNode(const std::string& model_file, const std::string& config_file)
+RLPlanner::RLPlanner(const std::string& model_file, const std::string& config_file)
     : config_file_path_(config_file)
     , model_file_(model_file)
     , current_position_(Point(0.0, 0.0))
     , goal_position_(Point(0.0, 0.0))
     , use_ppo_(true) {
-    LogUtils::log(LogUtils::INFO, "Creating NavPlannerNode with model_file: " + model_file + ", config_file: " + config_file);
+    LogUtils::log(LogUtils::INFO, "Creating RLPlanner with model_file: " + model_file + ", config_file: " + config_file);
     // Initialize with default values based on PRD: configurable 2D grid (default 20x20)
     int default_map_width = 20;
     int default_map_height = 20;
@@ -27,7 +27,7 @@ NavPlannerNode::NavPlannerNode(const std::string& model_file, const std::string&
 
 }
 
-bool NavPlannerNode::initialize() {
+bool RLPlanner::initialize() {
     LogUtils::log(LogUtils::INFO, "Initializing Navigation Planner Node");
     
     // Load configuration
@@ -74,8 +74,8 @@ bool NavPlannerNode::initialize() {
     coverage_metric_ = std::make_unique<CoverageMetric>(sampling_params.sparse_threshold);
     
     // Update PPO agent configuration from parameters
-    if (route_planner_->getPPOAgent()) {
-        route_planner_->getPPOAgent()->updateConfigFromParameters(planner_parameters_);
+    if (route_planner_->getPPOPolicy()) {
+        route_planner_->getPPOPolicy()->updateConfigFromParameters(planner_parameters_);
     }
     
     // Set use_ppo flag from configuration
@@ -88,7 +88,7 @@ bool NavPlannerNode::initialize() {
     return true;
 }
 
-bool NavPlannerNode::loadConfiguration() {
+bool RLPlanner::loadConfiguration() {
     LogUtils::log(LogUtils::INFO, "Loading configuration from " + config_file_path_);
     
     if (!PlannerUtils::loadParametersFromYaml(config_file_path_, planner_parameters_)) {
@@ -105,7 +105,7 @@ bool NavPlannerNode::loadConfiguration() {
     return true;
 }
 
-void NavPlannerNode::updateCostmapWithStatistics() {
+void RLPlanner::updateCostmapWithStatistics() {
     LogUtils::log(LogUtils::INFO, "Updating costmap with data statistics");
     
     // Update costmap with collected data points from trajectory
@@ -120,7 +120,7 @@ void NavPlannerNode::updateCostmapWithStatistics() {
     LogUtils::log(LogUtils::INFO, "Costmap updated with statistics");
 }
 
-Point NavPlannerNode::optimizeNextWaypoint() {
+Point RLPlanner::optimizeNextWaypoint() {
     LogUtils::log(LogUtils::INFO, "Optimizing next waypoint for data collection");
     
     // Use sampling optimizer to find next optimal point
@@ -131,7 +131,7 @@ Point NavPlannerNode::optimizeNextWaypoint() {
     return next_waypoint;
 }
 
-bool NavPlannerNode::validatePath(const std::vector<Point>& path) {
+bool RLPlanner::validatePath(const std::vector<Point>& path) {
     if (path.empty()) {
         return false;
     }
@@ -158,7 +158,7 @@ bool NavPlannerNode::validatePath(const std::vector<Point>& path) {
     return true;
 }
 
-void NavPlannerNode::updateCoverageMetrics(const std::vector<std::pair<int, int>>& visited_cells) {
+void RLPlanner::updateCoverageMetrics(const std::vector<std::pair<int, int>>& visited_cells) {
     LogUtils::log(LogUtils::INFO, "Updating coverage metrics");
     
     coverage_metric_->updateCoverage(*costmap_, visited_cells);
@@ -169,7 +169,7 @@ void NavPlannerNode::updateCoverageMetrics(const std::vector<std::pair<int, int>
                  std::to_string(coverage_metric_->getSparseCoverageRatio()));
 }
 
-double NavPlannerNode::computeStateReward(const StateInfo& prev_state_info, 
+double RLPlanner::computeStateReward(const StateInfo& prev_state_info, 
                                          const StateInfo& new_state_info) {
     LogUtils::log(LogUtils::INFO, "Computing state reward");
     
@@ -180,7 +180,7 @@ double NavPlannerNode::computeStateReward(const StateInfo& prev_state_info,
     return reward;
 }
 
-void NavPlannerNode::reloadConfiguration() {
+void RLPlanner::reloadConfiguration() {
     LogUtils::log(LogUtils::INFO, "Reloading configuration");
 
     if (loadConfiguration()) {
@@ -192,15 +192,15 @@ void NavPlannerNode::reloadConfiguration() {
     }
 }
 
-void NavPlannerNode::addDataPoint(const Point& point) {
+void RLPlanner::addDataPoint(const Point& point) {
     collected_data_points_.push_back(point);
     LogUtils::log(LogUtils::INFO, "Added data point: " + LogUtils::formatPoint(point));
 }
 
-bool NavPlannerNode::loadPPOWeights(const std::string& filepath) {
+bool RLPlanner::loadPPOWeights(const std::string& filepath) {
     LogUtils::log(LogUtils::INFO, "Loading PPO weights file from " + filepath);
-    if (route_planner_->getPPOAgent()) {
-        bool success = route_planner_->getPPOAgent()->loadWeights(filepath);
+    if (route_planner_->getPPOPolicy()) {
+        bool success = route_planner_->getPPOPolicy()->loadWeights(filepath);
         if (success) {
             LogUtils::log(LogUtils::INFO, "PPO weights loaded successfully from " + filepath);
             return true;
@@ -213,9 +213,9 @@ bool NavPlannerNode::loadPPOWeights(const std::string& filepath) {
     return false;
 }
 
-bool NavPlannerNode::savePPOWeights(const std::string& filepath) {
-    if (route_planner_->getPPOAgent()) {
-        bool success = route_planner_->getPPOAgent()->saveWeights(filepath);
+bool RLPlanner::savePPOWeights(const std::string& filepath) {
+    if (route_planner_->getPPOPolicy()) {
+        bool success = route_planner_->getPPOPolicy()->saveWeights(filepath);
         if (success) {
             LogUtils::log(LogUtils::INFO, "PPO weights saved to " + filepath);
             return true;
@@ -228,7 +228,7 @@ bool NavPlannerNode::savePPOWeights(const std::string& filepath) {
     return false;
 }
 
-void NavPlannerNode::reset() {
+void RLPlanner::reset() {
     // Reset planner state
     current_position_ = Point(0.0, 0.0);
     goal_position_ = Point(0.0, 0.0);
@@ -238,7 +238,7 @@ void NavPlannerNode::reset() {
     LogUtils::log(LogUtils::INFO, "Navigation Planner Node reset");
 }
 
-Trajectory NavPlannerNode::plan(const PlannerInput& input) {
+Trajectory RLPlanner::plan(const PlannerInput& input) {
     // Set the current and goal positions from the input
     current_position_ = input.start;
     goal_position_ = input.goal;
