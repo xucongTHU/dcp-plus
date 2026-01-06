@@ -5,7 +5,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "planner/plus/rl_planner.h"
+#include "planner/rl_planner.h"
+#include "dcp_mode.hpp"
 
 // Include data collection components
 // #include "trigger/strategy_parser/strategy_parser.h"
@@ -45,10 +46,12 @@ private:
     
     std::vector<DataPoint> collected_data_;
     MissionArea mission_area_;
+    DcpMode mode_;
     
 public:
-    DataCollectionPlanner(const std::string& model_file = "/workspaces/ad_agent/models/planner_model.onnx",
-                          const std::string& config_file = "/workspaces/ad_data_closed_loop/config/planner_weights.yaml");
+    DataCollectionPlanner(DcpMode mode = DcpMode::PLUS,
+                          const std::string& model_file = "/workspaces/dcp-plus/models/planner_model.onnx",
+                          const std::string& config_file = "/workspaces/dcp-plus/config/planner_weights.yaml");
     
     ~DataCollectionPlanner() = default;
     

@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # 项目名称和版本
-project(ad_dcl VERSION 1.0.0 LANGUAGES CXX)
+project(dcp-plus VERSION 1.0.0 LANGUAGES CXX)
 
 # 设置C++标准
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

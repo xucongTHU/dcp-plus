@@ -7,7 +7,10 @@
 #include "data_collection/common/log/logger.h"
 
 namespace dcp {
-DataCollectionPlanner::DataCollectionPlanner(const std::string& model_file, const std::string& config_file) {
+DataCollectionPlanner::DataCollectionPlanner(DcpMode mode,
+                                             const std::string& model_file,
+                                             const std::string& config_file)
+    : mode_(mode) {
     AD_INFO(DataCollectionPlanner, "Creating DataCollectionPlanner with model_file: %s, config_file: %s", 
             model_file.c_str(), config_file.c_str());
     // Create specific planner instance but store as base class pointer

@@ -18,7 +18,7 @@
 #include "semantics/semantic_constraint.h"
 #include "semantics/semantic_filter.h"
 #include "utils/planner_utils.h"
-#include "planner/planner_base.hpp"
+#include "planner_base.hpp"
 
 namespace dcp::planner {
 
