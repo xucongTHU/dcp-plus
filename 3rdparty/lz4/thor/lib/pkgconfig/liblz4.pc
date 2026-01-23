@@ -1,0 +1,14 @@
+#   LZ4 - Fast LZ compression algorithm
+#   Copyright (C) 2011-2014, Yann Collet.
+#   BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
+
+prefix=/home/sensetime/ws/ws/Thor/senseauto-3rdparty/build/install/THOR/lz4
+libdir=/home/sensetime/ws/ws/Thor/senseauto-3rdparty/build/install/THOR/lz4/lib
+includedir=/home/sensetime/ws/ws/Thor/senseauto-3rdparty/build/install/THOR/lz4/include
+
+Name: lz4
+Description: extremely fast lossless compression algorithm library
+URL: http://www.lz4.org/
+Version: 1.9.3
+Libs: -L/home/sensetime/ws/ws/Thor/senseauto-3rdparty/build/install/THOR/lz4/lib -llz4
+Cflags: -I/home/sensetime/ws/ws/Thor/senseauto-3rdparty/build/install/THOR/lz4/include

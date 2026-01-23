@@ -1,0 +1,9 @@
+prefix=/home/xucong/caic-ad/01dataengine/shadow_mode/影子模式车云传输/vehicle-cloud-transmission/src/mqtt-demo/third_party/install/openssl
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: OpenSSL
+Description: Secure Sockets Layer and cryptography libraries and tools
+Version: 1.1.1g
+Requires: libssl libcrypto

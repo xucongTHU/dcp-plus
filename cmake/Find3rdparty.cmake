@@ -1,5 +1,5 @@
 ## 3rdparty lib
-SET(THIRD_DEPS_DIR "/home/xucong/caicAD/01dataengine/Aurora/ad_edgeinsight/3rdparty")
+SET(THIRD_DEPS_DIR "/workspaces/ad_data_closed_loop/3rdparty")
 
 # YAML-CPP
 SET(YAML_CPP_INCLUDE_DIR ${THIRD_DEPS_DIR}/yaml-cpp/include CACHE INTERNAL "yaml-cpp include dir.")
