@@ -11,8 +11,8 @@
 #include <string>
 #include "../trigger_base.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 enum class TaskState { WAITING, RUNNING, PAUSED, FINISHED };
 
@@ -36,7 +36,6 @@ public:
     virtual void StartScheduling() = 0;
 };
 
-} 
-} 
+}
 
 #endif // SCHEDULER_H

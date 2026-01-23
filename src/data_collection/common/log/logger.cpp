@@ -362,12 +362,13 @@ void Logger::LogToFile(std::string& strs)
 void Logger::LogToCsvFile( std::string str) {
   std::vector<std::string> result=Logger::split(str,":",",");
   std::string line;
+  int result_size = result.size();
   inFile.open(csv_logPath, std::ios::in);
   if (inFile.is_open()) {
     inFile.close();
     csvFile.open(csv_logPath, std::ios::app);
     int i =1;
-    for(; i < result.size()-2; i+=2)
+    for(; i < result_size-2; i+=2)
       csvFile << result[i] << ',';
     csvFile << result[i];
     csvFile << '\n';
@@ -375,11 +376,11 @@ void Logger::LogToCsvFile( std::string str) {
   else {
     csvFile.open(csv_logPath, std::ios::out);
     int i = 0;
-    for (;i < result.size()-2;i+=2)
+    for (;i < result_size-2;i+=2)
       csvFile << result[i] << ',';
     csvFile << result[i] << '\n';
     i =1;
-    for(; i < result.size()-2; i+=2)
+    for(; i < result_size-2; i+=2)
       csvFile << result[i] << ',';
     csvFile << result[i];
     csvFile << '\n';
@@ -388,21 +389,18 @@ void Logger::LogToCsvFile( std::string str) {
 }
 
 std::vector<std::string> Logger::split(std::string str,std::string pattern1,std::string pattern2) {
-  std::string::size_type pos;
-  std::string::size_type pos1;
-  std::string::size_type pos2;
   std::vector<std::string> result;
   str+=pattern1;
-  int size=str.size();
+  const std::string::size_type size = str.size();
 
-  for(int i=0; i<size; i++) {
-    pos1=str.find(pattern1,i);
-    pos2 = str.find(pattern2,i);
-    pos = pos1 < pos2 ? pos1 : pos2;
-    if(pos<size) {
-      std::string s=str.substr(i,pos-i);
+  for(std::string::size_type i = 0; i < size; i++) {
+    std::string::size_type pos1 = str.find(pattern1, i);
+    std::string::size_type pos2 = str.find(pattern2, i);
+    std::string::size_type pos = pos1 < pos2 ? pos1 : pos2;
+    if(pos < size) {
+      std::string s = str.substr(i, pos - i);
       result.push_back(s);
-      i=pos+pattern1.size()-1;
+      i = pos + pattern1.size() - 1;
     }
   }
   return result;

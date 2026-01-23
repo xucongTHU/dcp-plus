@@ -9,13 +9,13 @@
 #include <stdexcept>
 #include <algorithm>
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 using namespace std;
 
 TriggerChecker::TriggerChecker()
-        : parser_(std::make_unique<ExpressionParser>()) {}
+    : parser_(std::make_unique<ExpressionParser>()) {}
 
 TriggerChecker::~TriggerChecker() = default;
 
@@ -24,7 +24,7 @@ bool TriggerChecker::parse(const string& condition) {
     elements_.clear();
 
     if (!parser_->compile(condition)) {
-        last_error_ = parser_->lastError();
+        last_error_ = parser_->last_error();
         return false;
     }
 
@@ -199,5 +199,4 @@ string TriggerChecker::trim(const string& s) {
     return string(start, end);
 }
 
-} // namespace trigger
-} // namespace dcp
+}

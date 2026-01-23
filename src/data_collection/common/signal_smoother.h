@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 
+namespace dcp::common {
 class SignalSmoother {
 public:
     /**
@@ -90,3 +91,4 @@ private:
     size_t window_size_;
     std::deque<double> buffer_;
 };
+}

@@ -29,15 +29,15 @@ enum ErrorCode {
     UNKNOWN_ERROR = 8,
 };
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 using json = nlohmann::json;
 
 ErrorCode CurlErrorMapping(CURLcode code);
 
 class DataProto {
-  public:
+public:
     DataProto() = default;
     ~DataProto() = default;
     bool Init(const std::string& gateway,
@@ -51,15 +51,14 @@ class DataProto {
     ErrorCode CompleteUpload(const common::CompleteUploadReq& req, common::CompleteUploadResp& resp);
     ErrorCode GetUploadStatus(const std::string& file_uuid, common::UploadStatusResp& resp);
 
-  private:
+private:
     CurlWrapper curl_wrapper_;
     std::string url_;
     std::string gateway_;
     common::AppConfigData::DataUpload config_;
-    std::shared_ptr<MqttWrapper> mqtt_wrapper_; 
+    std::shared_ptr<MqttWrapper> mqtt_wrapper_;
 };
 
-}
 }
 
 

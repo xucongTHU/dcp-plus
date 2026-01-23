@@ -24,7 +24,7 @@
 | ROI | Region of Interest (感兴趣区域) |
 | RL | Reinforcement Learning (强化学习) |
 | PPO | Proximal Policy Optimization (近端策略优化) |
-| DCP | Data Collection Planner (数据采集规划器) |
+| DCP | Data Collection as Planning (数据采集规划器) |
 
 ## 2. 系统架构设计
 
@@ -129,7 +129,6 @@ classDiagram
         - global_path_ : vector<Point>
         - local_path_ : vector<Point>
         - collected_data_points_ : vector<Point>
-        - use_ppo_ : bool
         + NavPlannerNode(config_file: string)
         + initialize() : bool
         + loadConfiguration() : bool
@@ -748,7 +747,7 @@ public:
     ~DataCollectionPlanner() = default;
     
     /**
-     * @brief Initialize the data collection planner
+     * @brief Initialize the Data Collection as Planning
      * @return true if initialization successful, false otherwise
      */
     bool initialize();

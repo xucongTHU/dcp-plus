@@ -12,8 +12,9 @@
 #include <cstdint>
 #include <map>
 
-namespace dcp {
-namespace common {
+
+namespace dcp::common{
+
 using json = nlohmann::json;
 
 struct TBussiness {
@@ -331,6 +332,6 @@ inline LogUploadTask GetLogTaskInfo(const QueryTaskResp::Object& obj, UploadType
 }
 
 } 
-} 
+
 
 #endif //DATA_H

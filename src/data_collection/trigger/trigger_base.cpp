@@ -6,8 +6,7 @@
 
 #include "trigger_base.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger{
 
 bool TriggerBase::init(const std::string& triggerId, const StrategyConfig& strategyConfig) {
     for (const auto& st : strategyConfig.strategies) {
@@ -25,5 +24,4 @@ bool TriggerBase::init(const std::string& triggerId, const StrategyConfig& strat
     return true;
 }
 
-}
 }

@@ -12,8 +12,8 @@
 #include <map>
 #include <stdexcept>
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 struct ExpressionParser::Impl {
     using symbol_table_t = exprtk::symbol_table<double>;
@@ -227,5 +227,4 @@ void ExpressionParser::Impl::rebuild_expression_cache() {
     }
 }
 
-}
 }

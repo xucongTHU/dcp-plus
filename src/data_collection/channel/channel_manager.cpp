@@ -1,8 +1,7 @@
 #include "channel_manager.h"
 #include "common/log/logger.h"
 
-namespace dcp {
-namespace channel {
+namespace dcp::channel{
 
 bool ChannelManager::Init(const std::shared_ptr<rclcpp::Node>& node,
                           const dcp::trigger::StrategyConfig& config,
@@ -26,11 +25,6 @@ bool ChannelManager::Init(const std::shared_ptr<rclcpp::Node>& node,
 }
 
 bool ChannelManager::InitSubscribers() {
-    senseAD::rscl::idl::SubscriberConf conf;
-    conf.mutable_qos_profile()->set_depth(20); 
-    conf.mutable_qos_profile()->set_reliability(
-        senseAD::rscl::idl::QosReliabilityPolicy::RELIABILITY_BEST_EFFORT);
-
     for (const auto& strategy : strategy_config_.strategies) {
         if (!strategy.trigger.enabled)  continue;
         for (const auto& channel : strategy.dds.channels) {
@@ -39,12 +33,16 @@ bool ChannelManager::InitSubscribers() {
                 continue;
             }
 
-            auto subscriber = node_->CreateSubscriber<senseAD::rscl::comm::RawMessage>(
+            std::string message_type;
+            auto callback = [this, topic](const std::shared_ptr<rclcpp::SerializedMessage>& msg) {
+                this->Notify(topic, *msg);
+            };
+
+            auto subscriber = node_->create_generic_subscription(
                 topic,
-                [this, topic](const TRawMessagePtr& raw_message) {
-                    this->Notify(topic, raw_message);
-                },
-                conf
+                message_type,
+                rclcpp::QoS(10),
+                callback
             );
 
             if (!subscriber) {
@@ -60,16 +58,14 @@ bool ChannelManager::InitSubscribers() {
 }
 
 bool ChannelManager::InitObservers() {
-    if (rscl_recorder_) {
-        AddObserver(rscl_recorder_);
-        AD_INFO(ChannelManager, "Added RsclRecorder as observer");
-    }
-
+    // if (rscl_recorder_) {
+    //     AddObserver(rscl_recorder_);
+    //     AD_INFO(ChannelManager, "Added RsclRecorder as observer");
+    // }
 
     if (trigger_manager_) {
         for (const auto& strategy : strategy_config_.strategies) {
-            auto trigger = trigger_manager_->getTrigger(strategy.trigger.triggerId);
-            if (trigger) {
+            if (auto trigger = trigger_manager_->getTrigger(strategy.trigger.triggerId)) {
                 AddObserver(trigger);
                 AD_INFO(ChannelManager, "Added %s as observer", strategy.trigger.triggerId.c_str());
             }
@@ -81,39 +77,31 @@ bool ChannelManager::InitObservers() {
     return true;
 }
 
-void ChannelManager::OnMessageReceived(const std::string& topic, const TRawMessagePtr& msg) {
-    auto cur_clock_mode = senseAD::base::time::ClockMode::SYSTEM_TIME;
-    uint64_t message_time = senseAD::base::time::Time::Now(&cur_clock_mode).ToMicrosecond();
-    auto header = msg->Header();
-    if (header.is_enabled)
-    {
-        // message_time = msg->Header().stamp;
-    }
-    else
-    {
-        AD_ERROR(ChannelManager, "OnMessageReceived, topic: %s, header parse error", topic.c_str());
-        return;
-    }
+void ChannelManager::OnMessageReceived(const std::string& topic, const rclcpp::SerializedMessage& msg) {
+    // 实现消息处理逻辑
+    AD_WARN(ChannelManager, "Received message on topic: %s", topic.c_str());
+}
 
-    // in start of replay mode rscl timestamp is zero
-    if (message_time == 0) {
-        AD_ERROR(ChannelManager, "OnMessageReceived, topic: %s, message_time is zero", topic.c_str());
-        return;
+void ChannelManager::AddObserver(const std::shared_ptr<Observer>& observer) const
+{
+    if (message_subject_) {
+        message_subject_->addObserver(observer);
     }
 }
 
-void ChannelManager::AddObserver(std::shared_ptr<Observer> observer) {
-    message_subject_->addObserver(observer);
+void ChannelManager::RemoveObserver(const std::shared_ptr<Observer>& observer) const
+{
+    if (message_subject_) {
+        message_subject_->removeObserver(observer);
+    }
 }
 
-void ChannelManager::RemoveObserver(std::shared_ptr<Observer> observer) {
-    message_subject_->removeObserver(observer);
+void ChannelManager::Notify(const std::string& topic, const rclcpp::SerializedMessage& msg) const
+{
+    if (message_subject_) {
+        message_subject_->notifyAll(topic, msg);
+    }
 }
 
-void ChannelManager::Notify(const std::string& topic, const TRawMessagePtr& msg) {
-    message_subject_->notifyAll(topic, msg);
+
 }
-
-
-} 
-} 

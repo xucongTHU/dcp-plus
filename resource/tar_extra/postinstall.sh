@@ -15,7 +15,7 @@ INSTALL_CUR_VERSION "shadow_mode"
 cp -rf $1/opt/senseauto/tmp/senseauto_data_closed_loop/* ${INSTALL_DIR}
 cp -rf $1/tmp/senseauto_data_closed_loop/release.conf.json ${INSTALL_DIR}
 
-echo "${ACTIVE_DIR}/lib/" > /etc/ld.so.conf.d/dcl.conf
-echo "${BASE_ROOT}/senseauto/senseauto-msgs/active/lib/" >> /etc/ld.so.conf.d/dcl.conf
+echo "${ACTIVE_DIR}/lib/" > /etc/ld.so.conf.d/dcp.conf
+echo "${BASE_ROOT}/senseauto/senseauto-msgs/active/lib/" >> /etc/ld.so.conf.d/dcp.conf
 
 #ldconfig

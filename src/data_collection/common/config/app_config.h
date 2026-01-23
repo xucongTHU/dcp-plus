@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 
-namespace dcp {
-namespace common {
+
+namespace dcp::common{
 
 class AppConfigData {
 public:
@@ -105,6 +105,6 @@ private:
 };
 
 } 
-} 
+
 
 #endif //APP_CONFIG_H

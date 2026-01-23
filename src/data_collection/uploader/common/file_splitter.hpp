@@ -8,8 +8,8 @@
 #include <iomanip>
 #include "common/log/logger.h"
 
-namespace dcp{
-namespace uploader{
+namespace dcp::uploader
+{
 
 
 //读取指定路径文件并对文件进行切片
@@ -38,7 +38,7 @@ public:
         fileSize = file.tellg();//返回当前文件流的读写位置，配合ate标志，当前读写位置为文件总大小
         file.close();//关闭文件流，释放资源
         chunkCount = (fileSize + chunkSize - 1) / chunkSize; // 计算分片总数，向上取整
-        AD_INFO(FileSplitter,"fileSize:%d chunkSize:%d chunkCount:%d", (int)fileSize , (int)chunkSize,(int)chunkCount); 
+        AD_INFO(FileSplitter,"fileSize:%d chunkSize:%d chunkCount:%d", (int)fileSize , (int)chunkSize,(int)chunkCount);
         errorCode = SUCCESS; // 初始化成功
     }
 
@@ -52,15 +52,15 @@ public:
         return chunkCount;
     }
 
-     // 获取文件大小
+    // 获取文件大小
     size_t getFileSize() const {
         return fileSize;
     }
 
     // 根据分片号获取分片数据
     ErrorCode getChunkData(int chunkNumber, std::vector<char>& chunkData) const {
-        chunkNumber-- ; 
-        AD_INFO(FileSplitter, "Chunk number after: %d, Chunk count: %d", chunkNumber, chunkCount); 
+        chunkNumber-- ;
+        AD_INFO(FileSplitter, "Chunk number after: %d, Chunk count: %d", chunkNumber, chunkCount);
         if (chunkNumber < 0 || chunkNumber >= chunkCount) {
             AD_ERROR(FileSplitter, "Invalid chunk number");
             return INVALID_CHUNK; // 分片号无效
@@ -75,7 +75,7 @@ public:
         // 计算分片的起始位置和大小
         size_t offset = chunkNumber * chunkSize;
         size_t size = (chunkNumber == chunkCount - 1) ? (fileSize - offset) : chunkSize;
-        AD_INFO(FileSplitter, "offset: %d, size: %d", (int)offset, (int)size); 
+        AD_INFO(FileSplitter, "offset: %d, size: %d", (int)offset, (int)size);
 
         // 定位到分片的起始位置
         file.seekg(offset, std::ios::beg);
@@ -122,6 +122,5 @@ private:
 };
 
 
-}
 }
 

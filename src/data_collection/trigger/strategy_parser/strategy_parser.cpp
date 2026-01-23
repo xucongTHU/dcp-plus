@@ -6,8 +6,7 @@
 
 #include "strategy_parser.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger {
 
 bool StrategyParser::LoadConfigFromFile(const std::string &file_path, StrategyConfig &conf) {
     std::ifstream file(file_path);
@@ -140,5 +139,4 @@ bool StrategyParser::CheckMessage(const json &j, std::vector<std::string>& trigg
     return true;   
 }
 
-} 
-} 
+}

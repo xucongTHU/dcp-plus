@@ -12,12 +12,11 @@
 
 #include "common/log/logger.h"
 #include "strategy_parser/strategy_config.h"
-#include "idl/dcp_trigger.h"
+#include "../msg/ad_trigger/dcp_trigger.h"
 #include "common/trigger_checker.h"
 #include "channel/observer.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger {
 
 /**
  * @brief Abstract base class for triggers.
@@ -30,15 +29,14 @@ public:
     virtual bool init(const std::string& triggerId, const StrategyConfig& strategyConfig);
     virtual bool proc() = 0;
     virtual bool checkCondition() = 0;
-    virtual void registerVariableGetter(const std::string& var_name, 
-                                std::function<TriggerChecker::Value()> getter) = 0;
+    virtual void registerVariableGetter(const std::string& var_name,
+                                        std::function<TriggerChecker::Value()> getter) = 0;
 
 protected:
     std::unique_ptr<Trigger> trigger_obj_ = nullptr;
 
 };
 
-} 
-} 
+}
 
 #endif //TRIGGER_BASE_H

@@ -6,8 +6,7 @@
 
 #include "sRegex.h"
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 
 bool IsMatch(const std::string &path, const std::string &regexPattern) {
     // try
@@ -22,5 +21,4 @@ bool IsMatch(const std::string &path, const std::string &regexPattern) {
     // }
 }
 
-}
 }

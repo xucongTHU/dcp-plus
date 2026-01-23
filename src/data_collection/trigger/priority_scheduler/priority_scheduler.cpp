@@ -9,11 +9,11 @@
 #include <iostream>
 
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 PriorityScheduler::PriorityScheduler(std::shared_ptr<ThreadPool> threadPool)
-        : thread_pool_(std::move(threadPool)) {}
+    : thread_pool_(std::move(threadPool)) {}
 
 PriorityScheduler::~PriorityScheduler() {
     stop_scheduling_.store(true);
@@ -41,9 +41,9 @@ void PriorityScheduler::StartScheduling() {
 
 void PriorityScheduler::ScheduleTasks() {
 #if 1
-        ProcessOneTriggerQueue();
+    ProcessOneTriggerQueue();
 #else
-        ProcessMultiTriggerQueue();
+    ProcessMultiTriggerQueue();
 #endif
 }
 
@@ -53,28 +53,28 @@ void PriorityScheduler::ProcessOneTriggerQueue() {
         std::unique_ptr<TriggerTask> highest_priority_task;
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
-            condition_.wait_for(lock, std::chrono::milliseconds(100), [this] { 
-                return !trigger_queue_.empty() || stop_scheduling_.load(); 
+            condition_.wait_for(lock, std::chrono::milliseconds(100), [this] {
+                return !trigger_queue_.empty() || stop_scheduling_.load();
             });
 
             if (stop_scheduling_.load() || trigger_queue_.empty()) {
                 continue;
             }
-            
+
             highest_priority_task = std::make_unique<TriggerTask>(std::move(const_cast<TriggerTask&>(trigger_queue_.top())));
-            std::cout << "[PriorityScheduler] Processing for " << highest_priority_task->trigger_name << " with priority(" 
-                       << static_cast<int>(highest_priority_task->priority) << ").\n";
+            std::cout << "[PriorityScheduler] Processing for " << highest_priority_task->triggerId << " with priority("
+                << static_cast<int>(highest_priority_task->priority) << ").\n";
             trigger_queue_.pop();
         }
 
         if (highest_priority_task && !highest_priority_task->cancelled) {
             thread_pool_->enqueue([this, task = std::move(*highest_priority_task)]() {
-                // std::cout << "[PriorityScheduler] Processing for " << task.trigger_name << " with priority(" 
+                // std::cout << "[PriorityScheduler] Processing for " << task.trigger_name << " with priority("
                 //           << static_cast<int>(task.priority) << ").\n";
                 // task.trigger->Proc();
                 while (!task.cancelled) {
-                    task.trigger->Proc();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100)); 
+                    task.trigger->proc();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
             });
         }
@@ -127,13 +127,13 @@ void PriorityScheduler::ProcessMultiTriggerQueue() {
 }
 
 /**
- * @brief 执行指定的触发任务
- *
- * 该函数负责处理任务的执行逻辑，包括检查任务是否被取消、
- * 判断重试间隔、检查触发条件以及根据执行结果决定是否需要重试。
- *
- * @param task_ptr 指向待执行任务的智能指针
- */
+* @brief 执行指定的触发任务
+*
+* 该函数负责处理任务的执行逻辑，包括检查任务是否被取消、
+* 判断重试间隔、检查触发条件以及根据执行结果决定是否需要重试。
+*
+* @param task_ptr 指向待执行任务的智能指针
+*/
 void PriorityScheduler::ExecuteTask(std::shared_ptr<TriggerTask> task_ptr) {
     // 如果任务已被取消，则直接标记为已完成并通知调度器
     if (task_ptr->cancelled) {
@@ -158,8 +158,8 @@ void PriorityScheduler::ExecuteTask(std::shared_ptr<TriggerTask> task_ptr) {
     }
 
     // 检查条件并执行任务
-    if (task_ptr->trigger->CheckCondition()) {
-        task_ptr->trigger->Proc();
+    if (task_ptr->trigger->checkCondition()) {
+        task_ptr->trigger->proc();
         std::lock_guard<std::mutex> lock(queue_mutex_);
         task_ptr->state = TaskState::FINISHED;
     } else if (task_ptr->retry_count < task_ptr->max_retries) {
@@ -210,13 +210,12 @@ void PriorityScheduler::AdjustTaskPriority(std::shared_ptr<TriggerTask> task_ptr
         int8_t new_priority = task_ptr->priority + (task_ptr->retry_count - ADJUST_PRIORITY_THRESHOLD);
         task_ptr->priority = std::min(new_priority, MIN_PRIORITY);
 
-        LOG_INFO("Task [%s] priority adjusted from %d to %d after %d retries",
-                 task_ptr->trigger_name.c_str(),
+        AD_INFO(PriorityScheduler, "Task [%s] priority adjusted from %d to %d after %d retries",
+                 task_ptr->triggerId.c_str(),
                  task_ptr->priority - (task_ptr->retry_count - ADJUST_PRIORITY_THRESHOLD),
                  task_ptr->priority,
                  task_ptr->retry_count);
     }
 }
 
-} 
 } 

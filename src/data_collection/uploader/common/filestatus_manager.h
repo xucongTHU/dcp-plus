@@ -7,14 +7,14 @@
 
 #include "common/data.h"
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 class FileStatusException : public std::runtime_error {
-  public:
+public:
     enum class ErrorType {
         CORRUPTED_FILE,//文件损坏
         WRITE_FAILURE,//写入失败
@@ -29,14 +29,14 @@ class FileStatusException : public std::runtime_error {
 };
 
 class FileStatusManager {
-  public:
+public:
     explicit FileStatusManager(const std::string& json_path);
     bool AddFileRecord(const std::string& file_path, const common::FileUploadRecord& record);
     bool DeleteFileRecord(const std::string& file_path);
     bool UpdateFileStartChunk(const std::string& file_path, int start_chunk);
     std::optional<common::FileUploadRecord> GetFileRecord(const std::string& file_path);
 
-  private:
+private:
     bool SaveToFile();
     json ConvertFileRecordToJson(const common::FileUploadRecord& record);
     void LoadWithRecovery();
@@ -53,5 +53,4 @@ class FileStatusManager {
 };
 
 
-}
 }

@@ -14,17 +14,17 @@ class parserManager:
     def guess_msgtype(self,path: Path) -> str:
         """Guess message type name from path."""
         name = path.relative_to(path.parents[2]).with_suffix('')
-        if 'msg' not in name.parts:
-            name = name.parent / 'msg' / name.name
+        if 'idl' not in name.parts:
+            name = name.parent / 'idl' / name.name
         return str(name)
 	
     def rejister_msg(self,):
         typestore = get_typestore(Stores.ROS2_HUMBLE)
         add_types = {}
-        ##  motor_msgs/msg/JointStateArray	  
-        for pathstr in ['/opt/motor_msgs/msg/JointState.msg', '/opt/motor_msgs/msg/JointStateArray.msg',
-                        '/opt/caicrobot_msgs/msg/JointState.msg', '/opt/caicrobot_msgs/msg/JointStateArray.msg',
-                        '/opt/caicrobot_msgs/msg/JointCommand.msg','/opt/caicrobot_msgs/msg/JointCommandArray.msg']:
+        ##  motor_msgs/idl/JointStateArray
+        for pathstr in ['/opt/motor_msgs/idl/JointState.idl', '/opt/motor_msgs/idl/JointStateArray.idl',
+                        '/opt/caicrobot_msgs/idl/JointState.idl', '/opt/caicrobot_msgs/idl/JointStateArray.idl',
+                        '/opt/caicrobot_msgs/idl/JointCommand.idl','/opt/caicrobot_msgs/idl/JointCommandArray.idl']:
             msgpath = Path(pathstr)
             msgdef = msgpath.read_text(encoding='utf-8')
             add_types.update(get_types_from_msg(msgdef,self.guess_msgtype(msgpath)))
@@ -48,11 +48,11 @@ class parserManager:
         print("start parse joint ...")
         for connection, timestamp, rawdata in reader.messages(connections=connections):
             msg = reader.deserialize(rawdata, connection.msgtype)
-            #print(msg.header.frame_id,msg.header.stamp.sec,msg.header.stamp.nanosec)
+            #print(idl.header.frame_id,idl.header.stamp.sec,idl.header.stamp.nanosec)
             message_nan_time = str(msg.header.stamp.sec) + "."+ str(msg.header.stamp.nanosec).rjust(9, '0')
             #message_time = "{0}.{1}".format( str(timestamp)[0:10],str(timestamp)[10:] )
             message_time = message_nan_time
-            #print("msg.states len",len(msg.states)) 
+            #print("idl.states len",len(idl.states))
             status_info ={"message_time":message_time}
             joint_info ={}
             for sig_status in msg.states:

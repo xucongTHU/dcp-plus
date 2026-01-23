@@ -11,8 +11,8 @@
 #include <vector>
 #include <unordered_map>
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 struct Trigger {
     std::string triggerId;
@@ -59,5 +59,4 @@ struct StrategyConfig {
     std::vector<Strategy> strategies;
 };
 
-}
 }

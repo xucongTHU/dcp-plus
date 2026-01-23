@@ -5,8 +5,7 @@
 
 #include "data.h"
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 void to_json(json& j, UploadType type) {
     j = static_cast<int>(type);
 }
@@ -308,11 +307,11 @@ void from_json(const json& j, FileUploadRecord& r) {
     }
 }
 
-void to_json(json& j, const FileUploadProgress& r) { 
+void to_json(json& j, const FileUploadProgress& r) {
     j = json{
         {"vin", r.vin},
-        {"taskId", r.taskId},  
-        {"batchId", r.batchId},  
+        {"taskId", r.taskId},
+        {"batchId", r.batchId},
         {"uploadUrl", r.uploadUrl},
         {"fileName", r.fileName},
         {"fileUuid", r.fileUuid},
@@ -352,17 +351,17 @@ void from_json(const json& j, FileUploadProgress& r) {
     }
 }
 
-void to_json(json& j, const SysInfo& r) { 
+void to_json(json& j, const SysInfo& r) {
     j = json{
-        {"taskId", r.taskId},  
+        {"taskId", r.taskId},
         {"cpuUsage", r.cpuUsage},
         {"memUsage", r.memUsage},
         {"harddriveUsage", r.harddriveUsage},
         {"ssdUsage", 0.0},
-        {"imageFrameRateException" , r.imageFrameRateException},   
-        {"pcFrameRateException" , r.pcFrameRateException},   
-        {"canbusFrameRateException", r.canbusFrameRateException},     
-        {"insFrameRateException ", r.insFrameRateException}       
+        {"imageFrameRateException" , r.imageFrameRateException},
+        {"pcFrameRateException" , r.pcFrameRateException},
+        {"canbusFrameRateException", r.canbusFrameRateException},
+        {"insFrameRateException ", r.insFrameRateException}
     };
 }
 
@@ -396,7 +395,7 @@ void from_json(const json& j, SysInfo& r) {
     }
 }
 
-void to_json(json& j, const CollectInfo& r) { 
+void to_json(json& j, const CollectInfo& r) {
     j = json{
         {"vin", r.vin},
         {"taskId", r.taskId},
@@ -441,7 +440,7 @@ void from_json(const json& j, CollectInfo& r) {
     }
 }
 
-void to_json(json& j, const RtspInfo& r) { 
+void to_json(json& j, const RtspInfo& r) {
     j = json{
         {"taskId", r.taskId},
         {"status", r.status},
@@ -461,7 +460,7 @@ void from_json(const json& j, RtspInfo& r) {
     }
 }
 
-void to_json(json& j, const OBUStateInfo& r) { 
+void to_json(json& j, const OBUStateInfo& r) {
     j = json{
         {"vin", r.vin},
         {"longitude", r.longitude},
@@ -474,19 +473,19 @@ void to_json(json& j, const OBUStateInfo& r) {
         {"starNm", 0},
         {"rtkState", "A"},
         {"light", r.light},
-        {"brakeState", r.brakeState},   
+        {"brakeState", r.brakeState},
         {"gasState", 0},
-        {"gearState", r.gearState},    
-        {"wheelAngle", r.wheelAngle}, 
-        {"driveState","0"}, 
-        {"abnormalState","0"}, 
-        {"traffic_light",0}, 
-        {"mileage","0"}, 
-        {"engineSpeed","0"}, 
-        {"chargeState",0}, 
-        {"handbrake",0}, 
-        {"startState",0}, 
-        {"elecQuantity","0"}, 
+        {"gearState", r.gearState},
+        {"wheelAngle", r.wheelAngle},
+        {"driveState","0"},
+        {"abnormalState","0"},
+        {"traffic_light",0},
+        {"mileage","0"},
+        {"engineSpeed","0"},
+        {"chargeState",0},
+        {"handbrake",0},
+        {"startState",0},
+        {"elecQuantity","0"},
         {"endurance",0},
         {"collectState", r.collectState}
     };
@@ -528,5 +527,4 @@ void from_json(const json& j, OBUStateInfo& r) {
     }
 }
 
-} 
 } 

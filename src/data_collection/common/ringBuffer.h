@@ -5,8 +5,7 @@
 #include <iterator>
 #include <mutex>
 
-namespace dcp{
-namespace common{
+namespace dcp::common{
 
 template <typename T>
 class RingBuffer {
@@ -135,6 +134,5 @@ private:
     mutable std::mutex mtx_;
 };
 
-}
 }
 

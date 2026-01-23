@@ -13,8 +13,8 @@
 #include <mutex>
 #include "ThreadPool/ThreadPool.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 class PriorityScheduler : public Scheduler {
 public:
@@ -45,7 +45,6 @@ private:
     std::condition_variable schedule_condition_;
 };
 
-} 
-} 
+}
 
 #endif // PRIORITY_SCHEDULER_H

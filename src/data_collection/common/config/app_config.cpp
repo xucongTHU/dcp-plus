@@ -11,8 +11,7 @@
 #include <iostream>
 #include <filesystem>
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 
 AppConfig& AppConfig::getInstance() {
     static AppConfig instance;
@@ -168,4 +167,4 @@ bool AppConfig::checkJsonFormat(const nlohmann::json& jsonData) const {
 
 
 } 
-} 
+

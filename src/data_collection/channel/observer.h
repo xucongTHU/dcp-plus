@@ -24,8 +24,8 @@
 using TRawMessagePtr = std::shared_ptr<ReceivedMsg<senseAD::rscl::comm::RawMessage>>;
 #endif
 
-namespace dcp {
-namespace channel {
+namespace dcp::channel
+{
 
 class Observer {
 public:
@@ -71,7 +71,6 @@ protected:
     std::vector<std::shared_ptr<Observer>> observers_;
 };
 
-} 
-} 
+}
 
 #endif

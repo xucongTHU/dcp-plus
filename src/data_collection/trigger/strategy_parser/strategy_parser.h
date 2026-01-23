@@ -5,34 +5,39 @@
 #include <memory>
 #include "nlohmann/json.hpp"
 
+#include "strategy_config.h"
 #include "common/config/app_config.h"
-#include "../common/trigger_checker.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger {
 
-struct StrategyRule {
-    std::string condition;
-    std::string action;
-    double priority;
-};
-
-struct StrategyConfig {
-    std::vector<StrategyRule> rules;
-    int max_concurrent_triggers;
-};
+using common::AppConfigData;
+using json = nlohmann::json;
 
 class StrategyParser {
 public:
-    StrategyParser() = default;
-    ~StrategyParser() = default;
+    bool LoadConfigFromFile(const std::string& file_path, StrategyConfig& conf);
 
-    bool LoadConfigFromFile(const std::string& filepath, StrategyConfig& config);
-    bool SaveConfigToFile(const std::string& filepath, const StrategyConfig& config);
+    /**
+    * @brief 获取支持的trigger类型
+    * @param trigger_vec trigger类型列表。
+    * @return 如果获取成功，返回 `true`；否则返回 `false`。
+    */
+    bool getTriggerType(const std::string& filepath, std::vector<std::string>& trigger_vec);
+
+    /**
+    * @brief 检查 JSON 消息的有效性
+    *
+    * 该函数用于验证接收到的 JSON 消息是否符合预期的结构和内容要求。
+    *
+    * @param j 需要检查的 JSON 对象。
+    * @return 如果消息有效，返回 `true`；否则返回 `false`。
+    */
+    bool CheckMessage(const json &j, std::vector<std::string>& trigger_vec, int8_t& bag_duration);
 
 private:
-    bool ParseJsonConfig(const nlohmann::json& json_data, StrategyConfig& config);
+    bool CheckValid(const std::string& jsonString);
+    void ParseJsonConfig(const nlohmann::json& jsonData, StrategyConfig& config);
+
 };
 
-} // namespace trigger
-} // namespace dcp
+}

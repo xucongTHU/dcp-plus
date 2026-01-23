@@ -13,8 +13,8 @@
 #include <memory>
 #include <functional>
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 class ExpressionParser {
 public:
@@ -43,7 +43,6 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}
 }
 
 #endif //EXPRESSION_PARSER_H

@@ -6,25 +6,37 @@
 #include "trigger_manager.h"
 #include "common/log/logger.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger {
+
+bool TriggerManager::initialize() {
+    // if (!initTriggerChecker(std::make_shared<TriggerBase>())) {
+    //     AD_ERROR(TriggerManager, "Trigger checker initialization failed.");
+    //     return false;
+    // }
+
+    if (!initScheduler(strategy_config_, scheduler_)) {
+        AD_ERROR(TriggerManager, "Scheduler initialization failed.");
+        return false;
+    }
+    return true;
+}
 
 bool TriggerManager::initTriggerChecker(std::shared_ptr<TriggerBase> trigger) {
     if (!trigger) return false;
     trigger->registerVariableGetter("speed", [this]() -> TriggerChecker::Value {
-        return message_provider_->getChassisVehicleMps(); // m/s
+        // return message_provider_->getChassisVehicleMps(); // m/s
     });
 
     trigger->registerVariableGetter("automode", [this]() -> TriggerChecker::Value {
-        return message_provider_->getAutoModeEnable();
+        // return message_provider_->getAutoModeEnable();
     });
 
     trigger->registerVariableGetter("gear", [this]() -> TriggerChecker::Value {
-        return message_provider_->getGear();
+        // return message_provider_->getGear();
     });
 
     trigger->registerVariableGetter("aeb_decel_req", [this]() -> TriggerChecker::Value {
-        return message_provider_->getAebDecelReq();
+        // return message_provider_->getAebDecelReq();
     });
 }
 
@@ -61,7 +73,7 @@ bool TriggerManager::initScheduler(const StrategyConfig& strategy_config, const 
         for (const auto& s : strategy_config_.strategies) {
             if (s.trigger.enabled) {
                 enabled_triggers.emplace_back(
-                    s.trigger.triggerId,  
+                    s.trigger.triggerId,
                     s.trigger.priority
                 );
             }
@@ -98,7 +110,6 @@ bool TriggerManager::processScheduler() {
     if (scheduler_) {
         scheduler_->StartScheduling();
     }
+    return true;
 }
-
-} // namespace trigger
-} // namespace dcp
+}

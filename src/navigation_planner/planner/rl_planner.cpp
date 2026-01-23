@@ -74,8 +74,8 @@ bool RLPlanner::initialize() {
     coverage_metric_ = std::make_unique<CoverageMetric>(sampling_params.sparse_threshold);
     
     // Update PPO agent configuration from parameters
-    if (route_planner_->getPPOPolicy()) {
-        route_planner_->getPPOPolicy()->updateConfigFromParameters(planner_parameters_);
+    if (route_planner_->getPPOAgent()) {
+        route_planner_->getPPOAgent()->updateConfigFromParameters(planner_parameters_);
     }
     
     // Set use_ppo flag from configuration
@@ -199,28 +199,13 @@ void RLPlanner::addDataPoint(const Point& point) {
 
 bool RLPlanner::loadPPOWeights(const std::string& filepath) {
     LogUtils::log(LogUtils::INFO, "Loading PPO weights file from " + filepath);
-    if (route_planner_->getPPOPolicy()) {
-        bool success = route_planner_->getPPOPolicy()->loadWeights(filepath);
+    if (route_planner_->getPPOAgent()) {
+        bool success = route_planner_->getPPOAgent()->loadWeights(filepath);
         if (success) {
             LogUtils::log(LogUtils::INFO, "PPO weights loaded successfully from " + filepath);
             return true;
         } else {
             LogUtils::log(LogUtils::ERROR, "Failed to load PPO weights from " + filepath);
-            return false;
-        }
-    }
-    LogUtils::log(LogUtils::WARN, "PPO agent not available");
-    return false;
-}
-
-bool RLPlanner::savePPOWeights(const std::string& filepath) {
-    if (route_planner_->getPPOPolicy()) {
-        bool success = route_planner_->getPPOPolicy()->saveWeights(filepath);
-        if (success) {
-            LogUtils::log(LogUtils::INFO, "PPO weights saved to " + filepath);
-            return true;
-        } else {
-            LogUtils::log(LogUtils::ERROR, "Failed to save PPO weights to " + filepath);
             return false;
         }
     }
@@ -247,6 +232,7 @@ Trajectory RLPlanner::plan(const PlannerInput& input) {
     if (use_ppo_) {
         planner_path_ = route_planner_->computePPOPath(*costmap_, input.start, input.goal);
     } else {
+        // Even when not using PPO, we may still want to use the route planner for A* path
         planner_path_ = route_planner_->computeAStarPath(*costmap_, input.start, input.goal);
     }
     

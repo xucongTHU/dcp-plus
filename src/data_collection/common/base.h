@@ -8,39 +8,42 @@
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L)
 
+#include <iostream>
 #include <filesystem>
 #include <optional>
 #include <any>
-namespace dcp {
-    namespace fs = std::filesystem;
-    template <typename T>
-    using optional = std::optional<T>;
-    using any = std::any;
-    template <typename T>
-    T any_cast(const any& a) {
-        return std::any_cast<T>(a);
-    }
-    const auto nullopt = std::nullopt;
-    const auto overwrite_if_exists = std::filesystem::copy_options::overwrite_existing;
-    static fs::path normalize_path(const fs::path& p) {
-        return fs::absolute(fs::path(p)).lexically_normal();
-    }
-    static fs::path relative_path(const fs::path& path, const fs::path& base) {
-        return fs::relative(path, base);
-    }
+namespace dcp::common {
 
-    inline char* getInstallRootPath() {
-        char* install_root_path = getenv("INSTALL_ROOT_PATH");
-        if (NULL != install_root_path) {
-            return install_root_path;
-        } else {
-            std::cerr
-                << "the environment variable 'INSTALL_ROOT_PATH' has not been set. "
-                "Please refer to the environment variable setting document on the relevant platform."
-                << std::endl;
-            exit(-1);
-        }
+namespace fs = std::filesystem;
+template <typename T>
+using optional = std::optional<T>;
+using any = std::any;
+template <typename T>
+T any_cast(const any& a) {
+    return std::any_cast<T>(a);
+}
+const auto nullopt = std::nullopt;
+const auto overwrite_if_exists = std::filesystem::copy_options::overwrite_existing;
+static fs::path normalize_path(const fs::path& p) {
+    return fs::absolute(fs::path(p)).lexically_normal();
+}
+static fs::path relative_path(const fs::path& path, const fs::path& base) {
+    return fs::relative(path, base);
+}
+
+inline char* getInstallRootPath() {
+    char* install_root_path = getenv("INSTALL_ROOT_PATH");
+    if (NULL != install_root_path) {
+        return install_root_path;
+    } else {
+        std::cerr
+            << "the environment variable 'INSTALL_ROOT_PATH' has not been set. "
+            "Please refer to the environment variable setting document on the relevant platform."
+            << std::endl;
+        exit(-1);
     }
+}
+
 }
 
 #else
@@ -48,7 +51,7 @@ namespace dcp {
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <boost/any.hpp>
-namespace dcp {
+namespace dcp::common {
     namespace fs = boost::filesystem;
     template <typename T>
     using optional = boost::optional<T>;

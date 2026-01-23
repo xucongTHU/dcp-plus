@@ -8,12 +8,11 @@
 
 #include <queue>
 #include <mutex>
-#include <memory>
 #include <string>
 #include "common/base.h"
+#include "common/data.h"
 
-namespace dcp{
-namespace common{
+namespace dcp::common {
 
 struct UploadItem {
     std::string file_path;
@@ -74,7 +73,6 @@ private:
     std::queue<UploadItem> queue_;
 };
 
-}
 }
 
 #endif //UPLOAD_QUEUE_H

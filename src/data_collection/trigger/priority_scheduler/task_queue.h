@@ -10,8 +10,8 @@
 #include <queue>
 #include "scheduler.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 struct TaskComparator {
     bool operator()(const TriggerTask& a, const TriggerTask& b) const {
@@ -21,7 +21,6 @@ struct TaskComparator {
 
 using TaskPriorityQueue = std::priority_queue<TriggerTask, std::vector<TriggerTask>, TaskComparator>;
 
-} 
-} 
+}
 
 #endif // TASK_QUEUE_H

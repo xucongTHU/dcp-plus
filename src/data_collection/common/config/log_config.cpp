@@ -10,8 +10,7 @@
 #include "common/utils/utils.h"
 #include "common/base.h"
 
-namespace dcp{
-namespace common{
+namespace dcp::common{
 
 LogConfig& LogConfig::GetInstance() {
     static LogConfig instance;
@@ -111,5 +110,4 @@ bool LogConfig::CheckJsonFormat(const nlohmann::json& jsonData) const {
     return true;
 }
 
-}
 }

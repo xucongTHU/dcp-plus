@@ -6,8 +6,8 @@
 
 #include "mqtt_wrapper.h"
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 MqttWrapper::MqttWrapper() : isConnected_(false), autoReconnect_(true) {}
 
@@ -33,11 +33,11 @@ MqttWrapper::ErrorCode MqttWrapper::Init(const std::string& serverURI,
 
     // 配置conn
     connOpts_ = mqtt::connect_options_builder()
-        .keep_alive_interval(std::chrono::seconds(keepAliveInterval))
-        .clean_session(true)
-        .user_name(username)
-        .password( password)
-        .finalize();
+                .keep_alive_interval(std::chrono::seconds(keepAliveInterval))
+                .clean_session(true)
+                .user_name(username)
+                .password( password)
+                .finalize();
 
     return ErrorCode::SUCCESS;
 
@@ -63,19 +63,19 @@ MqttWrapper::ErrorCode MqttWrapper::Init(const std::string& serverURI,
 
     // 配置SSL
     auto ssl_opts = mqtt::ssl_options_builder()
-        .trust_store(caCertPath)
-        .key_store(clientCertPath)
-        .private_key(clientKeyPath)
-        .verify(true)
-        .finalize();
+                    .trust_store(caCertPath)
+                    .key_store(clientCertPath)
+                    .private_key(clientKeyPath)
+                    .verify(true)
+                    .finalize();
 
     connOpts_ = mqtt::connect_options_builder()
-        .keep_alive_interval(std::chrono::seconds(keepAliveInterval))
-        .clean_session(true)
-        .ssl(std::move(ssl_opts))
-        .user_name(username)
-        .password( password)
-        .finalize();
+                .keep_alive_interval(std::chrono::seconds(keepAliveInterval))
+                .clean_session(true)
+                .ssl(std::move(ssl_opts))
+                .user_name(username)
+                .password( password)
+                .finalize();
 
     return ErrorCode::SUCCESS;
 }
@@ -108,9 +108,9 @@ void MqttWrapper::Disconnect() {
 }
 
 MqttWrapper::ErrorCode MqttWrapper::Publish(const std::string& topic,
-                                           const std::string& payload,
-                                           int qos,
-                                           bool retain) {
+                                            const std::string& payload,
+                                            int qos,
+                                            bool retain) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!isConnected_ || topic.empty() || qos < 0 || qos > 2) {
         return ErrorCode::INVALID_PARAMETER;
@@ -152,7 +152,7 @@ void MqttWrapper::MqttCallbackImpl::message_arrived(mqtt::const_message_ptr msg)
     if (parent_->userCallback_) {
         parent_->userCallback_(msg->get_topic(), msg->to_string());
     }
-    
+
 }
 
 void MqttWrapper::MqttCallbackImpl::connection_lost(const std::string& cause) {
@@ -185,5 +185,4 @@ void MqttWrapper::SetMessageCallback(MessageCallback callback) {
 }
 
 
-}
 }

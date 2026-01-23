@@ -1,6 +1,6 @@
-// nav_planner_node.h
-#ifndef NAV_PLANNER_NODE_H
-#define NAV_PLANNER_NODE_H
+// rl_planner.h
+#ifndef RL_PLANNER_H
+#define RL_PLANNER_H
 
 #include <vector>
 #include <string>
@@ -8,16 +8,16 @@
 #include <map>
 
 // Include all component headers
-#include "costmap/costmap.h"
-#include "learning/route_planner.h"
-#include "learning/ppo_policy.h"
-#include "metrics/reward_calculator.h"
-#include "metrics/coverage_metric.h"
-#include "metrics/sampling_optimizer.h"
-#include "semantics/semantic_map.h"
-#include "semantics/semantic_constraint.h"
-#include "semantics/semantic_filter.h"
-#include "utils/planner_utils.h"
+#include "../value_map/costmap.h"
+#include "../rl_policy/route_optimize.h"
+#include "../rl_policy/reward_calculator.h"
+#include "../rl_policy/ppo_agent.h"
+#include "../value_map/coverage_metric.h"
+#include "../value_map/sampling_optimizer.h"
+#include "../safety_layer/semantic_map.h"
+#include "../safety_layer/semantic_constraint.h"
+#include "../safety_layer/semantic_filter.h"
+#include "../utils/planner_utils.h"
 #include "planner_base.hpp"
 
 namespace dcp::planner {
@@ -119,11 +119,6 @@ public:
     bool loadPPOWeights(const std::string& filepath);
     
     /**
-     * @brief Save PPO weights to file
-     */
-    bool savePPOWeights(const std::string& filepath);
-    
-    /**
      * @brief Get current coverage metrics
      */
     const CoverageMetric& getCoverageMetric() const { return *coverage_metric_; }
@@ -148,7 +143,12 @@ public:
      */
     void setGoalPosition(const Point& position) { goal_position_ = position; }
 
+    /**
+     * @brief Get the route planner instance for direct access
+     */
+    RoutePlanner* getRoutePlanner() { return route_planner_.get(); }
+
 };
 
 } // namespace dcp::planner
-#endif // NAV_PLANNER_NODE_H
+#endif // RL_PLANNER_H

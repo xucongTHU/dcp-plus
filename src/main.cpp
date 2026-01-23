@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <cstdio>
 
+using namespace dcp;
+
 // 安全获取密码输入
 std::string getPasswordInput(const std::string& prompt) {
     std::cout << prompt;
@@ -44,7 +46,7 @@ std::string getPasswordInput(const std::string& prompt) {
     return password;
 }
 
-int main() {
+int main(int argc, char** argv) {
     try {
         AuthManager& auth = AuthManager::getInstance();
 
@@ -71,17 +73,17 @@ int main() {
         std::cout << "Authorization successful!" << std::endl;
 
         // Initialize logging
-        dcp::common::Logger::instance()->Init(dcp::common::LOG_TO_CONSOLE | dcp::common::LOG_TO_FILE, LOG_LEVEL_INFO,
+        common::Logger::instance()->Init(dcp::common::LOG_TO_CONSOLE | dcp::common::LOG_TO_FILE, LOG_LEVEL_INFO,
                                "/tmp/ad_data_closed_loop.log", "/tmp/ad_data_closed_loop.csv");
 
-        AD_INFO(Main, "Starting Data Collection Planner (DCP) System");
-
-        // Create data collection planner
-        dcp::DataCollectionPlanner collector;
+        AD_INFO(Main, "Starting Data Collection as Planning (DCP) System");
+#if 1
+        rclcpp::init(argc, argv);
+        auto ct = std::make_shared<DataCollectionPlanner>();
 
         // Initialize the system
-        if (!collector.initialize()) {
-            AD_ERROR(Main, "Failed to initialize data collection planner");
+        if (!ct->initialize()) {
+            AD_ERROR(Main, "Failed to initialize Data Collection as Planning");
             dcp::common::Logger::instance()->Uninit();
             auth.logout(token); // 注销会话
             return -1;
@@ -89,10 +91,10 @@ int main() {
 
         // Set mission area based on PRD: configurable 2D grid (default 20x20)
         MissionArea mission(Point(50.0, 50.0), 10.0);
-        collector.setMissionArea(mission);
+        ct->setMissionArea(mission);
 
         // Plan data collection mission
-        auto mission_path = collector.planDataCollectionMission();
+        auto mission_path = ct->planDataCollectionMission();
 
         if (mission_path.empty()) {
             AD_WARN(Main, "No valid path planned for data collection");
@@ -102,16 +104,16 @@ int main() {
         }
 
         // Execute data collection
-        collector.executeDataCollection(mission_path);
+        ct->executeDataCollection(mission_path);
 
         // Report coverage metrics
-        collector.reportCoverageMetrics();
-
-        // Analyze data and update planner weights
-        collector.analyzeAndExportWeights();
+        ct->reportCoverageMetrics();
 
         // Upload collected data
-        collector.uploadCollectedData();
+        ct->uploadCollectedData();
+
+        rclcpp::spin(ct);
+        rclcpp::shutdown();
 
         AD_INFO(Main, "Data Collection Mission Completed");
         auth.logout(token);
@@ -119,11 +121,10 @@ int main() {
 
     } catch (const std::exception& e) {
         AD_ERROR(Main, "Exception occurred: " + std::string(e.what()));
-        dcp::common::Logger::instance()->Uninit();
-        return -1;
-    } catch (...) {
-        AD_ERROR(Main, "Unknown exception occurred");
-        dcp::common::Logger::instance()->Uninit();
+        // dcp::common::Logger::instance()->Uninit();
         return -1;
     }
+
+#endif
+
 }

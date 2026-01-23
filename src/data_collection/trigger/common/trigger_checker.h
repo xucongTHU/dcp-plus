@@ -15,8 +15,8 @@
 #include <memory>
 
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
 class TriggerChecker {
 public:
@@ -59,7 +59,6 @@ private:
 };
 
 
-}
 }
 
 #endif //TRIGGERCONDITION_CHECKER_H

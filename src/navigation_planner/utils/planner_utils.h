@@ -7,8 +7,8 @@
 #include <cmath>
 #include <map>
 #include <iostream>
-#include "../costmap/costmap.h"
-#include "../semantics/semantic_map.h"
+#include "../value_map/costmap.h"
+#include "../safety_layer/semantic_map.h"
 
 struct Pose {
     Point position;

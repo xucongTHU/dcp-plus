@@ -1,4 +1,4 @@
-#include "DataUploader.h"
+#include "data_uploader.h"
 #include <cstring>
 #include <fstream>
 #include <filesystem>
@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 
-#include "file_splitter.hpp"
+#include "common/file_splitter.hpp"
 #include "common/utils/utils.h"
 #include "common/utils/sRegex.h"
 #include "common/log/logger.h"
@@ -15,12 +15,11 @@
 
 using json = nlohmann::json;
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 bool DataUploader::Init(const common::AppConfigData::DataUpload& config) {
     config_ = config;
-    data_reporter_ = data_reporter;   
     stop_flag_ = false;
 
     encryptor_ = std::make_unique<DataEncryption>();                  
@@ -389,5 +388,4 @@ void DataUploader::ProcessQueue() {
     }
 }
 
-}
 }

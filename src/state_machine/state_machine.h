@@ -4,8 +4,6 @@
 #include <memory>
 #include <string>
 #include "../data_collection_planner.h"
-#include "../navigation_planner/nav_planner_node.h"
-#include "../recorder/DataStorage.h"
 
 // 系统状态枚举
 enum class SystemState {
@@ -58,10 +56,10 @@ public:
     void setDataCollectionPlanner(std::shared_ptr<DataCollectionPlanner> planner);
     
     // 设置导航规划器
-    void setNavPlanner(std::shared_ptr<NavPlannerNode> nav_planner);
+    void setNavPlanner(std::shared_ptr<planner::RLPlanner> nav_planner);
     
     // 设置数据存储器
-    void setDataStorage(std::shared_ptr<DataStorage> data_storage);
+    // void setDataStorage(std::shared_ptr<DataStorage> data_storage);
     
     // 状态转换日志
     void logStateTransition(SystemState from, SystemState to, StateEvent event);
@@ -82,8 +80,8 @@ private:
     
     // 内部组件
     std::shared_ptr<DataCollectionPlanner> data_collection_planner_;
-    std::shared_ptr<NavPlannerNode> nav_planner_;
-    std::shared_ptr<DataStorage> data_storage_;
+    std::shared_ptr<planner::RLPlanner> rl_planner_;
+    // std::shared_ptr<DataStorage> data_storage_;
     
     // 当前状态
     SystemState current_state_;

@@ -14,8 +14,7 @@
 
 #include "common/data.h"
 
-namespace dcp{
-namespace common{
+namespace dcp::common{
 
 struct LogConfigData {
     struct AppInfo {
@@ -54,7 +53,6 @@ private:
     LogConfigData parsedConfig;
 };
 
-}
 }
 
 #endif //LOG_CONFIG_H

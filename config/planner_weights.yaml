@@ -47,7 +47,6 @@ semantic_constraints:
   road_preference: -10.0        # Negative cost (preference) for road areas
 
 # Navigation planner parameters
-nav_planner:
-  use_ppo: true                 # Whether to use PPO-based planning
+rl_planner:
   local_path_lookahead: 10      # Number of waypoints to include in local path
   waypoint_spacing: 1.0         # Desired spacing between waypoints (meters)

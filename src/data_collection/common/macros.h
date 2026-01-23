@@ -13,14 +13,13 @@
 #include <utility>
 
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 
 #define DEFINE_TYPE_TRAIT(name, func)                   \
 template <typename T>                                   \
 struct name {                                           \
 template <typename Class>                               \
-static constexpr bool Test(decltype(&Class::func)*) {   \ 
+static constexpr bool Test(decltype(&Class::func)*) {   \
   return true;                                          \
 }                                                       \
 template <typename>                                     \
@@ -34,21 +33,21 @@ static constexpr bool value = Test<T>(nullptr);         \
 template <typename T>                                   \
 constexpr bool name<T>::value;
 
-DEFINE_TYPE_TRAIT(HasShutdown, Shutdown)
+  DEFINE_TYPE_TRAIT(HasShutdown, Shutdown)
 
-template <typename T>
-typename std::enable_if<HasShutdown<T>::value>::type CallShutdown(T *instance) {
-  instance->Shutdown();
-}
+  template <typename T>
+  typename std::enable_if<HasShutdown<T>::value>::type CallShutdown(T *instance) {
+    instance->Shutdown();
+  }
 
-template <typename T>
-typename std::enable_if<!HasShutdown<T>::value>::type CallShutdown(
+  template <typename T>
+  typename std::enable_if<!HasShutdown<T>::value>::type CallShutdown(
     T *instance) {
-  (void)instance;
-}
+    (void)instance;
+  }
 
-// There must be many copy-paste versions of these macros which are same
-// things, undefine them to avoid conflict.
+  // There must be many copy-paste versions of these macros which are same
+  // things, undefine them to avoid conflict.
 #undef UNUSED
 #undef DISALLOW_COPY_AND_ASSIGN
 
@@ -85,5 +84,4 @@ typename std::enable_if<!HasShutdown<T>::value>::type CallShutdown(
 using TypeName##Ptr = std::shared_ptr<TypeName>;    \
 using TypeName##ConstPtr = std::shared_ptr<const TypeName>;
 
-}  
 }  

@@ -3,8 +3,8 @@
 #include "common/log/logger.h"
 #include "common/utils/utils.h"
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 FileStatusManager::FileStatusManager(const std::string& json_path)
     : main_path_(json_path), backup_path_(json_path + ".bak"), tmp_path_(json_path + ".tmp") {
@@ -51,7 +51,7 @@ std::optional<common::FileUploadRecord> FileStatusManager::GetFileRecord(const s
         record.file_uuid = data_[file_path]["file_uuid"];
         record.upload_id = data_[file_path]["upload_id"];
         for (const auto& [slice_id, url] : data_[file_path]["upload_url_map"].get<std::map<std::string, std::string>>()) {
-            record.upload_url_map[std::stoi(slice_id)] = url;  
+            record.upload_url_map[std::stoi(slice_id)] = url;
         }
         // record.upload_url_map = data_[file_path]["upload_url_map"].get<std::map<int, std::string>>();
     } catch (const std::exception& e) {
@@ -170,5 +170,4 @@ void FileStatusManager::WriteToFile(const std::string& path, const json& j) {
     file.close();
 }
 
-}
 }

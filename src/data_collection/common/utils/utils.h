@@ -22,8 +22,7 @@
 #include "../data.h"
 #include "../base.h"
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
@@ -87,7 +86,6 @@ double calculateCPUPercentage(const CPUData& oldData, const CPUData& newData);
 void getMemData(SysInfo& sys_info);
 void getSpaceData(SysInfo& sys_info, const char *path);
 
-} 
-} 
+}
 
 #endif 

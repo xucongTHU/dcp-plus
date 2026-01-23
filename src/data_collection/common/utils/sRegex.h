@@ -14,14 +14,12 @@
 
 #include "nlohmann/json.hpp"
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 using json = nlohmann::json;
 // using namespace boost;
 
 bool IsMatch(const std::string &path, const std::string &regexPattern);
 
-} 
-} 
+}
 
 #endif

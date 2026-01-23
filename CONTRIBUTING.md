@@ -1,4 +1,4 @@
-# Contributing to Ad Data Closed Loop
+# Contributing to Aurora Edge Insight
 
 We welcome contributions to this project! This document provides guidelines for contributing.
 

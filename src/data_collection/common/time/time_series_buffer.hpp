@@ -10,15 +10,14 @@
 #include <boost/core/noncopyable.hpp>
 #include <functional>
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 
 template <typename _T>
 class TimeSeriesBuffer : private boost::noncopyable {
- public:
+public:
   using GetTime = std::function<int64_t(_T)>;
   TimeSeriesBuffer(const size_t& capacity, GetTime&& func)
-      : buffer_(capacity), getTime(std::forward<GetTime>(func)) {}
+    : buffer_(capacity), getTime(std::forward<GetTime>(func)) {}
   ~TimeSeriesBuffer() = default;
 
   inline bool push(const _T& data) {
@@ -41,8 +40,8 @@ class TimeSeriesBuffer : private boost::noncopyable {
   // bool between(const _T& data, _T* left, _T* right) const {
   bool between(const int64_t& time, _T* const left, _T* const right) const {  // PRQA S 6006
     auto iter =
-        std::lower_bound(buffer_.begin(), buffer_.end(), time,
-                         [this](const _T& data, const int64_t& time) { return getTime(data) < time; });
+      std::lower_bound(buffer_.begin(), buffer_.end(), time,
+                       [this](const _T& data, const int64_t& time) { return getTime(data) < time; });
     assert(iter == buffer_.end() || time <= getTime(*iter));
     if (iter == buffer_.end()) {
       return false;
@@ -89,10 +88,9 @@ class TimeSeriesBuffer : private boost::noncopyable {
 
   int64_t backTime() const { return getTime(buffer_.back()); }
 
- private:
+private:
   boost::circular_buffer<_T> buffer_;
   GetTime getTime;
 };
 
-}  
 }  

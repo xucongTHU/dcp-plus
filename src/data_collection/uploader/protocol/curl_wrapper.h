@@ -6,11 +6,11 @@
 #include <curl/curl.h>
 #include <string.h> 
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 class CurlWrapper {
-  public:
+public:
     CurlWrapper() : curl_(nullptr) {}
     ~CurlWrapper() {
         if (curl_) {
@@ -25,7 +25,7 @@ class CurlWrapper {
     CURLcode HttpGet(const std::string& url, std::string& response, const std::vector<std::string>& heads);
     CURLcode HttpPut(const std::string& url, const std::vector<char>& data, std::string& response, const std::vector<std::string>& heads);
 
-  private:
+private:
     CURL* curl_;
     std::string client_cert_path_;
     std::string client_key_path_;
@@ -41,18 +41,18 @@ class CurlWrapper {
     // 回调函数用于读取和存储服务器的响应数据
     static size_t WriteCallback1(void *ptr, size_t size, size_t nmemb, void *data) {
         size_t written = fwrite(ptr, size, nmemb, (FILE *)data);
-        // std::cout << "写入的body：" <<std::endl ;  
-        fwrite(ptr, size, nmemb , stdout); 
+        // std::cout << "写入的body：" <<std::endl ;
+        fwrite(ptr, size, nmemb , stdout);
         return written;
     }
 
     // 回调函数用于读取和存储服务器的响应数据
     static size_t WriteHeadCallback1(void *ptr, size_t size, size_t nmemb, void *data) {
         // size_t written = fwrite(ptr, size, nmemb, (FILE *)data);
-        std::cout << "写入的头："<< (char*)ptr << "end" << std::endl; 
+        std::cout << "写入的头："<< (char*)ptr << "end" << std::endl;
         char *etag = (char *)data;
-        // std::cout << "写入的头："<< (char*)ptr << "end" << std::endl; 
-        // std::cout << "size："<< (int)size << " nmemb：" <<  (int)nmemb  <<std::endl ;     
+        // std::cout << "写入的头："<< (char*)ptr << "end" << std::endl;
+        // std::cout << "size："<< (int)size << " nmemb：" <<  (int)nmemb  <<std::endl ;
 
 
         // std::string str1(str);
@@ -60,18 +60,17 @@ class CurlWrapper {
 
         // 检查是否是ETag字段
         if(strstr((char*)ptr, "ETag: ") == ptr) {
-           // 复制ETag值到用户数据缓冲区
-          strncpy(etag, &((char*)ptr)[7], 32);  // 跳过 "ETag: " 并复制剩余部分
-          etag[32] = '\0';  // 确保以空字符结尾
-          std::cout << "ETag:" << etag << "end" << std::endl;   
+            // 复制ETag值到用户数据缓冲区
+            strncpy(etag, &((char*)ptr)[7], 32);  // 跳过 "ETag: " 并复制剩余部分
+            etag[32] = '\0';  // 确保以空字符结尾
+            std::cout << "ETag:" << etag << "end" << std::endl;
 
-          return size * nmemb;  // 返回实际处理的字节数
+            return size * nmemb;  // 返回实际处理的字节数
         }
-        // fwrite(ptr, size, nmemb , stdout); 
+        // fwrite(ptr, size, nmemb , stdout);
         return size * nmemb;
     }
     void SetupMutualTLS();
 };
 
-}
 }

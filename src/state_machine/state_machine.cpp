@@ -1,5 +1,5 @@
 #include "state_machine.h"
-#include "common/log/Logger.h"
+#include "common/log/logger.h"
 #include <iostream>
 
 namespace dcp::state_machine {
@@ -12,28 +12,28 @@ bool StateMachine::initialize() {
     AD_INFO(StateMachine, "Initializing state machine");
     
     if (!data_collection_planner_) {
-        AD_ERROR(StateMachine, "Data collection planner not set");
+        AD_ERROR(StateMachine, "Data Collection as Planning not set");
         return false;
     }
     
-    if (!nav_planner_) {
+    if (!rl_planner_) {
         AD_ERROR(StateMachine, "Navigation planner not set");
         return false;
     }
     
-    if (!data_storage_) {
-        AD_ERROR(StateMachine, "Data storage not set");
-        return false;
-    }
+    // if (!data_storage_) {
+    //     AD_ERROR(StateMachine, "Data storage not set");
+    //     return false;
+    // }
     
     // 初始化各组件
     if (!data_collection_planner_->initialize()) {
-        AD_ERROR(StateMachine, "Failed to initialize data collection planner");
+        AD_ERROR(StateMachine, "Failed to initialize Data Collection as Planning");
         transitionToState(SystemState::ERROR, StateEvent::ERROR_OCCURRED);
         return false;
     }
     
-    if (!nav_planner_->initialize()) {
+    if (!rl_planner_->initialize()) {
         AD_ERROR(StateMachine, "Failed to initialize navigation planner");
         transitionToState(SystemState::ERROR, StateEvent::ERROR_OCCURRED);
         return false;
@@ -70,6 +70,8 @@ void StateMachine::handleEvent(StateEvent event) {
         case SystemState::SHUTTING_DOWN:
             handleShuttingDown(event);
             break;
+        default:
+            AD_WARN(StateMachine, "Unexpected event in state");
     }
 }
 
@@ -118,7 +120,7 @@ void StateMachine::handlePlanning(StateEvent event) {
     }
 }
 
-void C::handleNavigating(StateEvent event) {
+void StateMachine::handleNavigating(StateEvent event) {
     switch (event) {
         case StateEvent::WAYPOINT_REACHED:
             AD_INFO(StateMachine, "Waypoint reached");
@@ -148,7 +150,7 @@ void C::handleNavigating(StateEvent event) {
     }
 }
 
-void C::handleDataCollection(StateEvent event) {
+void StateMachine::handleDataCollection(StateEvent event) {
     switch (event) {
         case StateEvent::DATA_COLLECTED:
             AD_INFO(StateMachine, "Data collection completed");

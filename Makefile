@@ -1,9 +1,9 @@
 SHELL := /bin/bash
 
-MW ?= "RSCL"
-PROJECT_NAME ?= "aurora_robot_edge"
-PROJECT_ID ?= "robot_edge"
-TARGET_PALTFORM ?= "thor"
+MW ?= "ROS2"
+PROJECT_NAME ?= "aurora_robot"
+PROJECT_ID ?= "robot"
+TARGET_PALTFORM ?= "x86-64"
 TGZ_VER := 1.$$(date '+%Y%m%d-%H%M%S')-$$(git rev-parse --short=5 HEAD).$(PROJECT_NAME)-$(TARGET_PALTFORM)-dev
 CLEAN_VER := $$([[ -n $$(git status -s) ]] && echo '-dirty' || echo '-new')
 JOBS ?= 8
@@ -78,7 +78,6 @@ tgz_x86: $(RELEASE_CONF)
 	@cd build && cmake .. \
 		-DCMAKE_TOOLCHAIN_FILE=./cmake/cross_toolchains/x86-toolchain.cmake \
 		-DCMAKE_BUILD_TYPE="Release" \
-		-DBUILD_x86_64=ON \
 		-DCMAKE_INSTALL_PREFIX="/opt/tmp/dcp" \
 		-DMODULE_VERSION="$(TGZ_VER)$(CLEAN_VER)"
 	@cd build && make package --no-print-directory -j$(JOBS)

@@ -6,10 +6,10 @@
 #include "rule_trigger.h"
 #include "common/utils/utils.h"
 
-namespace dcp {
-namespace trigger {
+namespace dcp::trigger
+{
 
-RuleTrigger::RuleTrigger() 
+RuleTrigger::RuleTrigger()
     : current_state_(SystemState::IDLE) {
 }
 
@@ -45,33 +45,37 @@ bool RuleTrigger::proc() {
 bool RuleTrigger::checkCondition() {
     // 解析触发条件表达式
     if (!trigger_checker_.parse(trigger_obj_->triggerCondition)) {
-        AD_ERROR(RuleTrigger, "Failed to parse condition: %s", 
-                  trigger_checker_.lastError().c_str());
+        AD_ERROR(RuleTrigger, "Failed to parse condition: %s",
+                 trigger_checker_.lastError().c_str());
         return false;
     }
     current_variables_.clear();
-    
+
     // 获取所有需要的变量值
     for (const auto& [var_name, getter] : variable_getters_) {
         try {
             current_variables_[var_name] = getter();
         } catch (const std::exception& e) {
-            AD_ERROR(RuleTrigger, "Failed to get variable '%s': %s", 
-                      var_name.c_str(), e.what());
+            AD_ERROR(RuleTrigger, "Failed to get variable '%s': %s",
+                     var_name.c_str(), e.what());
             return false;
         }
     }
 
     // 检查条件
     bool result = trigger_checker_.executeCheck(current_variables_);
-    
+
     return result;
 }
 
-void RuleTrigger::registerVariableGetter(const std::string& var_name, 
+void RuleTrigger::registerVariableGetter(const std::string& var_name,
                                          std::function<TriggerChecker::Value()> getter) {
     variable_getters_[var_name] = std::move(getter);
 }
 
-} // namespace trigger
-} // namespace shadow
+void RuleTrigger::OnMessageReceived(const std::string& topic, const rclcpp::SerializedMessage& subject)
+{
+    AD_INFO(RuleTrigger, "Received message on topic %s", topic.c_str());
+}
+
+}

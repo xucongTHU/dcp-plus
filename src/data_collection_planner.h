@@ -2,24 +2,22 @@
 #ifndef DATA_COLLECTION_PLANNER_H
 #define DATA_COLLECTION_PLANNER_H
 
+#include <memory>
 #include <vector>
 #include <string>
-#include <memory>
-#include "planner/rl_planner.h"
-#include "dcp_mode.hpp"
+#include "data_collection/common/utils/utils.h"
+#include "navigation_planner/planner/rl_planner.h"
+#include "trigger/trigger_manager.h"
+#include "recorder/data_storage.h"
+#include "uploader/data_uploader.h"
 
-// Include data collection components
-// #include "trigger/strategy_parser/strategy_parser.h"
-// #include "trigger/trigger_manager.h"
-// #include "recorder/data_storage.h"
-// #include "uploader/data_uploader.h"
+namespace dcp {
 
-// Forward declarations for data collection components
 struct DataPoint {
     Point position;
     std::string sensor_data;
     double timestamp;
-    
+
     DataPoint(const Point& pos = Point(), const std::string& data = "", double time = 0.0)
         : position(pos), sensor_data(data), timestamp(time) {}
 };
@@ -27,36 +25,32 @@ struct DataPoint {
 struct MissionArea {
     Point center;
     double radius;
-    
+
     MissionArea(const Point& c = Point(), double r = 0.0) : center(c), radius(r) {}
 };
 
-namespace dcp {
-
-class DataCollectionPlanner {
+class DataCollectionPlanner : public rclcpp::Node {
 private:
-    // std::shared_ptr<rscl::Node> node_;
-    std::unique_ptr<planner::RLPlanner> rl_planner_;  // Changed from NavPlannerNode to PlannerBase
-    // std::unique_ptr<recorder::DataStorage> data_storage_;
-    // std::unique_ptr<uploader::DataUploader> data_uploader_;
-    // std::unique_ptr<trigger::TriggerManager> trigger_manager_;
-    // std::unique_ptr<trigger::StrategyParser> strategy_parser_;
-    // trigger::StrategyConfig strategy_config_;
-    // common::AppConfigData config_;
-    
-    std::vector<DataPoint> collected_data_;
+    std::unique_ptr<planner::RLPlanner> rl_planner_;  // RL planner instance
+    // std::unique_ptr<planner::PlannerBase> baseline_planner_;  // Base planner interface
+
+
+    std::unique_ptr<trigger::StrategyParser> strategy_parser_;
+    std::unique_ptr<trigger::TriggerManager> trigger_;
+    std::unique_ptr<recorder::DataStorage> data_storage_;
+    std::unique_ptr<uploader::DataUploader> data_uploader_;
+
+    std::vector<DataPoint> data_collection_points_;
     MissionArea mission_area_;
-    DcpMode mode_;
-    
+
 public:
-    DataCollectionPlanner(DcpMode mode = DcpMode::PLUS,
-                          const std::string& model_file = "/workspaces/dcp-plus/models/planner_model.onnx",
-                          const std::string& config_file = "/workspaces/dcp-plus/config/planner_weights.yaml");
+    DataCollectionPlanner(const std::string& model_file = "/workspaces/ad_data_closed_loop/code/ad_data_closed_loop-main/training/models/planner_model.onnx",
+                          const std::string& config_file = "/workspaces/ad_data_closed_loop/code/ad_data_closed_loop-main/config/planner_weights.yaml");
     
     ~DataCollectionPlanner() = default;
     
     /**
-     * @brief Initialize the data collection planner
+     * @brief Initialize the Data Collection as Planning
      * @return true if initialization successful, false otherwise
      */
     bool initialize();
@@ -88,16 +82,6 @@ public:
      * @brief Get coverage metrics for reporting
      */
     void reportCoverageMetrics();
-    
-    /**
-     * @brief Analyze collected data and update planner weights
-     */
-    void analyzeAndExportWeights();
-    
-    /**
-     * @brief Get collected data
-     */
-    const std::vector<DataPoint>& getCollectedData() const { return collected_data_; }
     
     /**
      * @brief Upload collected data to cloud
@@ -157,12 +141,7 @@ public:
      */
     static PlannerWeights adjustCostWeights(const std::vector<Region>& sparse_zones,
                                           const PlannerWeights& current_weights);
-    
-    /**
-     * @brief Save weights to planner configuration file
-     */
-    static void saveToPlannerConfig(const PlannerWeights& weights, 
-                                   const std::string& config_path);
+
 };
 
 } // namespace dcp

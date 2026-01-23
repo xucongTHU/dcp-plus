@@ -26,8 +26,8 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 static const char* LOG_TAG = "DATA_ENCRYPTION";
 namespace fs = std::filesystem;
@@ -70,7 +70,7 @@ private:
     std::vector<unsigned char> combine_encrypted_data(const std::vector<unsigned char>& encryptedKey,
                                                       const std::vector<unsigned char>& ciphertext);
     void print_hex(const std::string& label, const unsigned char* data, size_t length);
-    
+
 private:
     std::string cloud_pubkey_file_path_;
     std::vector<unsigned char> aes_key;
@@ -86,7 +86,6 @@ private:
     std::atomic<bool> stop_flag_;
 };
 
-}
 }
 
 #endif //DATA_ENCRYPTION_H

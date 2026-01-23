@@ -14,12 +14,11 @@
 #include "common/data.h"
 #include "common/base.h"
 
-namespace dcp{
-namespace common{
+namespace dcp::common{
 
 template <typename T, typename Priority, typename Compare = std::less<Priority>, typename Hash = std::hash<T>, typename Equal = std::equal_to<T>>
 class TaskPriorityQueue {
-  public:
+public:
     static TaskPriorityQueue& GetInstance() {
         static TaskPriorityQueue instance;
         return instance;
@@ -54,7 +53,7 @@ class TaskPriorityQueue {
         return pq_.size();
     }
 
-  private:
+private:
     TaskPriorityQueue() = default;
     TaskPriorityQueue(const TaskPriorityQueue&) = delete;
     TaskPriorityQueue& operator=(const TaskPriorityQueue&) = delete;
@@ -91,7 +90,6 @@ struct TaskHash {
 
 using TaskQueue = TaskPriorityQueue<LogUploadTask, int, std::less<int>, TaskHash, TaskEqual>;
 
-}
 }
 
 

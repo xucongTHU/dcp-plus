@@ -14,9 +14,8 @@
 #include <functional>
 #include <memory>
 
-namespace dcp {
-namespace trigger {
-
+namespace dcp::trigger
+{
 
 class RuleTrigger : public TriggerBase {
 public:
@@ -25,17 +24,16 @@ public:
 
     bool proc() override;
     bool checkCondition() override;
-    void registerVariableGetter(const std::string& var_name, 
+    void registerVariableGetter(const std::string& var_name,
                                 std::function<TriggerChecker::Value()> getter) override;
-    void OnMessageReceived(const std::string& topic, const TRawMessagePtr& subject) override;                            
+    void OnMessageReceived(const std::string& topic, const rclcpp::SerializedMessage& subject) override;
 
 private:
     TriggerChecker trigger_checker_;
     SystemState current_state_;
     std::unordered_map<std::string, std::function<TriggerChecker::Value()>> variable_getters_;
-    
+
     mutable std::unordered_map<std::string, TriggerChecker::Value> current_variables_;
 };
 
-} 
 }

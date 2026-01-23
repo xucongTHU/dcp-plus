@@ -13,8 +13,8 @@
 #include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 class MqttWrapper {
 public:
@@ -66,11 +66,11 @@ public:
 
 private:
     class MqttCallbackImpl : public virtual mqtt::callback {
-      public:
+    public:
         MqttCallbackImpl(MqttWrapper* parent);
         void message_arrived(mqtt::const_message_ptr msg) override;
         void connection_lost(const std::string& cause) override;
-      private:
+    private:
         MqttWrapper* parent_;
     };
 
@@ -86,7 +86,6 @@ private:
     std::vector<std::pair<std::string, int>> subscriptions_;
 };
 
-} 
-} 
+}
 
 #endif //MQTT_WRAPPER_H

@@ -13,8 +13,7 @@
 #include "common/log/logger.h"
 // #include <strategy/ConfigFileWatcher.hpp>
 
-namespace dcp {
-namespace common {
+namespace dcp::common{
 
 //=========================================================
 // 文件系统操作
@@ -78,7 +77,7 @@ void saveDataToFile(const std::string &data, const std::string &filePath) {
 
 bool ensureDirectoryExists(const std::string &path) {
 #ifdef _WIN32
-    return _mkdir(path.c_str()) == 0 || errno == EEXIST;
+return _mkdir(path.c_str()) == 0 || errno == EEXIST;
 #else
     return mkdir(path.c_str(), 0755) == 0 || errno == EEXIST;
 #endif
@@ -317,16 +316,16 @@ std::string getCurrentTimeFormatted() {
 std::string UnixSecondsToString(
     uint64_t unix_seconds,
     const std::string& format_str) {
-  std::time_t t = unix_seconds;
-  struct tm ptm;
-  struct tm* ret = localtime_r(&t, &ptm);
-  if (ret == nullptr) {
-    return std::string("");
-  }
-  uint32_t length = 64;
-  std::vector<char> buff(length, '\0');
-  strftime(buff.data(), length, format_str.c_str(), ret);
-  return std::string(buff.data());
+    std::time_t t = unix_seconds;
+    struct tm ptm;
+    struct tm* ret = localtime_r(&t, &ptm);
+    if (ret == nullptr) {
+        return std::string("");
+    }
+    uint32_t length = 64;
+    std::vector<char> buff(length, '\0');
+    strftime(buff.data(), length, format_str.c_str(), ret);
+    return std::string(buff.data());
 }
 
 std::string TimestampNs2Str(uint64_t timestamp) {
@@ -348,17 +347,17 @@ uint64_t FileTimeToMs(const fs::file_time_type& filetime) {
 }
 
 uint64_t MonoTime() {
-  auto now = std::chrono::steady_clock::now();
-  auto nano_time_point =
-      std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
-  auto epoch = nano_time_point.time_since_epoch();
-  uint64_t now_nano =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
-  return now_nano;
+    auto now = std::chrono::steady_clock::now();
+    auto nano_time_point =
+        std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto epoch = nano_time_point.time_since_epoch();
+    uint64_t now_nano =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(epoch).count();
+    return now_nano;
 }
 
 double ToSecond(uint64_t nanoseconds_) {
-  return static_cast<double>(nanoseconds_) / 1000000000UL;
+    return static_cast<double>(nanoseconds_) / 1000000000UL;
 }
 
 std::string getCurrentDateTimeString() {
@@ -593,5 +592,4 @@ void getSpaceData(SysInfo& sys_info, const char *path) {
 
 }
 
-} 
 } 

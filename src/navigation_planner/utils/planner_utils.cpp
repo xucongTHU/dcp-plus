@@ -249,11 +249,11 @@ bool PlannerUtils::loadParametersFromYaml(const std::string& filepath,
             }
         }
         
-        if (config["nav_planner"]) {
-            const YAML::Node& nav_planner = config["nav_planner"];
-            for (const auto& item : nav_planner) {
+        if (config["rl_planner"]) {
+            const YAML::Node& rl_planner = config["rl_planner"];
+            for (const auto& item : rl_planner) {
                 if (item.second.IsScalar()) {
-                    std::string key = "nav_planner_" + item.first.as<std::string>();
+                    std::string key = "rl_planner_" + item.first.as<std::string>();
                     // For boolean values, convert to 0 or 1
                     if (item.second.IsScalar() && item.second.Type() == YAML::NodeType::Scalar) {
                         parameters[key] = item.second.as<bool>() ? 1.0 : 0.0;

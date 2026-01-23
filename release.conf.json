@@ -1,7 +1,7 @@
 {
-  "MODULE_VERSION": "1.20251017-034320-ac81a.ad_shadowmode-thor-dirty",
-  "BUILDTOOLS_TARGET_PLATFORM": "thor",
-  "PROJECT_NAME": "ad_shadowmode",
+  "MODULE_VERSION": "1.20260123-081026-fcb77.aurora_robot-x86-64-dev-dirty",
+  "BUILDTOOLS_TARGET_PLATFORM": "x86-64",
+  "PROJECT_NAME": "aurora_robot",
   "AD_CROSS_COMPILE": "ON",
   "BT_CROSS_ROOT": "/usr/local/thor/",
   "BT_CROSS_TOOLCHAIN": "/usr/local/thor/aarch64--glibc--bleeding-edge-2024.02-1",

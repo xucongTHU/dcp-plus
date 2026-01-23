@@ -2,8 +2,8 @@
 #include <cstring>
 #include "common/log/logger.h"
 
-namespace dcp {
-namespace uploader {
+namespace dcp::uploader
+{
 
 CURLcode CurlWrapper::Init(const std::string& client_cert_path, const std::string& client_key_path, const std::string& ca_cert_path) {
     client_cert_path_ = client_cert_path;//客户端证书路径
@@ -28,8 +28,8 @@ void CurlWrapper::SetupMutualTLS() {
         curl_easy_setopt(curl_, CURLOPT_SSLCERT, client_cert_path_.c_str());
         curl_easy_setopt(curl_, CURLOPT_SSLKEY, client_key_path_.c_str());
 
-        // std::cout << "client_cert_path_:" << client_cert_path_ << std::endl;  
-        // std::cout << "client_key_path_:" << client_key_path_ << std::endl;   
+        // std::cout << "client_cert_path_:" << client_cert_path_ << std::endl;
+        // std::cout << "client_key_path_:" << client_key_path_ << std::endl;
 
         // 如果私钥有密码，可以在这里设置
         // curl_easy_setopt(curl_, CURLOPT_KEYPASSWD, "xxx");
@@ -38,7 +38,7 @@ void CurlWrapper::SetupMutualTLS() {
     if (!ca_cert_path_.empty()) {
         // 设置CA证书，用于验证服务器证书
         curl_easy_setopt(curl_, CURLOPT_CAINFO, ca_cert_path_.c_str());
-        // std::cout << "ca_cert_path_:" << ca_cert_path_ << std::endl;   
+        // std::cout << "ca_cert_path_:" << ca_cert_path_ << std::endl;
     }
 
     // 启用SSL验证（双向认证要求）
@@ -125,8 +125,8 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
     // curl_easy_reset(curl_);
 
     curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYPEER, 0L); 
-    curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYHOST, 0L); 
+    curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYHOST, 0L);
     // SetupMutualTLS();
     //curl_easy_setopt(curl_, CURLOPT_HTTPGET, 0L);  // 明确设置为非 GET 请求
     curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -146,7 +146,7 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
     // 设置回调函数用于处理响应数据
     // curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, WriteCallback1);
     // curl_easy_setopt(curl_, CURLOPT_WRITEDATA, response_file);
-    
+
     // 初始化一个字符串来存储ETag值
     char etag[33];
     memset(etag, 0, sizeof(etag));
@@ -155,7 +155,7 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
     curl_easy_setopt(curl_, CURLOPT_HEADERFUNCTION, WriteHeadCallback1);
     curl_easy_setopt(curl_, CURLOPT_HEADERDATA, etag);
 
-   
+
 
     // curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, WriteCallback);
     // curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &response);
@@ -165,8 +165,8 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
 
     // 设置 stderr 来捕获 SSL 报警信息
     curl_easy_setopt(curl_, CURLOPT_STDERR, stdout);
-    
-    CURLcode res = CURLE_FAILED_INIT; 
+
+    CURLcode res = CURLE_FAILED_INIT;
 
     try {
         res = curl_easy_perform(curl_);
@@ -177,7 +177,7 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
         // 捕获所有其他类型的异常
         std::cerr << "Unknown exception caught" << std::endl;
     }
-    
+
 
     // CURLcode res = curl_easy_perform(curl_);
 
@@ -199,5 +199,4 @@ CURLcode CurlWrapper::HttpPut(const std::string& url, const std::vector<char>& d
     return res;
 }
 
-}
 }
